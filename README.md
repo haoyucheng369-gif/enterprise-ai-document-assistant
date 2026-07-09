@@ -1,458 +1,368 @@
 # Enterprise AI Document Assistant
 
-An enterprise-oriented AI assistant built with **React**, **ASP.NET Core**, and modern Large Language Model technologies.
+**Enterprise AI Document Assistant** is an AI-powered enterprise application designed to help organizations analyze, search, understand, and act on business documents through Large Language Models.
 
-The goal of this project is not to build a simple chatbot, but to demonstrate how AI can be integrated into a real enterprise application: document analysis, RAG, tool calling, agent workflows, MCP, Microsoft Graph integration, MongoDB persistence, authentication, and observability.
-
----
-
-## Project Vision
-
-This project is designed as a practical learning and portfolio project for modern enterprise AI application development.
-
-It combines:
-
-- Traditional enterprise software architecture
-- React frontend development
-- ASP.NET Core Web API
-- OAuth2 / OpenID Connect authentication
-- LLM integration
-- RAG-based document analysis
-- Tool Calling
-- Agent Workflow
-- MCP Server
-- Microsoft Graph integration
-- MongoDB for conversation and memory storage
-- Vector database for semantic search
-- Enterprise-grade security and observability
+The platform combines document intelligence, Retrieval-Augmented Generation, semantic search, AI workflow orchestration, secure enterprise integrations, and a modern React/.NET architecture.
 
 ---
 
-## Main Use Case
+## Product Positioning
 
-A user uploads enterprise documents such as PDF, Word, or text files, then interacts with an AI assistant to:
+Enterprise teams often work with contracts, technical documents, operational reports, procedures, emails, and internal knowledge scattered across different systems.
 
-- Summarize documents
-- Ask questions based on uploaded content
-- Extract risks or important points
-- Generate professional email replies
-- Create follow-up actions
-- Search related knowledge
-- Query backend tools such as system health, queue status, or metadata
+This platform provides a secure AI assistant that can:
 
-Example questions:
+- Understand uploaded enterprise documents
+- Answer questions with source-grounded responses
+- Extract risks, decisions, obligations, and action items
+- Generate professional summaries and email drafts
+- Invoke controlled backend tools
+- Integrate with enterprise services such as Microsoft Graph, SQL Server, health check APIs, queues, and MCP-compatible tools
+
+The assistant is not only a chat interface. It is an AI-enabled application layer that connects business documents, enterprise data, and operational tools.
+
+---
+
+## Key Capabilities
+
+### AI Document Intelligence
+
+- Document upload and parsing
+- Document chunking and indexing
+- Semantic search
+- Retrieval-Augmented Generation
+- Source-grounded answers
+- Multi-document question answering
+- Risk and obligation extraction
+- Structured document summaries
+
+### Conversational AI Assistant
+
+- React-based AI assistant interface
+- Streaming responses
+- Multi-turn conversation support
+- Context-aware document interaction
+- Source citation rendering
+- Tool execution feedback
+
+### AI Orchestration
+
+- Prompt orchestration
+- AI Skills for reusable business capabilities
+- Tool Calling through backend APIs
+- Workflow execution for multi-step tasks
+- Optional Agent-to-Agent collaboration for specialized processing
+
+### Enterprise Integrations
+
+- Microsoft Graph for Outlook, Calendar, and productivity workflows
+- MCP Server for exposing application capabilities to external AI clients
+- SQL Server / PostgreSQL integration
+- RabbitMQ or queue monitoring integration
+- System health check integration
+- REST-based enterprise service connectors
+
+### Enterprise Security
+
+- OAuth2 / OpenID Connect
+- JWT-based API protection
+- User-scoped document access
+- Authorization-aware retrieval
+- API key and secret isolation
+- Prompt injection mitigation
+- Sensitive data handling
+
+### Persistence and Storage
+
+- Relational storage for business entities
+- MongoDB for conversation state, workflow state, metadata, and flexible AI records
+- Vector database for embeddings and semantic retrieval
+- Audit-friendly storage design
+
+### Platform Engineering
+
+- ASP.NET Core backend
+- React + TypeScript frontend
+- Docker-ready architecture
+- Structured logging
+- Retry and timeout policies
+- Rate limiting
+- Observability and health checks
+
+---
+
+## Reference Architecture
 
 ```text
-Summarize this document in 10 bullet points.
-What are the key risks in this contract?
-Generate a professional email reply based on this document.
-Find all sections related to payment, delay, or termination.
-Check the system health before generating the report.
+                              Enterprise AI Document Assistant
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                React Portal                                  │
+│                                                                             │
+│   AI Assistant UI  │  Document Center  │  Workflow Console  │  Admin Area    │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            ASP.NET Core Web API                              │
+│                                                                             │
+│   Auth  │  Documents  │  Conversations  │  AI Gateway  │  Tool Gateway      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           AI Orchestration Layer                             │
+│                                                                             │
+│   Prompt Orchestration  │  AI Skills  │  Tool Calling  │  Workflows         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    ▼                 ▼                 ▼
+┌─────────────────────────┐ ┌──────────────────┐ ┌──────────────────────────┐
+│      RAG Pipeline        │ │   Enterprise      │ │       AI Models           │
+│                          │ │   Tools           │ │                          │
+│ Parse → Chunk → Embed    │ │ Graph / SQL / MQ  │ │ Chat / Embedding Models   │
+│ Retrieve → Generate      │ │ Health / MCP      │ │ OpenAI / Azure OpenAI     │
+└─────────────────────────┘ └──────────────────┘ └──────────────────────────┘
+                    │                 │                 │
+                    ▼                 ▼                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                Data Layer                                    │
+│                                                                             │
+│   SQL Server / PostgreSQL  │  MongoDB  │  Vector Store  │  Object Storage    │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Features
+## Core User Flows
 
-### 1. Authentication and Security
-
-- OAuth2 / OpenID Connect
-- JWT authentication
-- Protected REST APIs
-- User-based document access
-- Secure API integration
-- Sensitive data handling
-
----
-
-### 2. React Chatbot UI
-
-- Modern React + TypeScript frontend
-- Chatbox / chatbot interface
-- Streaming AI responses
-- Conversation history
-- File upload
-- Source citation display
-- Tool execution result display
-
----
-
-### 3. Document Upload and Analysis
-
-Supported file types:
-
-- PDF
-- Word
-- TXT / Markdown
-
-Processing pipeline:
+### Document Question Answering
 
 ```text
 Upload document
       ↓
-Parse content
+Extract text
       ↓
-Split into chunks
+Chunk and embed content
       ↓
-Generate embeddings
+Store vectors and metadata
       ↓
-Store vectors
+Ask a question
       ↓
-Ask questions with RAG
+Retrieve relevant chunks
+      ↓
+Generate answer with citations
 ```
 
----
-
-### 4. RAG - Retrieval Augmented Generation
-
-The assistant answers questions using uploaded documents as context.
-
-Core concepts:
-
-- Chunking
-- Embedding
-- Vector search
-- Semantic retrieval
-- Context injection
-- Source citation
-- Multi-document search
-
----
-
-### 5. Vector Database
-
-Used to store document embeddings for semantic search.
-
-Possible implementations:
-
-- PostgreSQL + pgvector
-- Qdrant
-- Chroma
-- Azure AI Search
-
-Initial implementation can start with a simple local vector store, then evolve to a production-ready vector database.
-
----
-
-### 6. Prompt Engineering
-
-The project includes prompt design for:
-
-- Document summary
-- Risk analysis
-- Contract review
-- Email generation
-- Technical explanation
-- Source-grounded answers
-- Safe and structured responses
-
----
-
-### 7. Tool Calling
-
-The LLM can call backend tools instead of only generating text.
-
-Example tools:
-
-- `SearchDocuments`
-- `GetDocumentMetadata`
-- `GetSystemHealth`
-- `GetQueueStatus`
-- `QuerySqlServer`
-- `GenerateEmailDraft`
-- `CreateFollowUpTask`
-
-This demonstrates how AI can interact with enterprise systems through controlled backend APIs.
-
----
-
-### 8. AI Skills
-
-Reusable business capabilities are implemented as AI skills.
-
-Example skills:
-
-- Document Summary Skill
-- Risk Analysis Skill
-- Contract Review Skill
-- Email Generation Skill
-- Technical Report Skill
-- Incident Summary Skill
-
-A skill is a reusable AI capability that combines prompt design, business rules, and optional tool calls.
-
----
-
-### 9. Agent Workflow
-
-The assistant can execute multi-step workflows.
-
-Example:
+### Risk Analysis
 
 ```text
-User request
-   ↓
-Document Agent
-   ↓
-Risk Analysis Skill
-   ↓
-Summary Agent
-   ↓
-Email Agent
-   ↓
-Microsoft Graph Tool
-```
-
-This demonstrates agent orchestration beyond a simple single-prompt chatbot.
-
----
-
-### 10. MCP - Model Context Protocol
-
-The project includes an MCP Server exposing backend capabilities to AI clients.
-
-Example MCP tools:
-
-- `search_documents`
-- `get_document_by_id`
-- `get_system_health`
-- `get_queue_status`
-- `search_users`
-
-The objective is to understand how external AI clients can securely access application tools and context through MCP.
-
----
-
-### 11. A2A - Agent-to-Agent Communication
-
-A lightweight A2A demo can be added to show multiple agents cooperating.
-
-Example:
-
-```text
-Document Agent
-   ↓
-Risk Agent
-   ↓
-Email Agent
-```
-
-The goal is not to over-engineer multi-agent systems, but to understand the concept and demonstrate a practical example.
-
----
-
-### 12. Microsoft Graph Integration
-
-The project can integrate with Microsoft Graph for enterprise productivity scenarios.
-
-Example capabilities:
-
-- Read emails
-- Create email drafts
-- Read calendar events
-- Create calendar tasks
-- Teams-related integration
-
-Example workflow:
-
-```text
-Analyze uploaded document
+Select document
       ↓
-Generate email reply
+Run Risk Analysis Skill
+      ↓
+Retrieve relevant sections
+      ↓
+Extract risks, obligations, deadlines, and missing information
+      ↓
+Return structured report
+```
+
+### Email Draft Generation
+
+```text
+Analyze document or conversation
+      ↓
+Generate professional response
+      ↓
+Validate tone and structure
       ↓
 Create Outlook draft through Microsoft Graph
 ```
 
----
+### Enterprise Tool Execution
 
-### 13. MongoDB
-
-MongoDB is used for flexible document-oriented storage.
-
-Possible use cases:
-
-- Conversation history
-- User sessions
-- Agent memory
-- Document metadata
-- Tool execution logs
-- Workflow state
-
-The goal is to understand how document databases differ from relational databases and when they are useful in AI applications.
+```text
+User asks an operational question
+      ↓
+AI identifies required tool
+      ↓
+Backend executes controlled function
+      ↓
+Tool result is injected into AI response
+      ↓
+Assistant returns grounded answer
+```
 
 ---
 
-### 14. Enterprise Engineering Concerns
-
-This project also covers enterprise-level concerns:
-
-- Logging
-- Error handling
-- Retry policy
-- Timeout handling
-- Rate limiting
-- Cost control
-- API key protection
-- Prompt injection mitigation
-- RAG authorization filtering
-- Observability
-- Health checks
-- Docker-based deployment
-
----
-
-## Tech Stack
+## Technical Architecture
 
 ### Frontend
 
 - React
 - TypeScript
 - Vite
+- AI assistant interface
+- Document upload UI
+- Source citation panel
+- Workflow status display
 
 ### Backend
 
-- ASP.NET Core
-- Web API
-- Minimal API or Controller-based API
+- ASP.NET Core Web API
+- Clean service-oriented architecture
+- Authentication and authorization middleware
+- AI orchestration services
+- Document processing services
+- Tool gateway services
 
-### AI
+### AI Layer
 
-- OpenAI or Azure OpenAI
-- Semantic Kernel or Microsoft.Extensions.AI
-- Embedding model
 - Chat completion model
+- Embedding model
+- RAG pipeline
+- Prompt orchestration
+- AI Skills
+- Tool Calling
+- Workflow orchestration
+- MCP-compatible tool exposure
 
-### Storage
+### Storage Layer
 
-- SQL Server or PostgreSQL
-- MongoDB
-- Vector database
+- SQL Server or PostgreSQL for structured entities
+- MongoDB for flexible AI-related state
+- Vector store for semantic retrieval
+- File/object storage for uploaded documents
 
-### Integration
+### Integration Layer
 
 - Microsoft Graph
 - MCP Server
-- REST APIs
-
-### Security
-
-- OAuth2
-- OpenID Connect
-- JWT
-
-### DevOps
-
-- Docker
-- GitHub Actions
-- Structured logging
+- SQL / REST enterprise APIs
+- RabbitMQ or queue monitoring APIs
+- Health check APIs
 
 ---
 
-## Suggested Architecture
+## Repository Structure
 
 ```text
-React Frontend
-     ↓
-ASP.NET Core Web API
-     ↓
-Application Services
-     ↓
-AI Orchestration Layer
-     ↓
-LLM / Embedding Model
-     ↓
-Vector Database
-     ↓
-MongoDB / SQL Database
-     ↓
-External Tools: Microsoft Graph, MCP, System Health APIs
+enterprise-ai-document-assistant/
+│
+├── frontend/                  # React + TypeScript application
+├── backend/                   # ASP.NET Core Web API
+│   ├── src/
+│   └── tests/
+│
+├── docs/
+│   ├── architecture.md        # Architecture overview
+│   ├── roadmap.md             # Product roadmap
+│   └── decisions/             # Architecture Decision Records
+│
+├── infrastructure/
+│   ├── docker/
+│   └── scripts/
+│
+├── samples/
+│   ├── documents/
+│   └── requests/
+│
+├── README.md
+└── README.zh-CN.md
 ```
 
 ---
 
-## Roadmap
+## Product Roadmap
 
-### Phase 1 - Foundation
+### Phase 1 - Core Platform
 
-- Create React frontend
-- Create ASP.NET Core backend
-- Implement basic chatbot API
-- Add project structure
-- Add Docker support
+- React portal foundation
+- ASP.NET Core API foundation
+- Authentication-ready architecture
+- Basic AI assistant endpoint
+- Initial document upload pipeline
 
-### Phase 2 - Document RAG
+### Phase 2 - Document Intelligence
 
-- Upload documents
-- Parse documents
-- Chunk text
-- Generate embeddings
-- Store vectors
-- Ask questions using RAG
-- Return source citations
+- PDF / Word / text processing
+- Chunking strategy
+- Embedding generation
+- Vector indexing
+- RAG-based question answering
+- Source citation support
 
-### Phase 3 - Tool Calling and Skills
+### Phase 3 - AI Capabilities
 
-- Implement backend tools
-- Add document summary skill
-- Add risk analysis skill
-- Add email generation skill
-- Add structured AI responses
+- Prompt orchestration
+- Document summary skill
+- Risk analysis skill
+- Email generation skill
+- Structured AI output
+- Conversation persistence
 
-### Phase 4 - MongoDB and Memory
+### Phase 4 - Enterprise Integrations
 
-- Store conversation history
-- Store document metadata
-- Store agent memory
-- Store tool execution logs
+- Microsoft Graph integration
+- SQL / REST tool connectors
+- System health tool
+- Queue status tool
+- MCP Server for AI-compatible tool exposure
 
-### Phase 5 - Microsoft Graph Integration
+### Phase 5 - Workflow Orchestration
 
-- Implement OAuth flow
-- Read user profile
-- Create Outlook draft
-- Read calendar events
-- Add email-generation workflow
+- Multi-step AI workflows
+- AI Skills composition
+- Tool execution pipeline
+- Optional specialized agent collaboration
+- Workflow state persistence
 
-### Phase 6 - MCP and Agent Workflow
+### Phase 6 - Enterprise Readiness
 
-- Build MCP Server
-- Expose backend tools through MCP
-- Add basic Agent Workflow
-- Add lightweight A2A demo
-
-### Phase 7 - Enterprise Hardening
-
-- Logging
+- Authorization-aware retrieval
 - Rate limiting
-- Retry and timeout handling
-- Prompt injection mitigation
-- RAG authorization filtering
-- Observability dashboard
+- Retry and timeout policies
+- Prompt injection protection
+- Observability
 - Health checks
+- Docker-based deployment
 
 ---
 
-## Learning Objectives
+## Local Development
 
-This project is intended to cover the most important modern AI application concepts:
+### Prerequisites
 
-- Chatbot / Chatbox
-- Prompt Engineering
-- Embedding
-- Vector Database
-- RAG
-- Tool Calling
-- AI Skills
-- Agent Workflow
-- MCP
-- A2A
-- Microsoft Graph
-- MongoDB
-- OAuth2 / OIDC
-- Enterprise AI security
+- Node.js LTS
+- .NET SDK
+- Docker Desktop
+- Git
+
+### Clone the repository
+
+```bash
+git clone https://github.com/haoyucheng369-gif/enterprise-ai-document-assistant.git
+cd enterprise-ai-document-assistant
+code .
+```
+
+The implementation will be built progressively inside `frontend/`, `backend/`, `docs/`, and `infrastructure/`.
+
+---
+
+## Design Principles
+
+- AI features must be grounded in enterprise use cases
+- Documents and answers must remain traceable through citations
+- Tool execution must be explicit, controlled, and auditable
+- Retrieval must respect user authorization boundaries
+- AI orchestration should remain separated from infrastructure and UI concerns
+- The system should be extensible without becoming a collection of disconnected AI experiments
 
 ---
 
 ## Status
 
-Project initialized. Implementation will be developed progressively through roadmap issues.
+Product architecture initialized. Implementation will proceed through the roadmap phases.
