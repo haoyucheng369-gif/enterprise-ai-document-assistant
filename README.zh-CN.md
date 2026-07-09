@@ -1,458 +1,368 @@
-# 企业级 AI 文档助手
+# Enterprise AI Document Assistant
 
-一个基于 **React**、**ASP.NET Core** 和现代大语言模型技术构建的企业级 AI 应用项目。
+**Enterprise AI Document Assistant** 是一个面向企业场景的 AI 文档助手，用于帮助组织通过大语言模型分析、搜索、理解并处理业务文档。
 
-本项目的目标不是做一个简单的 Chatbot，而是完整实践 AI 在企业应用中的落地方式：文档分析、RAG、Tool Calling、Agent Workflow、MCP、Microsoft Graph、MongoDB、认证、安全和可观测性。
-
----
-
-## 项目定位
-
-这个项目是一个面向企业场景的 AI 应用学习与展示项目。
-
-它结合了：
-
-- 传统企业级软件架构
-- React 前端开发
-- ASP.NET Core Web API
-- OAuth2 / OpenID Connect 认证
-- 大语言模型集成
-- 基于 RAG 的文档分析
-- Tool Calling
-- Agent Workflow
-- MCP Server
-- Microsoft Graph 集成
-- MongoDB 存储聊天记录和 Memory
-- Vector Database 进行语义搜索
-- 企业级安全和可观测性
+该平台结合了文档智能、RAG、语义搜索、AI 工作流编排、安全企业集成，以及现代 React/.NET 架构。
 
 ---
 
-## 核心业务场景
+## 产品定位
 
-用户上传企业文档，例如 PDF、Word 或文本文件，然后通过 AI Assistant 完成：
+企业团队经常需要处理合同、技术文档、运营报告、流程说明、邮件和分散在不同系统中的内部知识。
 
-- 文档总结
-- 基于文档内容问答
-- 提取风险点或重点信息
-- 生成专业邮件回复
-- 创建后续行动项
-- 查询相关知识
-- 调用后端工具，例如系统健康状态、队列状态、文档元数据等
+本平台提供一个安全的 AI Assistant，可以：
 
-示例问题：
+- 理解用户上传的企业文档
+- 基于来源内容进行问答
+- 提取风险、决策、义务和行动项
+- 生成专业总结和邮件草稿
+- 调用受控的后端工具
+- 集成 Microsoft Graph、SQL Server、Health Check API、消息队列和 MCP 兼容工具
+
+它不是一个简单聊天界面，而是一个连接业务文档、企业数据和运维工具的 AI 应用层。
+
+---
+
+## 核心能力
+
+### AI 文档智能
+
+- 文档上传与解析
+- 文档 Chunking 与索引
+- 语义搜索
+- Retrieval-Augmented Generation
+- 带来源依据的回答
+- 多文档问答
+- 风险与义务提取
+- 结构化文档总结
+
+### AI Assistant 对话入口
+
+- React AI Assistant 界面
+- Streaming 响应
+- 多轮对话
+- 基于上下文的文档交互
+- 来源引用展示
+- Tool Calling 执行结果展示
+
+### AI 编排层
+
+- Prompt 编排
+- 可复用 AI Skills
+- 后端 Tool Calling
+- 多步骤工作流执行
+- 可选的 Agent-to-Agent 专项协作
+
+### 企业系统集成
+
+- Microsoft Graph：Outlook、Calendar、企业办公流程
+- MCP Server：向外部 AI Client 暴露应用能力
+- SQL Server / PostgreSQL 集成
+- RabbitMQ 或队列监控集成
+- 系统 Health Check 集成
+- REST 企业服务连接器
+
+### 企业安全
+
+- OAuth2 / OpenID Connect
+- JWT API 保护
+- 基于用户的文档访问控制
+- 带授权过滤的 RAG 检索
+- API Key 和 Secret 隔离
+- Prompt Injection 防护
+- 敏感数据处理
+
+### 持久化与存储
+
+- 关系型数据库保存业务实体
+- MongoDB 保存对话状态、工作流状态、Metadata 和灵活 AI 记录
+- Vector Database 保存 Embedding 和语义检索索引
+- 文件/对象存储保存上传文档
+
+### 平台工程能力
+
+- ASP.NET Core 后端
+- React + TypeScript 前端
+- Docker-ready 架构
+- Structured Logging
+- Retry / Timeout 策略
+- Rate Limiting
+- Observability 与 Health Checks
+
+---
+
+## 参考架构
 
 ```text
-请用 10 个要点总结这份文档。
-这份合同有哪些主要风险？
-根据这份文档生成一封专业回复邮件。
-找出所有和付款、延期、终止相关的条款。
-在生成报告之前，先检查一下系统健康状态。
+                              Enterprise AI Document Assistant
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                React Portal                                  │
+│                                                                             │
+│   AI Assistant UI  │  Document Center  │  Workflow Console  │  Admin Area    │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            ASP.NET Core Web API                              │
+│                                                                             │
+│   Auth  │  Documents  │  Conversations  │  AI Gateway  │  Tool Gateway      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           AI Orchestration Layer                             │
+│                                                                             │
+│   Prompt Orchestration  │  AI Skills  │  Tool Calling  │  Workflows         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    ▼                 ▼                 ▼
+┌─────────────────────────┐ ┌──────────────────┐ ┌──────────────────────────┐
+│      RAG Pipeline        │ │   Enterprise      │ │       AI Models           │
+│                          │ │   Tools           │ │                          │
+│ Parse → Chunk → Embed    │ │ Graph / SQL / MQ  │ │ Chat / Embedding Models   │
+│ Retrieve → Generate      │ │ Health / MCP      │ │ OpenAI / Azure OpenAI     │
+└─────────────────────────┘ └──────────────────┘ └──────────────────────────┘
+                    │                 │                 │
+                    ▼                 ▼                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                Data Layer                                    │
+│                                                                             │
+│   SQL Server / PostgreSQL  │  MongoDB  │  Vector Store  │  Object Storage    │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 功能模块
+## 核心流程
 
-### 1. 认证与安全
-
-- OAuth2 / OpenID Connect
-- JWT 认证
-- 受保护的 REST API
-- 基于用户的文档访问控制
-- 安全的 API 集成
-- 敏感数据处理
-
----
-
-### 2. React Chatbot 界面
-
-- React + TypeScript 前端
-- Chatbox / Chatbot 对话界面
-- Streaming AI 输出
-- 多轮对话历史
-- 文件上传
-- 来源引用展示
-- Tool Calling 执行结果展示
-
----
-
-### 3. 文档上传与分析
-
-支持文件类型：
-
-- PDF
-- Word
-- TXT / Markdown
-
-处理流程：
+### 文档问答
 
 ```text
 上传文档
    ↓
-解析内容
+提取文本
    ↓
-切分 Chunk
+Chunking + Embedding
    ↓
-生成 Embedding
+存储向量与 Metadata
    ↓
-存入向量数据库
+用户提问
    ↓
-基于 RAG 进行问答
+检索相关片段
+   ↓
+生成带来源引用的回答
 ```
 
----
-
-### 4. RAG - Retrieval Augmented Generation
-
-AI 基于用户上传的文档内容进行回答。
-
-核心概念：
-
-- Chunking
-- Embedding
-- Vector Search
-- Semantic Retrieval
-- Context Injection
-- Source Citation
-- Multi-document Search
-
----
-
-### 5. Vector Database
-
-用于存储文档 Embedding，支持语义搜索。
-
-可选实现：
-
-- PostgreSQL + pgvector
-- Qdrant
-- Chroma
-- Azure AI Search
-
-初期可以从简单本地 Vector Store 开始，后续升级为更接近生产的向量数据库。
-
----
-
-### 6. Prompt Engineering
-
-项目会包含多个 Prompt 设计场景：
-
-- 文档总结
-- 风险分析
-- 合同审核
-- 邮件生成
-- 技术解释
-- 带来源引用的回答
-- 安全且结构化的输出
-
----
-
-### 7. Tool Calling
-
-AI 不只是生成文本，还可以调用后端工具。
-
-示例工具：
-
-- `SearchDocuments`
-- `GetDocumentMetadata`
-- `GetSystemHealth`
-- `GetQueueStatus`
-- `QuerySqlServer`
-- `GenerateEmailDraft`
-- `CreateFollowUpTask`
-
-这部分体现 AI 如何通过受控后端 API 与企业系统交互。
-
----
-
-### 8. AI Skills
-
-项目会把可复用业务能力封装成 AI Skills。
-
-示例：
-
-- 文档总结 Skill
-- 风险分析 Skill
-- 合同审核 Skill
-- 邮件生成 Skill
-- 技术报告 Skill
-- Incident 总结 Skill
-
-Skill 可以理解为：Prompt + 业务规则 + 可选工具调用 的可复用 AI 能力。
-
----
-
-### 9. Agent Workflow
-
-AI 可以执行多步骤工作流。
-
-示例：
+### 风险分析
 
 ```text
-用户请求
+选择文档
    ↓
-Document Agent
+执行 Risk Analysis Skill
    ↓
-Risk Analysis Skill
+检索相关段落
    ↓
-Summary Agent
+提取风险、义务、截止日期和缺失信息
    ↓
-Email Agent
-   ↓
-Microsoft Graph Tool
+返回结构化报告
 ```
 
-这部分体现的不是普通单轮 Chatbot，而是具备任务编排能力的 AI 应用。
-
----
-
-### 10. MCP - Model Context Protocol
-
-项目会实现一个 MCP Server，把后端能力暴露给 AI Client。
-
-示例 MCP Tools：
-
-- `search_documents`
-- `get_document_by_id`
-- `get_system_health`
-- `get_queue_status`
-- `search_users`
-
-目标是理解外部 AI Client 如何通过 MCP 安全访问应用上下文和工具。
-
----
-
-### 11. A2A - Agent-to-Agent Communication
-
-项目后期可以加入一个轻量级 A2A Demo，展示多个 Agent 之间的协作。
-
-示例：
+### 邮件草稿生成
 
 ```text
-Document Agent
+分析文档或对话上下文
    ↓
-Risk Agent
+生成专业回复
    ↓
-Email Agent
-```
-
-这里不用过度复杂化，重点是理解多个 Agent 如何协作完成任务。
-
----
-
-### 12. Microsoft Graph 集成
-
-项目可以集成 Microsoft Graph，模拟企业办公自动化场景。
-
-示例能力：
-
-- 读取邮件
-- 创建邮件草稿
-- 读取日历
-- 创建日程或任务
-- Teams 相关集成
-
-示例工作流：
-
-```text
-分析上传文档
-   ↓
-生成邮件回复
+校验语气和结构
    ↓
 通过 Microsoft Graph 创建 Outlook 草稿
 ```
 
----
+### 企业工具调用
 
-### 13. MongoDB
-
-MongoDB 用于灵活的文档型数据存储。
-
-可能用途：
-
-- 聊天记录
-- 用户 Session
-- Agent Memory
-- 文档 Metadata
-- Tool Execution Logs
-- Workflow State
-
-学习重点是理解 MongoDB 和关系型数据库的区别，以及它在 AI 应用中的适用场景。
+```text
+用户提出运营类问题
+   ↓
+AI 识别所需工具
+   ↓
+后端执行受控函数
+   ↓
+工具结果注入 AI 响应
+   ↓
+Assistant 返回有依据的回答
+```
 
 ---
 
-### 14. 企业级工程能力
-
-项目也会覆盖企业级落地必须考虑的问题：
-
-- Logging
-- Error Handling
-- Retry Policy
-- Timeout Handling
-- Rate Limiting
-- Cost Control
-- API Key Protection
-- Prompt Injection Mitigation
-- RAG Authorization Filtering
-- Observability
-- Health Checks
-- Docker 部署
-
----
-
-## 技术栈
+## 技术架构
 
 ### Frontend
 
 - React
 - TypeScript
 - Vite
+- AI Assistant 界面
+- 文档上传 UI
+- 来源引用面板
+- 工作流状态展示
 
 ### Backend
 
-- ASP.NET Core
-- Web API
-- Minimal API 或 Controller-based API
+- ASP.NET Core Web API
+- 清晰的服务分层架构
+- 认证与授权中间件
+- AI 编排服务
+- 文档处理服务
+- Tool Gateway 服务
 
-### AI
+### AI Layer
 
-- OpenAI 或 Azure OpenAI
-- Semantic Kernel 或 Microsoft.Extensions.AI
-- Embedding Model
 - Chat Completion Model
+- Embedding Model
+- RAG Pipeline
+- Prompt Orchestration
+- AI Skills
+- Tool Calling
+- Workflow Orchestration
+- MCP 兼容工具暴露
 
-### Storage
+### Storage Layer
 
-- SQL Server 或 PostgreSQL
-- MongoDB
-- Vector Database
+- SQL Server 或 PostgreSQL 保存结构化实体
+- MongoDB 保存灵活 AI 状态
+- Vector Store 做语义检索
+- 文件/对象存储保存上传文档
 
-### Integration
+### Integration Layer
 
 - Microsoft Graph
 - MCP Server
-- REST APIs
-
-### Security
-
-- OAuth2
-- OpenID Connect
-- JWT
-
-### DevOps
-
-- Docker
-- GitHub Actions
-- Structured Logging
+- SQL / REST 企业 API
+- RabbitMQ 或队列监控 API
+- Health Check API
 
 ---
 
-## 推荐架构
+## 仓库结构
 
 ```text
-React Frontend
-     ↓
-ASP.NET Core Web API
-     ↓
-Application Services
-     ↓
-AI Orchestration Layer
-     ↓
-LLM / Embedding Model
-     ↓
-Vector Database
-     ↓
-MongoDB / SQL Database
-     ↓
-External Tools: Microsoft Graph, MCP, System Health APIs
+enterprise-ai-document-assistant/
+│
+├── frontend/                  # React + TypeScript application
+├── backend/                   # ASP.NET Core Web API
+│   ├── src/
+│   └── tests/
+│
+├── docs/
+│   ├── architecture.md        # 架构说明
+│   ├── roadmap.md             # 产品路线图
+│   └── decisions/             # Architecture Decision Records
+│
+├── infrastructure/
+│   ├── docker/
+│   └── scripts/
+│
+├── samples/
+│   ├── documents/
+│   └── requests/
+│
+├── README.md
+└── README.zh-CN.md
 ```
 
 ---
 
-## Roadmap
+## 产品路线图
 
-### Phase 1 - Foundation
+### Phase 1 - Core Platform
 
-- 创建 React 前端
-- 创建 ASP.NET Core 后端
-- 实现基础 Chatbot API
-- 建立项目结构
-- 加入 Docker 支持
+- React Portal 基础
+- ASP.NET Core API 基础
+- 认证预留架构
+- 基础 AI Assistant Endpoint
+- 初始文档上传管线
 
-### Phase 2 - Document RAG
+### Phase 2 - Document Intelligence
 
-- 上传文档
-- 解析文档
-- Chunk 切分
-- 生成 Embedding
-- 存储向量
-- 基于 RAG 问答
-- 返回来源引用
+- PDF / Word / Text 处理
+- Chunking 策略
+- Embedding 生成
+- Vector Indexing
+- RAG 文档问答
+- 来源引用支持
 
-### Phase 3 - Tool Calling and Skills
+### Phase 3 - AI Capabilities
 
-- 实现后端工具
-- 增加文档总结 Skill
-- 增加风险分析 Skill
-- 增加邮件生成 Skill
-- 增加结构化 AI 响应
+- Prompt 编排
+- 文档总结 Skill
+- 风险分析 Skill
+- 邮件生成 Skill
+- 结构化 AI 输出
+- 对话持久化
 
-### Phase 4 - MongoDB and Memory
+### Phase 4 - Enterprise Integrations
 
-- 存储聊天记录
-- 存储文档 Metadata
-- 存储 Agent Memory
-- 存储 Tool Execution Logs
+- Microsoft Graph 集成
+- SQL / REST Tool Connectors
+- 系统 Health Tool
+- 队列状态 Tool
+- MCP Server 暴露 AI 兼容工具
 
-### Phase 5 - Microsoft Graph Integration
+### Phase 5 - Workflow Orchestration
 
-- 实现 OAuth Flow
-- 读取用户 Profile
-- 创建 Outlook 草稿
-- 读取日历
-- 增加邮件生成工作流
+- 多步骤 AI 工作流
+- AI Skills 组合
+- Tool Execution Pipeline
+- 可选专项 Agent 协作
+- 工作流状态持久化
 
-### Phase 6 - MCP and Agent Workflow
+### Phase 6 - Enterprise Readiness
 
-- 构建 MCP Server
-- 通过 MCP 暴露后端工具
-- 增加基础 Agent Workflow
-- 增加轻量级 A2A Demo
-
-### Phase 7 - Enterprise Hardening
-
-- Logging
+- 授权感知的 RAG 检索
 - Rate Limiting
-- Retry and Timeout Handling
-- Prompt Injection Mitigation
-- RAG Authorization Filtering
-- Observability Dashboard
+- Retry / Timeout 策略
+- Prompt Injection 防护
+- Observability
 - Health Checks
+- Docker 部署
 
 ---
 
-## 学习目标
+## 本地开发
 
-本项目计划覆盖现代 AI 应用开发中的主要概念：
+### 前置环境
 
-- Chatbot / Chatbox
-- Prompt Engineering
-- Embedding
-- Vector Database
-- RAG
-- Tool Calling
-- AI Skills
-- Agent Workflow
-- MCP
-- A2A
-- Microsoft Graph
-- MongoDB
-- OAuth2 / OIDC
-- 企业级 AI 安全
+- Node.js LTS
+- .NET SDK
+- Docker Desktop
+- Git
+
+### Clone 仓库
+
+```bash
+git clone https://github.com/haoyucheng369-gif/enterprise-ai-document-assistant.git
+cd enterprise-ai-document-assistant
+code .
+```
+
+后续实现会逐步放入 `frontend/`、`backend/`、`docs/` 和 `infrastructure/`。
+
+---
+
+## 设计原则
+
+- AI 能力必须服务真实企业场景
+- 文档回答必须可追溯、有来源引用
+- Tool Calling 必须显式、受控、可审计
+- RAG 检索必须遵守用户权限边界
+- AI 编排层应与 UI、基础设施保持清晰分离
+- 系统应保持可扩展，而不是堆砌彼此孤立的 AI 实验功能
 
 ---
 
 ## 当前状态
 
-项目已初始化，后续会按照 Roadmap Issues 逐步实现。
+产品架构已初始化，后续将按照路线图逐步实现。
