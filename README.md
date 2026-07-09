@@ -1,93 +1,187 @@
 # Enterprise AI Document Assistant
 
-**Enterprise AI Document Assistant** is an AI-powered enterprise application designed to help organizations analyze, search, understand, and act on business documents through Large Language Models.
+**Enterprise AI Document Assistant** is a focused AI application that shows how modern Large Language Models can be integrated into enterprise-style software using React, ASP.NET Core, Retrieval-Augmented Generation, AI orchestration, tool calling, MCP, and Microsoft Graph.
 
-The platform combines document intelligence, Retrieval-Augmented Generation, semantic search, AI workflow orchestration, secure enterprise integrations, and a modern React/.NET architecture.
+The project focuses on a practical first version: build one end-to-end assistant flow, connect documents to AI responses, call a few backend tools, and keep the architecture clear enough to extend later.
 
 ---
 
 ## Product Positioning
 
-Enterprise teams often work with contracts, technical documents, operational reports, procedures, emails, and internal knowledge scattered across different systems.
+Enterprise teams often work with contracts, technical notes, reports, procedures, emails, and internal knowledge spread across different systems.
 
-This platform provides a secure AI assistant that can:
+This application starts with an AI assistant that can:
 
-- Understand uploaded enterprise documents
-- Answer questions with source-grounded responses
-- Extract risks, decisions, obligations, and action items
-- Generate professional summaries and email drafts
-- Invoke controlled backend tools
-- Integrate with enterprise services such as Microsoft Graph, SQL Server, health check APIs, queues, and MCP-compatible tools
+- Chat with users through a React interface
+- Upload and process business documents
+- Answer document questions with source citations
+- Use prompt orchestration for repeatable AI tasks
+- Call controlled backend tools through a Tool Gateway
+- Integrate with Microsoft Graph for a small Outlook or Calendar scenario
+- Expose a small MCP-compatible interface
+- Coordinate a simple multi-step AI workflow
 
-The assistant is not only a chat interface. It is an AI-enabled application layer that connects business documents, enterprise data, and operational tools.
+The goal is not to build a large enterprise platform in the first version. The goal is to connect the core concepts of modern AI applications in a clean React + ASP.NET Core architecture.
 
 ---
 
-## Key Capabilities
+## V1 Scope
 
-### AI Document Intelligence
+The first version should be a narrow vertical slice:
 
-- Document upload and parsing
-- Document chunking and indexing
-- Semantic search
-- Retrieval-Augmented Generation
-- Source-grounded answers
-- Multi-document question answering
-- Risk and obligation extraction
-- Structured document summaries
+- A React chat interface
+- An ASP.NET Core conversation endpoint
+- Prompt orchestration for one or two reusable tasks
+- Structured output, AI output validation, and lightweight guardrails
+- AI Gateway for chat and embedding calls
+- Document upload, chunking, embedding, and vector search
+- Basic conversation memory
+- RAG answer generation with source citations
+- A small Tool Gateway with a few backend tools
+- A minimal Microsoft Graph integration
+- A minimal MCP Server and client path
+- A simple Agent Planner that chooses one known workflow path
+- A simple workflow that combines document analysis and tool execution
 
-### Conversational AI Assistant
+Everything else should remain lightweight until this path works end to end.
 
-- React-based AI assistant interface
+---
+
+## V1 Modules
+
+The first version is organized around six practical modules instead of a broad enterprise platform.
+
+### 1. React Workspace
+
+- Document list
+- Document detail view
+- Right-side AI Assistant
+- Citation panel
+- Tool result panel
+
+### 2. ASP.NET Core API
+
+- `/api/chat`
+- `/api/documents`
+- `/api/tools`
+- `/api/workflows`
+
+### 3. AI Gateway
+
+- Unified chat model calls
+- Unified embedding model calls
+- Model, token, and latency logging
+- Simple provider configuration without complex fallback logic
+
+### 4. Document RAG
+
+- Upload
+- Parse text
+- Chunk
+- Embed
+- Vector search
+- Answer with citations
+
+### 5. Tool Gateway and Skills
+
+- `SearchDocumentsTool`
+- `GetDocumentMetadataTool`
+- `CreateEmailDraftTool` or `GetHealthStatusTool`
+- `SummarySkill`
+- `RiskAnalysisSkill`
+
+### 6. MCP, Workflow, and A2A Extension
+
+- MCP Server exposing `search_documents`
+- Workflow: summarize document, identify risks, generate email draft
+- Optional A2A path: `DocumentAgent` and `EmailAgent`
+
+---
+
+## Core Capabilities
+
+### AI Assistant
+
+- Conversation API
 - Streaming responses
-- Multi-turn conversation support
-- Context-aware document interaction
-- Source citation rendering
-- Tool execution feedback
+- Multi-turn context
+- React-based assistant interface
+- Source and tool result rendering
+- Basic conversation memory
 
-### AI Orchestration
+### Prompt Orchestration
 
-- Prompt orchestration
-- AI Skills for reusable business capabilities
-- Tool Calling through backend APIs
-- Workflow execution for multi-step tasks
-- Optional Agent-to-Agent collaboration for specialized processing
+- Prompt templates
+- Runtime variables
+- Structured output
+- AI output validation
+- Guardrails
+- Reusable AI skills
 
-### Enterprise Integrations
+### Document Intelligence
 
-- Microsoft Graph for Outlook, Calendar, and productivity workflows
-- MCP Server for exposing application capabilities to external AI clients
-- SQL Server / PostgreSQL integration
-- RabbitMQ or queue monitoring integration
-- System health check integration
-- REST-based enterprise service connectors
+- Document upload
+- Text extraction
+- Metadata management
+- Chunking
+- Document summaries
+- Risk and obligation extraction
 
-### Enterprise Security
+### AI Gateway
 
-- OAuth2 / OpenID Connect
-- JWT-based API protection
-- User-scoped document access
-- Authorization-aware retrieval
-- API key and secret isolation
-- Prompt injection mitigation
-- Sensitive data handling
+- Model provider abstraction
+- OpenAI / Azure OpenAI ready design
+- Microsoft.Extensions.AI and Semantic Kernel friendly architecture
+- Retry and timeout handling
+- Request logging
+- Model configuration
 
-### Persistence and Storage
+### RAG
 
-- Relational storage for business entities
-- MongoDB for conversation state, workflow state, metadata, and flexible AI records
-- Vector database for embeddings and semantic retrieval
-- Audit-friendly storage design
+- Embedding generation
+- Embedding lifecycle for document updates
+- Vector database integration
+- Semantic search
+- Context retrieval
+- Source citation tracking
+- Grounded document question answering
 
-### Platform Engineering
+### Tool Gateway
 
-- ASP.NET Core backend
-- React + TypeScript frontend
-- Docker-ready architecture
-- Structured logging
-- Retry and timeout policies
-- Rate limiting
-- Observability and health checks
+- Backend tool registration
+- Tool Calling execution
+- Input validation
+- Execution audit trail
+- Enterprise API adapters
+
+### Persistence
+
+- Relational database for structured application entities
+- Document metadata storage
+- Conversation history
+- Workflow state
+- Optional MongoDB or JSON-based storage for flexible AI records
+
+### Enterprise Integration
+
+- Microsoft Graph for Outlook or Calendar scenarios
+- REST API connector pattern
+- SQL-backed data lookup pattern
+- Health check tool
+
+### MCP Interface
+
+- MCP Server
+- MCP tools backed by application services
+- Small external AI client access path
+
+### Workflow Orchestration
+
+- Simple Agent Planner
+- AI skill composition
+- Simple multi-step document workflow
+- Tool execution pipeline
+- Optional Agent-to-Agent collaboration as an extension
 
 ---
 
@@ -97,56 +191,56 @@ The assistant is not only a chat interface. It is an AI-enabled application laye
                               Enterprise AI Document Assistant
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                                React Portal                                  │
+│                                React Frontend                                │
 │                                                                             │
-│   AI Assistant UI  │  Document Center  │  Workflow Console  │  Admin Area    │
+│   AI Assistant  │  Document Center  │  Workflow View  │  Integration View   │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            ASP.NET Core Web API                              │
 │                                                                             │
-│   Auth  │  Documents  │  Conversations  │  AI Gateway  │  Tool Gateway      │
+│ Conversations │ Documents │ AI Gateway │ Tool Gateway │ Integrations │ MCP  │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           AI Orchestration Layer                             │
+│                            AI Application Layer                              │
 │                                                                             │
-│   Prompt Orchestration  │  AI Skills  │  Tool Calling  │  Workflows         │
+│ Prompt Orchestration │ RAG │ Tool Calling │ Skills │ Planner │ Workflows   │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                     ┌─────────────────┼─────────────────┐
                     ▼                 ▼                 ▼
 ┌─────────────────────────┐ ┌──────────────────┐ ┌──────────────────────────┐
-│      RAG Pipeline        │ │   Enterprise      │ │       AI Models           │
-│                          │ │   Tools           │ │                          │
-│ Parse → Chunk → Embed    │ │ Graph / SQL / MQ  │ │ Chat / Embedding Models   │
-│ Retrieve → Generate      │ │ Health / MCP      │ │ OpenAI / Azure OpenAI     │
+│   Document Pipeline      │ │ Enterprise Tools  │ │       AI Models           │
+│                          │ │                  │ │                          │
+│ Upload → Parse → Chunk   │ │ Graph / REST / DB │ │ Chat / Embedding Models   │
+│ Embed → Retrieve         │ │ Health / MCP      │ │ OpenAI / Azure OpenAI     │
 └─────────────────────────┘ └──────────────────┘ └──────────────────────────┘
                     │                 │                 │
                     ▼                 ▼                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                                Data Layer                                    │
+│                                Persistence                                   │
 │                                                                             │
-│   SQL Server / PostgreSQL  │  MongoDB  │  Vector Store  │  Object Storage    │
+│   SQL Server / PostgreSQL  │  Vector Store  │  File Storage  │  AI Records   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Core User Flows
+## Core Flows
 
 ### Document Question Answering
 
 ```text
 Upload document
       ↓
-Extract text
+Extract text and metadata
       ↓
 Chunk and embed content
       ↓
-Store vectors and metadata
+Store vectors and document metadata
       ↓
 Ask a question
       ↓
@@ -155,94 +249,88 @@ Retrieve relevant chunks
 Generate answer with citations
 ```
 
-### Risk Analysis
+### Tool Calling
+
+```text
+User asks for an action or enterprise data
+      ↓
+Assistant selects a backend tool
+      ↓
+Tool Gateway validates arguments
+      ↓
+Backend executes the controlled operation
+      ↓
+Result is added to the AI response
+```
+
+### AI Workflow
 
 ```text
 Select document
       ↓
-Run Risk Analysis Skill
+Agent Planner chooses a simple plan
       ↓
-Retrieve relevant sections
+Run summary, risk analysis, or email draft skill
       ↓
-Extract risks, obligations, deadlines, and missing information
+Retrieve supporting evidence
       ↓
-Return structured report
-```
-
-### Email Draft Generation
-
-```text
-Analyze document or conversation
+Generate structured output
       ↓
-Generate professional response
-      ↓
-Validate tone and structure
-      ↓
-Create Outlook draft through Microsoft Graph
-```
-
-### Enterprise Tool Execution
-
-```text
-User asks an operational question
-      ↓
-AI identifies required tool
-      ↓
-Backend executes controlled function
-      ↓
-Tool result is injected into AI response
-      ↓
-Assistant returns grounded answer
+Optionally create a follow-up email or task
 ```
 
 ---
 
-## Technical Architecture
+## Technology Stack
 
 ### Frontend
 
 - React
 - TypeScript
 - Vite
-- AI assistant interface
+- AI assistant UI
 - Document upload UI
-- Source citation panel
-- Workflow status display
+- Citation and tool result panels
 
 ### Backend
 
 - ASP.NET Core Web API
-- Clean service-oriented architecture
-- Authentication and authorization middleware
-- AI orchestration services
-- Document processing services
-- Tool gateway services
+- Service-oriented application structure
+- Conversation endpoints
+- Document endpoints
+- AI Gateway
+- Tool Gateway
+- Integration adapters
 
-### AI Layer
+### AI Application Layer
 
-- Chat completion model
-- Embedding model
-- RAG pipeline
+- Chat completion
+- Embeddings
 - Prompt orchestration
-- AI Skills
+- Structured output
+- AI output validation
+- Guardrails
+- RAG
 - Tool Calling
-- Workflow orchestration
+- Simple Agent Planner
 - MCP-compatible tool exposure
+- Workflow orchestration
+- Optional A2A pattern
 
-### Storage Layer
+### Storage
 
-- SQL Server or PostgreSQL for structured entities
-- MongoDB for flexible AI-related state
-- Vector store for semantic retrieval
-- File/object storage for uploaded documents
+- SQL Server or PostgreSQL
+- Vector store
+- File or object storage
+- Optional MongoDB for flexible AI state
 
-### Integration Layer
+### Integrations
 
 - Microsoft Graph
-- MCP Server
-- SQL / REST enterprise APIs
-- RabbitMQ or queue monitoring APIs
+- REST APIs
+- SQL-backed services
 - Health check APIs
+- MCP clients and servers
 
 ---
 
@@ -275,59 +363,49 @@ enterprise-ai-document-assistant/
 
 ---
 
-## Product Roadmap
+## Roadmap
 
-### Phase 1 - Core Platform
+### Phase 1 - Full-Stack Foundation
 
-- React portal foundation
-- ASP.NET Core API foundation
-- Authentication-ready architecture
+- React frontend foundation
+- ASP.NET Core Web API foundation
 - Basic AI assistant endpoint
-- Initial document upload pipeline
+- Streaming conversation response
+- Configuration structure
 
-### Phase 2 - Document Intelligence
-
-- PDF / Word / text processing
-- Chunking strategy
-- Embedding generation
-- Vector indexing
-- RAG-based question answering
-- Source citation support
-
-### Phase 3 - AI Capabilities
+### Phase 2 - Prompt and AI Gateway
 
 - Prompt orchestration
-- Document summary skill
-- Risk analysis skill
-- Email generation skill
-- Structured AI output
-- Conversation persistence
+- Structured output
+- AI output validation and guardrails
+- AI Gateway abstraction
+- Model provider configuration
 
-### Phase 4 - Enterprise Integrations
+### Phase 3 - Document Intelligence and RAG
 
+- Document upload and parsing
+- Chunking
+- Embedding generation
+- Embedding lifecycle
+- Vector search
+- Source-grounded document question answering
+
+### Phase 4 - Tool Gateway and Light Enterprise Integration
+
+- Tool Calling through backend services
 - Microsoft Graph integration
-- SQL / REST tool connectors
-- System health tool
-- Queue status tool
-- MCP Server for AI-compatible tool exposure
+- SQL / REST tool adapters
+- Health check tool
+- Tool execution audit
 
-### Phase 5 - Workflow Orchestration
+### Phase 5 - MCP and Simple Workflow Orchestration
 
-- Multi-step AI workflows
-- AI Skills composition
-- Tool execution pipeline
-- Optional specialized agent collaboration
-- Workflow state persistence
-
-### Phase 6 - Enterprise Readiness
-
-- Authorization-aware retrieval
-- Rate limiting
-- Retry and timeout policies
-- Prompt injection protection
-- Observability
-- Health checks
-- Docker-based deployment
+- MCP Server
+- MCP-backed application tools
+- AI skills
+- Simple Agent Planner
+- One multi-step workflow
+- Optional A2A collaboration
 
 ---
 
@@ -354,15 +432,16 @@ The implementation will be built progressively inside `frontend/`, `backend/`, `
 
 ## Design Principles
 
-- AI features must be grounded in enterprise use cases
-- Documents and answers must remain traceable through citations
-- Tool execution must be explicit, controlled, and auditable
-- Retrieval must respect user authorization boundaries
-- AI orchestration should remain separated from infrastructure and UI concerns
-- The system should be extensible without becoming a collection of disconnected AI experiments
+- Keep the scope practical and focused on one end-to-end AI application path.
+- Use product-oriented names instead of temporary or classroom-style terminology.
+- Keep the frontend, backend, AI orchestration, and integrations clearly separated.
+- Keep model access behind an AI Gateway.
+- Keep enterprise actions behind a Tool Gateway.
+- Make document answers traceable through citations.
+- Prefer Microsoft-friendly AI architecture such as Semantic Kernel and Microsoft.Extensions.AI when it fits the .NET backend.
 
 ---
 
 ## Status
 
-Product architecture initialized. Implementation will proceed through the roadmap phases.
+Architecture and roadmap are initialized. Implementation will proceed through the roadmap phases.

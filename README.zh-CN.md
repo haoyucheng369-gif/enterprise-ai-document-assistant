@@ -1,93 +1,187 @@
 # Enterprise AI Document Assistant
 
-**Enterprise AI Document Assistant** 是一个面向企业场景的 AI 文档助手，用于帮助组织通过大语言模型分析、搜索、理解并处理业务文档。
+**Enterprise AI Document Assistant** 是一个聚焦型 AI 文档助手应用，用 React、ASP.NET Core、RAG、AI 编排、Tool Calling、MCP 和 Microsoft Graph，把现代大语言模型应用开发中的核心概念串起来。
 
-该平台结合了文档智能、RAG、语义搜索、AI 工作流编排、安全企业集成，以及现代 React/.NET 架构。
+这个项目第一版的重点不是做复杂平台，而是先跑通一条端到端主线：对话入口、文档理解、向量检索、模型调用网关、后端工具调用、MCP 接口和一个简单工作流。
 
 ---
 
 ## 产品定位
 
-企业团队经常需要处理合同、技术文档、运营报告、流程说明、邮件和分散在不同系统中的内部知识。
+企业团队经常需要处理合同、技术文档、运营报告、流程说明、邮件，以及分散在不同系统里的内部知识。
 
-本平台提供一个安全的 AI Assistant，可以：
+本应用第一版从一个 AI Assistant 开始，可以：
 
-- 理解用户上传的企业文档
-- 基于来源内容进行问答
-- 提取风险、决策、义务和行动项
-- 生成专业总结和邮件草稿
-- 调用受控的后端工具
-- 集成 Microsoft Graph、SQL Server、Health Check API、消息队列和 MCP 兼容工具
+- 通过 React 界面进行对话
+- 上传并处理业务文档
+- 基于文档内容进行问答，并展示来源引用
+- 通过 Prompt Orchestration 执行可复用的 AI 任务
+- 通过 Tool Gateway 调用受控后端工具
+- 集成一个轻量 Microsoft Graph 场景，例如 Outlook 或 Calendar
+- 通过一个小型 MCP 兼容接口暴露部分能力
+- 编排一个简单的多步骤 AI 工作流
 
-它不是一个简单聊天界面，而是一个连接业务文档、企业数据和运维工具的 AI 应用层。
+它不是一个简单聊天页面，也不是一开始就完整企业平台；它是一个用 React + ASP.NET Core 串起 AI 应用核心概念的端到端项目。
+
+---
+
+## V1 范围
+
+第一版应该是一条窄而完整的主线：
+
+- React Chat 界面
+- ASP.NET Core Conversation Endpoint
+- 一到两个可复用任务的 Prompt Orchestration
+- Structured Output、AI Output Validation 和轻量 Guardrails
+- 用 AI Gateway 统一处理 Chat 和 Embedding 调用
+- 文档上传、Chunking、Embedding、Vector Search
+- 基础 Conversation Memory
+- 带来源引用的 RAG 回答
+- 一个小型 Tool Gateway，包含少量后端工具
+- 一个最小 Microsoft Graph 集成
+- 一个最小 MCP Server 和 Client 路径
+- 一个简单 Agent Planner，用来选择已知工作流路径
+- 一个组合文档分析和工具调用的简单 Workflow
+
+这条主线跑通之前，其他企业能力都保持轻量。
+
+---
+
+## V1 模块
+
+第一版按 6 个务实模块组织，而不是一开始拆成很大的企业平台。
+
+### 1. React Workspace
+
+- 文档列表
+- 文档详情
+- 右侧 AI Assistant
+- Citation 面板
+- Tool Result 面板
+
+### 2. ASP.NET Core API
+
+- `/api/chat`
+- `/api/documents`
+- `/api/tools`
+- `/api/workflows`
+
+### 3. AI Gateway
+
+- 统一调用 Chat Model
+- 统一调用 Embedding Model
+- 记录 model、token、latency
+- 只做简单 Provider 配置，先不做复杂 fallback
+
+### 4. Document RAG
+
+- Upload
+- Parse Text
+- Chunk
+- Embed
+- Vector Search
+- Answer with Citations
+
+### 5. Tool Gateway and Skills
+
+- `SearchDocumentsTool`
+- `GetDocumentMetadataTool`
+- `CreateEmailDraftTool` 或 `GetHealthStatusTool`
+- `SummarySkill`
+- `RiskAnalysisSkill`
+
+### 6. MCP, Workflow, and A2A Extension
+
+- MCP Server 暴露 `search_documents`
+- Workflow：总结文档、识别风险、生成邮件草稿
+- 可选 A2A 路径：`DocumentAgent` 和 `EmailAgent`
 
 ---
 
 ## 核心能力
 
-### AI 文档智能
+### AI Assistant
 
-- 文档上传与解析
-- 文档 Chunking 与索引
-- 语义搜索
-- Retrieval-Augmented Generation
-- 带来源依据的回答
-- 多文档问答
-- 风险与义务提取
-- 结构化文档总结
-
-### AI Assistant 对话入口
-
-- React AI Assistant 界面
+- Conversation API
 - Streaming 响应
-- 多轮对话
-- 基于上下文的文档交互
-- 来源引用展示
-- Tool Calling 执行结果展示
+- 多轮上下文
+- React Assistant 界面
+- 来源引用和工具结果展示
+- 基础 Conversation Memory
 
-### AI 编排层
+### Prompt Orchestration
 
-- Prompt 编排
+- Prompt Templates
+- 运行时变量
+- 结构化输出
+- AI 输出校验
+- Guardrails
 - 可复用 AI Skills
-- 后端 Tool Calling
-- 多步骤工作流执行
-- 可选的 Agent-to-Agent 专项协作
 
-### 企业系统集成
+### Document Intelligence
 
-- Microsoft Graph：Outlook、Calendar、企业办公流程
-- MCP Server：向外部 AI Client 暴露应用能力
-- SQL Server / PostgreSQL 集成
-- RabbitMQ 或队列监控集成
-- 系统 Health Check 集成
-- REST 企业服务连接器
+- 文档上传
+- 文本解析
+- Metadata 管理
+- Chunking
+- 文档总结
+- 风险与义务提取
 
-### 企业安全
+### AI Gateway
 
-- OAuth2 / OpenID Connect
-- JWT API 保护
-- 基于用户的文档访问控制
-- 带授权过滤的 RAG 检索
-- API Key 和 Secret 隔离
-- Prompt Injection 防护
-- 敏感数据处理
+- 模型 Provider 抽象
+- 面向 OpenAI / Azure OpenAI 的设计
+- 适配 Microsoft.Extensions.AI 和 Semantic Kernel 的架构
+- Retry / Timeout
+- 请求日志
+- 模型配置
 
-### 持久化与存储
+### RAG
 
-- 关系型数据库保存业务实体
-- MongoDB 保存对话状态、工作流状态、Metadata 和灵活 AI 记录
-- Vector Database 保存 Embedding 和语义检索索引
-- 文件/对象存储保存上传文档
+- Embedding 生成
+- 文档更新时的 Embedding Lifecycle
+- Vector Database 集成
+- 语义搜索
+- 上下文检索
+- 来源引用追踪
+- 基于文档证据的问答
 
-### 平台工程能力
+### Tool Gateway
 
-- ASP.NET Core 后端
-- React + TypeScript 前端
-- Docker-ready 架构
-- Structured Logging
-- Retry / Timeout 策略
-- Rate Limiting
-- Observability 与 Health Checks
+- 后端工具注册
+- Tool Calling 执行
+- 输入参数校验
+- 执行记录
+- 企业 API Adapter
+
+### Persistence
+
+- 关系型数据库保存结构化应用实体
+- 文档 Metadata
+- 对话历史
+- 工作流状态
+- 可选 MongoDB 或 JSON 存储保存灵活 AI 记录
+
+### Enterprise Integration
+
+- Microsoft Graph：Outlook 或 Calendar 场景
+- REST API 连接器模式
+- SQL 业务数据查询模式
+- Health Check Tool
+
+### MCP Interface
+
+- MCP Server
+- 基于应用服务的 MCP Tools
+- 一条小型外部 AI Client 访问路径
+
+### Workflow Orchestration
+
+- 简单 Agent Planner
+- AI Skill 组合
+- 一个简单多步骤文档工作流
+- Tool Execution Pipeline
+- A2A 作为可选扩展模式
 
 ---
 
@@ -97,39 +191,39 @@
                               Enterprise AI Document Assistant
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                                React Portal                                  │
+│                                React Frontend                                │
 │                                                                             │
-│   AI Assistant UI  │  Document Center  │  Workflow Console  │  Admin Area    │
+│   AI Assistant  │  Document Center  │  Workflow View  │  Integration View   │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            ASP.NET Core Web API                              │
 │                                                                             │
-│   Auth  │  Documents  │  Conversations  │  AI Gateway  │  Tool Gateway      │
+│ Conversations │ Documents │ AI Gateway │ Tool Gateway │ Integrations │ MCP  │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           AI Orchestration Layer                             │
+│                            AI Application Layer                              │
 │                                                                             │
-│   Prompt Orchestration  │  AI Skills  │  Tool Calling  │  Workflows         │
+│ Prompt Orchestration │ RAG │ Tool Calling │ Skills │ Planner │ Workflows   │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                     ┌─────────────────┼─────────────────┐
                     ▼                 ▼                 ▼
 ┌─────────────────────────┐ ┌──────────────────┐ ┌──────────────────────────┐
-│      RAG Pipeline        │ │   Enterprise      │ │       AI Models           │
-│                          │ │   Tools           │ │                          │
-│ Parse → Chunk → Embed    │ │ Graph / SQL / MQ  │ │ Chat / Embedding Models   │
-│ Retrieve → Generate      │ │ Health / MCP      │ │ OpenAI / Azure OpenAI     │
+│   Document Pipeline      │ │ Enterprise Tools  │ │       AI Models           │
+│                          │ │                  │ │                          │
+│ Upload → Parse → Chunk   │ │ Graph / REST / DB │ │ Chat / Embedding Models   │
+│ Embed → Retrieve         │ │ Health / MCP      │ │ OpenAI / Azure OpenAI     │
 └─────────────────────────┘ └──────────────────┘ └──────────────────────────┘
                     │                 │                 │
                     ▼                 ▼                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                                Data Layer                                    │
+│                                Persistence                                   │
 │                                                                             │
-│   SQL Server / PostgreSQL  │  MongoDB  │  Vector Store  │  Object Storage    │
+│   SQL Server / PostgreSQL  │  Vector Store  │  File Storage  │  AI Records   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -142,11 +236,11 @@
 ```text
 上传文档
    ↓
-提取文本
+提取文本和 Metadata
    ↓
 Chunking + Embedding
    ↓
-存储向量与 Metadata
+保存向量和文档 Metadata
    ↓
 用户提问
    ↓
@@ -155,94 +249,88 @@ Chunking + Embedding
 生成带来源引用的回答
 ```
 
-### 风险分析
+### Tool Calling
+
+```text
+用户提出动作请求或企业数据问题
+   ↓
+Assistant 选择后端工具
+   ↓
+Tool Gateway 校验参数
+   ↓
+后端执行受控操作
+   ↓
+工具结果进入 AI 响应
+```
+
+### AI Workflow
 
 ```text
 选择文档
    ↓
-执行 Risk Analysis Skill
+Agent Planner 选择简单执行计划
    ↓
-检索相关段落
+执行总结、风险分析或邮件草稿 Skill
    ↓
-提取风险、义务、截止日期和缺失信息
+检索支持证据
    ↓
-返回结构化报告
-```
-
-### 邮件草稿生成
-
-```text
-分析文档或对话上下文
+生成结构化结果
    ↓
-生成专业回复
-   ↓
-校验语气和结构
-   ↓
-通过 Microsoft Graph 创建 Outlook 草稿
-```
-
-### 企业工具调用
-
-```text
-用户提出运营类问题
-   ↓
-AI 识别所需工具
-   ↓
-后端执行受控函数
-   ↓
-工具结果注入 AI 响应
-   ↓
-Assistant 返回有依据的回答
+可选生成后续邮件或任务
 ```
 
 ---
 
-## 技术架构
+## 技术栈
 
 ### Frontend
 
 - React
 - TypeScript
 - Vite
-- AI Assistant 界面
+- AI Assistant UI
 - 文档上传 UI
-- 来源引用面板
-- 工作流状态展示
+- 来源引用和工具结果面板
 
 ### Backend
 
 - ASP.NET Core Web API
-- 清晰的服务分层架构
-- 认证与授权中间件
-- AI 编排服务
-- 文档处理服务
-- Tool Gateway 服务
+- 面向服务的应用结构
+- Conversation Endpoints
+- Document Endpoints
+- AI Gateway
+- Tool Gateway
+- Integration Adapters
 
-### AI Layer
+### AI Application Layer
 
-- Chat Completion Model
-- Embedding Model
-- RAG Pipeline
+- Chat Completion
+- Embeddings
 - Prompt Orchestration
-- AI Skills
+- Structured Output
+- AI Output Validation
+- Guardrails
+- RAG
 - Tool Calling
-- Workflow Orchestration
+- Simple Agent Planner
 - MCP 兼容工具暴露
+- Workflow Orchestration
+- 可选 A2A 模式
 
-### Storage Layer
+### Storage
 
-- SQL Server 或 PostgreSQL 保存结构化实体
-- MongoDB 保存灵活 AI 状态
-- Vector Store 做语义检索
-- 文件/对象存储保存上传文档
+- SQL Server 或 PostgreSQL
+- Vector Store
+- 文件或对象存储
+- 可选 MongoDB 保存灵活 AI 状态
 
-### Integration Layer
+### Integrations
 
 - Microsoft Graph
-- MCP Server
-- SQL / REST 企业 API
-- RabbitMQ 或队列监控 API
-- Health Check API
+- REST APIs
+- SQL-backed services
+- Health Check APIs
+- MCP Clients and Servers
 
 ---
 
@@ -275,59 +363,49 @@ enterprise-ai-document-assistant/
 
 ---
 
-## 产品路线图
+## 路线图
 
-### Phase 1 - Core Platform
+### Phase 1 - Full-Stack Foundation
 
-- React Portal 基础
-- ASP.NET Core API 基础
-- 认证预留架构
+- React 前端基础
+- ASP.NET Core Web API 基础
 - 基础 AI Assistant Endpoint
-- 初始文档上传管线
+- Streaming 对话响应
+- 配置结构
 
-### Phase 2 - Document Intelligence
+### Phase 2 - Prompt and AI Gateway
 
-- PDF / Word / Text 处理
-- Chunking 策略
+- Prompt Orchestration
+- 结构化输出
+- AI Output Validation 和 Guardrails
+- AI Gateway 抽象
+- Model Provider 配置
+
+### Phase 3 - Document Intelligence and RAG
+
+- 文档上传与解析
+- Chunking
 - Embedding 生成
-- Vector Indexing
-- RAG 文档问答
-- 来源引用支持
+- Embedding Lifecycle
+- Vector Search
+- 带来源引用的文档问答
 
-### Phase 3 - AI Capabilities
+### Phase 4 - Tool Gateway and Light Enterprise Integration
 
-- Prompt 编排
-- 文档总结 Skill
-- 风险分析 Skill
-- 邮件生成 Skill
-- 结构化 AI 输出
-- 对话持久化
-
-### Phase 4 - Enterprise Integrations
-
+- 通过后端服务执行 Tool Calling
 - Microsoft Graph 集成
-- SQL / REST Tool Connectors
-- 系统 Health Tool
-- 队列状态 Tool
-- MCP Server 暴露 AI 兼容工具
+- SQL / REST Tool Adapters
+- Health Check Tool
+- 工具执行记录
 
-### Phase 5 - Workflow Orchestration
+### Phase 5 - MCP and Simple Workflow Orchestration
 
-- 多步骤 AI 工作流
-- AI Skills 组合
-- Tool Execution Pipeline
-- 可选专项 Agent 协作
-- 工作流状态持久化
-
-### Phase 6 - Enterprise Readiness
-
-- 授权感知的 RAG 检索
-- Rate Limiting
-- Retry / Timeout 策略
-- Prompt Injection 防护
-- Observability
-- Health Checks
-- Docker 部署
+- MCP Server
+- 基于 MCP 的应用工具
+- AI Skills
+- Simple Agent Planner
+- 一个多步骤工作流
+- 可选 A2A 协作
 
 ---
 
@@ -354,15 +432,16 @@ code .
 
 ## 设计原则
 
-- AI 能力必须服务真实企业场景
-- 文档回答必须可追溯、有来源引用
-- Tool Calling 必须显式、受控、可审计
-- RAG 检索必须遵守用户权限边界
-- AI 编排层应与 UI、基础设施保持清晰分离
-- 系统应保持可扩展，而不是堆砌彼此孤立的 AI 实验功能
+- 范围保持务实，聚焦一条端到端 AI 应用主线。
+- 使用产品化命名，避免临时性或课堂式表达。
+- 前端、后端、AI 编排和企业集成保持清晰分层。
+- 模型访问统一经过 AI Gateway。
+- 企业动作统一经过 Tool Gateway。
+- 文档回答必须可追溯、有来源引用。
+- 在适合 .NET 后端的场景下，优先采用 Semantic Kernel 和 Microsoft.Extensions.AI 友好的架构。
 
 ---
 
 ## 当前状态
 
-产品架构已初始化，后续将按照路线图逐步实现。
+架构和路线图已初始化，后续将按照路线图逐步实现。
