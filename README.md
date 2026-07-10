@@ -34,7 +34,7 @@ flowchart LR
         rag --> vector[Vector Store]
         rag --> files[Document Storage]
         gateway --> models[OpenAI / Azure OpenAI]
-        tools --> graph[Microsoft Graph]
+        tools --> msgraph[Microsoft Graph]
         tools --> mcp[MCP Tools]
     end
 ```
