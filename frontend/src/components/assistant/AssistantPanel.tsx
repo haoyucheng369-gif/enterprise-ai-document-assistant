@@ -1,11 +1,18 @@
 import { MessageSquare, Send } from 'lucide-react'
-import type { Message } from '../../types'
+import type { ApiConnectionState, ApiStatusResponse, Message } from '../../types'
+import { ApiStatusBadge } from '../layout/ApiStatusBadge'
 
 type AssistantPanelProps = {
   messages: Message[]
+  apiState: ApiConnectionState
+  apiStatus: ApiStatusResponse | null
 }
 
-export function AssistantPanel({ messages }: AssistantPanelProps) {
+export function AssistantPanel({
+  messages,
+  apiState,
+  apiStatus,
+}: AssistantPanelProps) {
   return (
     <aside
       aria-label="AI Assistant"
@@ -20,9 +27,7 @@ export function AssistantPanel({ messages }: AssistantPanelProps) {
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">Document context</p>
           </div>
-          <span className="rounded-sm bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
-            Online
-          </span>
+          <ApiStatusBadge state={apiState} status={apiStatus} />
         </div>
 
         <div className="flex min-h-0 flex-col gap-2 overflow-auto">

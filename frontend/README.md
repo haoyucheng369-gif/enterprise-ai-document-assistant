@@ -11,6 +11,8 @@ React Workspace for Enterprise AI Document Assistant.
 - Tool result panel placeholder
 - Tailwind CSS utility styling
 - Component-based workspace structure
+- API status connection to the ASP.NET Core backend
+- Workspace data loaded from the ASP.NET Core backend
 
 ## Structure
 
@@ -28,11 +30,23 @@ src/
 │   │   └── ToolResultPanel.tsx
 │   └── layout/
 │       └── WorkspaceHeader.tsx
-├── data/
-│   └── workspaceData.ts
+├── hooks/
+│   ├── useWorkspaceData.ts
+│   └── useApiStatus.ts
+├── api/
+│   ├── workspaceApi.ts
+│   └── statusApi.ts
 ├── App.tsx
 ├── index.css
 └── types.ts
+```
+
+## Configuration
+
+Create a local `.env` file when the backend API runs on a custom URL:
+
+```bash
+VITE_API_BASE_URL=http://localhost:5221
 ```
 
 ## Commands

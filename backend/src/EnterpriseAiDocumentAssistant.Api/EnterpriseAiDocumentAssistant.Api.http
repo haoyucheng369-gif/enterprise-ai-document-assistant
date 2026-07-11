@@ -9,3 +9,8 @@ GET {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/status
 Accept: application/json
 
 ###
+
+GET {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/workspace
+Accept: application/json
+
+###

@@ -8,6 +8,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Swagger UI
 - Health check endpoint
 - Status endpoint
+- Workspace seed endpoint
 - CORS for the React development server
 - ProblemDetails and simple global error handling
 
@@ -17,6 +18,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 |---|---|---|
 | GET | `/health` | Basic service health check |
 | GET | `/api/status` | API status, version, environment, and AI provider placeholder |
+| GET | `/api/workspace` | Initial workspace data for the React shell |
 | GET | `/swagger` | Swagger UI in development |
 
 ## Commands

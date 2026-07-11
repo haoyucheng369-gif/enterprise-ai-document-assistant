@@ -29,3 +29,23 @@ export type ToolResult = {
   status: string
   description: string
 }
+
+export type ApiStatusResponse = {
+  service: string
+  environment: string
+  apiVersion: string
+  version: string
+  aiProvider: string
+  timeUtc: string
+}
+
+export type ApiConnectionState = 'loading' | 'connected' | 'unavailable'
+
+export type WorkspaceResponse = {
+  documents: DocumentItem[]
+  messages: Message[]
+  citations: Citation[]
+  toolResult: ToolResult
+}
+
+export type DataConnectionState = 'loading' | 'loaded' | 'unavailable'
