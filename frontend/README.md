@@ -17,13 +17,17 @@ React Workspace for Enterprise AI Document Assistant.
 ```text
 src/
 ├── components/
-│   ├── AssistantPanel.tsx
-│   ├── CitationPanel.tsx
-│   ├── DocumentNav.tsx
-│   ├── DocumentPreview.tsx
-│   ├── DocumentWorkspace.tsx
-│   ├── ToolResultPanel.tsx
-│   └── WorkspaceHeader.tsx
+│   ├── assistant/
+│   │   └── AssistantPanel.tsx
+│   ├── documents/
+│   │   ├── DocumentNav.tsx
+│   │   ├── DocumentPreview.tsx
+│   │   └── DocumentWorkspace.tsx
+│   ├── insights/
+│   │   ├── CitationPanel.tsx
+│   │   └── ToolResultPanel.tsx
+│   └── layout/
+│       └── WorkspaceHeader.tsx
 ├── data/
 │   └── workspaceData.ts
 ├── App.tsx

@@ -1,5 +1,5 @@
 import { FileText, Upload } from 'lucide-react'
-import type { DocumentItem } from '../types'
+import type { DocumentItem } from '../../types'
 
 type DocumentNavProps = {
   documents: DocumentItem[]

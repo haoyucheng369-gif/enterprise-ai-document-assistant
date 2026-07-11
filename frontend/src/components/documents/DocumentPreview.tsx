@@ -1,4 +1,4 @@
-import type { DocumentItem } from '../types'
+import type { DocumentItem } from '../../types'
 
 type DocumentPreviewProps = {
   document: DocumentItem

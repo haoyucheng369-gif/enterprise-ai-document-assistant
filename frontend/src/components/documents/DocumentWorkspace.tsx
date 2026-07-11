@@ -1,8 +1,8 @@
-import type { Citation, DocumentItem, ToolResult } from '../types'
-import { CitationPanel } from './CitationPanel'
+import type { Citation, DocumentItem, ToolResult } from '../../types'
+import { CitationPanel } from '../insights/CitationPanel'
 import { DocumentPreview } from './DocumentPreview'
-import { ToolResultPanel } from './ToolResultPanel'
-import { WorkspaceHeader } from './WorkspaceHeader'
+import { ToolResultPanel } from '../insights/ToolResultPanel'
+import { WorkspaceHeader } from '../layout/WorkspaceHeader'
 
 type DocumentWorkspaceProps = {
   document: DocumentItem

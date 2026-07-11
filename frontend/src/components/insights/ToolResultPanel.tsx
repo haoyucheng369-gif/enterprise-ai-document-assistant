@@ -1,5 +1,5 @@
 import { Activity } from 'lucide-react'
-import type { ToolResult } from '../types'
+import type { ToolResult } from '../../types'
 
 type ToolResultPanelProps = {
   toolResult: ToolResult

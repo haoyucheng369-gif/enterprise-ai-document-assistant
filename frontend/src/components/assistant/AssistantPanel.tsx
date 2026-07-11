@@ -1,5 +1,5 @@
 import { MessageSquare, Send } from 'lucide-react'
-import type { Message } from '../types'
+import type { Message } from '../../types'
 
 type AssistantPanelProps = {
   messages: Message[]

@@ -1,5 +1,5 @@
 import { Quote } from 'lucide-react'
-import type { Citation } from '../types'
+import type { Citation } from '../../types'
 
 type CitationPanelProps = {
   citations: Citation[]

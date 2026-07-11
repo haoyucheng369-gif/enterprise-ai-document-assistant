@@ -1,5 +1,5 @@
 import { FileSearch, ListChecks } from 'lucide-react'
-import type { DocumentItem } from '../types'
+import type { DocumentItem } from '../../types'
 
 type WorkspaceHeaderProps = {
   document: DocumentItem

@@ -1,6 +1,6 @@
-import { AssistantPanel } from './components/AssistantPanel'
-import { DocumentNav } from './components/DocumentNav'
-import { DocumentWorkspace } from './components/DocumentWorkspace'
+import { AssistantPanel } from './components/assistant/AssistantPanel'
+import { DocumentNav } from './components/documents/DocumentNav'
+import { DocumentWorkspace } from './components/documents/DocumentWorkspace'
 import {
   citations,
   documents,
