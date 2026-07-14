@@ -53,7 +53,7 @@ sequenceDiagram
     participant Tools as Tool Gateway
 
     U->>UI: Ask about a document
-    UI->>API: POST /api/chat
+    UI->>API: POST /api/chat/stream
     API->>AI: Build prompt + route request
     AI->>RAG: Retrieve relevant chunks
     RAG-->>AI: Context + citations
@@ -81,8 +81,10 @@ sequenceDiagram
 ## 当前状态
 
 - [x] React Workspace skeleton
-- [ ] ASP.NET Core API skeleton
-- [ ] Chat endpoint
+- [x] ASP.NET Core API skeleton
+- [x] Backend-driven workspace data
+- [x] Chat endpoint
+- [x] Streaming chat response
 - [ ] AI Gateway
 - [ ] Document RAG
 - [ ] Tool Gateway and Skills

@@ -14,6 +14,7 @@ React Workspace for Enterprise AI Document Assistant.
 - API status connection to the ASP.NET Core backend
 - Workspace data loaded from the ASP.NET Core backend
 - Mock chat request/response through the ASP.NET Core backend
+- Streaming chat response rendering in the Assistant panel
 
 ## Structure
 

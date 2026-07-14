@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { sendChatMessage } from './api/chatApi'
+import { streamChatMessage } from './api/chatApi'
 import { AssistantPanel } from './components/assistant/AssistantPanel'
 import { DocumentNav } from './components/documents/DocumentNav'
 import { DocumentWorkspace } from './components/documents/DocumentWorkspace'
@@ -50,34 +50,67 @@ function App() {
     }
 
     const nextMessages = [...messages, userMessage]
+    const assistantMessageId = `assistant-${crypto.randomUUID()}`
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+    }
+
     setMessages(nextMessages)
     setIsSendingMessage(true)
 
     try {
-      const response = await sendChatMessage({
-        message,
-        documentId: selectedDocument.id,
-        history: nextMessages,
-      })
+      setMessages([...nextMessages, assistantMessage])
 
-      setMessages((currentMessages) => [...currentMessages, response.message])
-    } catch {
-      setMessages((currentMessages) => [
-        ...currentMessages,
+      await streamChatMessage(
         {
-          id: `assistant-error-${crypto.randomUUID()}`,
-          role: 'assistant',
-          content:
-            'The chat API is unavailable. Check that the backend is running and try again.',
+          message,
+          documentId: selectedDocument.id,
+          history: nextMessages,
         },
-      ])
+        (chunk) => {
+          setMessages((currentMessages) =>
+            currentMessages.map((currentMessage) =>
+              currentMessage.id === assistantMessageId
+                ? {
+                    ...currentMessage,
+                    content: `${currentMessage.content}${chunk}`,
+                  }
+                : currentMessage,
+            ),
+          )
+        },
+      )
+    } catch {
+      setMessages((currentMessages) => {
+        const errorMessage =
+          'The chat API is unavailable. Check that the backend is running and try again.'
+
+        if (currentMessages.some((message) => message.id === assistantMessageId)) {
+          return currentMessages.map((currentMessage) =>
+            currentMessage.id === assistantMessageId
+              ? { ...currentMessage, content: errorMessage }
+              : currentMessage,
+          )
+        }
+
+        return [
+          ...currentMessages,
+          {
+            id: `assistant-error-${crypto.randomUUID()}`,
+            role: 'assistant',
+            content: errorMessage,
+          },
+        ]
+      })
     } finally {
       setIsSendingMessage(false)
     }
   }
 
   return (
-    <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[248px_minmax(0,1fr)] xl:grid-cols-[264px_minmax(0,1fr)_420px]">
+    <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[288px_minmax(0,1fr)_500px] 2xl:grid-cols-[300px_minmax(0,1fr)_540px]">
       <DocumentNav documents={documents} selectedDocumentId={selectedDocument.id} />
       <DocumentWorkspace
         citations={citations}

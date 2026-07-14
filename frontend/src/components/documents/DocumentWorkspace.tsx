@@ -18,15 +18,15 @@ export function DocumentWorkspace({
   return (
     <section
       aria-label="Document workspace"
-      className="grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-4 overflow-hidden p-5"
+      className="grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden p-4"
     >
       <WorkspaceHeader document={document} />
 
-      <div className="grid min-h-0 gap-4 overflow-hidden xl:grid-cols-[minmax(0,1fr)_288px]">
+      <div className="grid min-h-0 gap-3 overflow-hidden xl:grid-cols-[minmax(0,1fr)_248px] 2xl:grid-cols-[minmax(0,1fr)_264px]">
         <DocumentPreview document={document} />
         <aside
           aria-label="Assistant context"
-          className="grid min-h-0 content-start gap-4 overflow-y-auto"
+          className="grid min-h-0 content-start gap-3 overflow-y-auto"
         >
           <CitationPanel citations={citations} />
           <ToolResultPanel toolResult={toolResult} />

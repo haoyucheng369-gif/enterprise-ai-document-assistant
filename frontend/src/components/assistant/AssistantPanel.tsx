@@ -20,6 +20,8 @@ export function AssistantPanel({
 }: AssistantPanelProps) {
   const [draftMessage, setDraftMessage] = useState('')
   const messageListRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const shouldRestoreFocusRef = useRef(false)
 
   useEffect(() => {
     const messageList = messageListRef.current
@@ -33,6 +35,15 @@ export function AssistantPanel({
     })
   }, [messages, isSending])
 
+  useEffect(() => {
+    if (isSending || !shouldRestoreFocusRef.current) {
+      return
+    }
+
+    inputRef.current?.focus()
+    shouldRestoreFocusRef.current = false
+  }, [isSending])
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -42,13 +53,14 @@ export function AssistantPanel({
     }
 
     setDraftMessage('')
+    shouldRestoreFocusRef.current = true
     await onSendMessage(message)
   }
 
   return (
     <aside
       aria-label="AI Assistant"
-      className="min-h-0 border-t border-slate-200 bg-white p-4 lg:col-span-2 xl:col-span-1 xl:border-l xl:border-t-0"
+      className="min-h-0 border-t border-slate-200 bg-white px-5 py-4 lg:col-span-2 xl:col-span-1 xl:border-l xl:border-t-0"
     >
       <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-4">
         <div className="flex items-center justify-between">
@@ -79,7 +91,7 @@ export function AssistantPanel({
                 {message.role === 'assistant' ? 'Assistant' : 'You'}
               </span>
               <p className="mt-1 text-sm leading-6 text-slate-700">
-                {message.content}
+                {message.content.length > 0 ? message.content : 'Thinking...'}
               </p>
             </div>
           ))}
@@ -95,6 +107,7 @@ export function AssistantPanel({
             disabled={isSending}
             onChange={(event) => setDraftMessage(event.target.value)}
             placeholder="Ask about this document..."
+            ref={inputRef}
             type="text"
             value={draftMessage}
           />

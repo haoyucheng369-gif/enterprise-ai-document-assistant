@@ -25,3 +25,14 @@ Content-Type: application/json
 }
 
 ###
+
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat/stream
+Content-Type: application/json
+
+{
+  "message": "What should I review first?",
+  "documentId": "contract-review",
+  "history": []
+}
+
+###
