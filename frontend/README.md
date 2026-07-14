@@ -13,6 +13,7 @@ React Workspace for Enterprise AI Document Assistant.
 - Component-based workspace structure
 - API status connection to the ASP.NET Core backend
 - Workspace data loaded from the ASP.NET Core backend
+- Mock chat request/response through the ASP.NET Core backend
 
 ## Structure
 
@@ -35,6 +36,7 @@ src/
 │   └── useApiStatus.ts
 ├── api/
 │   ├── workspaceApi.ts
+│   ├── chatApi.ts
 │   └── statusApi.ts
 ├── App.tsx
 ├── index.css

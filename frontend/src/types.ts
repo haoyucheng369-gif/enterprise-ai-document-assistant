@@ -49,3 +49,13 @@ export type WorkspaceResponse = {
 }
 
 export type DataConnectionState = 'loading' | 'loaded' | 'unavailable'
+
+export type ChatRequest = {
+  message: string
+  documentId: string | null
+  history: Message[]
+}
+
+export type ChatResponse = {
+  message: Message
+}

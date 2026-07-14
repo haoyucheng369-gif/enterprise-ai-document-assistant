@@ -14,3 +14,14 @@ GET {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/workspace
 Accept: application/json
 
 ###
+
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat
+Content-Type: application/json
+
+{
+  "message": "What should I review first?",
+  "documentId": "contract-review",
+  "history": []
+}
+
+###

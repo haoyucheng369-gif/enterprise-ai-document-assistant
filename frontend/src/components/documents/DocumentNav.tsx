@@ -13,7 +13,7 @@ export function DocumentNav({
   return (
     <aside
       aria-label="Documents"
-      className="border-b border-slate-200 bg-white p-4 lg:border-b-0 lg:border-r"
+      className="min-h-0 overflow-y-auto border-b border-slate-200 bg-white p-4 lg:border-b-0 lg:border-r"
     >
       <div className="grid grid-cols-[34px_minmax(0,1fr)] items-center gap-3">
         <div

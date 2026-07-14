@@ -1,12 +1,23 @@
+import { useEffect, useState } from 'react'
+import { sendChatMessage } from './api/chatApi'
 import { AssistantPanel } from './components/assistant/AssistantPanel'
 import { DocumentNav } from './components/documents/DocumentNav'
 import { DocumentWorkspace } from './components/documents/DocumentWorkspace'
 import { useApiStatus } from './hooks/useApiStatus'
 import { useWorkspaceData } from './hooks/useWorkspaceData'
+import type { Message } from './types'
 
 function App() {
   const apiStatus = useApiStatus()
   const workspace = useWorkspaceData()
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isSendingMessage, setIsSendingMessage] = useState(false)
+
+  useEffect(() => {
+    if (workspace.data !== null) {
+      setMessages(workspace.data.messages)
+    }
+  }, [workspace.data])
 
   if (workspace.state === 'loading') {
     return (
@@ -28,11 +39,45 @@ function App() {
     )
   }
 
-  const { citations, documents, messages, toolResult } = workspace.data
+  const { citations, documents, toolResult } = workspace.data
   const selectedDocument = documents[0]
 
+  async function handleSendMessage(message: string) {
+    const userMessage: Message = {
+      id: `user-${crypto.randomUUID()}`,
+      role: 'user',
+      content: message,
+    }
+
+    const nextMessages = [...messages, userMessage]
+    setMessages(nextMessages)
+    setIsSendingMessage(true)
+
+    try {
+      const response = await sendChatMessage({
+        message,
+        documentId: selectedDocument.id,
+        history: nextMessages,
+      })
+
+      setMessages((currentMessages) => [...currentMessages, response.message])
+    } catch {
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        {
+          id: `assistant-error-${crypto.randomUUID()}`,
+          role: 'assistant',
+          content:
+            'The chat API is unavailable. Check that the backend is running and try again.',
+        },
+      ])
+    } finally {
+      setIsSendingMessage(false)
+    }
+  }
+
   return (
-    <main className="grid min-h-screen grid-cols-1 bg-slate-100 text-slate-900 lg:grid-cols-[248px_minmax(0,1fr)] xl:grid-cols-[264px_minmax(0,1fr)_340px]">
+    <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[248px_minmax(0,1fr)] xl:grid-cols-[264px_minmax(0,1fr)_420px]">
       <DocumentNav documents={documents} selectedDocumentId={selectedDocument.id} />
       <DocumentWorkspace
         citations={citations}
@@ -42,7 +87,9 @@ function App() {
       <AssistantPanel
         apiState={apiStatus.state}
         apiStatus={apiStatus.status}
+        isSending={isSendingMessage}
         messages={messages}
+        onSendMessage={handleSendMessage}
       />
     </main>
   )

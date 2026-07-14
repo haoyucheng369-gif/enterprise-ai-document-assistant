@@ -6,8 +6,8 @@ type DocumentPreviewProps = {
 
 export function DocumentPreview({ document }: DocumentPreviewProps) {
   return (
-    <article className="min-w-0 overflow-auto">
-      <div className="mx-auto min-h-auto max-w-[760px] rounded-md border border-slate-200 bg-white p-7 xl:min-h-[calc(100vh-126px)] xl:p-10">
+    <article className="min-h-0 min-w-0 overflow-y-auto">
+      <div className="mx-auto max-w-[760px] rounded-md border border-slate-200 bg-white p-7 xl:min-h-full xl:p-10">
         {document.sections.map((section) => (
           <section className="mt-7 first:mt-0" key={section.label}>
             <p className="text-xs font-semibold uppercase tracking-[0.06em] text-blue-600">
