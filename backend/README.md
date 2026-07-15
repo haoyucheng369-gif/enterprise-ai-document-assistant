@@ -12,6 +12,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Mock chat endpoint
 - Streaming mock chat endpoint
 - Prompt orchestration service for template variables and response rules
+- Structured assistant response contract and validation
 - CORS for the React development server
 - ProblemDetails and simple global error handling
 
@@ -24,6 +25,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 | GET | `/api/workspace` | Initial workspace data for the React shell |
 | POST | `/api/chat` | Mock assistant response for request/response chat flow |
 | POST | `/api/chat/stream` | Mock assistant response streamed as text chunks |
+| POST | `/api/chat/structured` | Mock assistant response as validated structured JSON |
 | GET | `/swagger` | Swagger UI in development |
 
 ## Commands

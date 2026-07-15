@@ -6,5 +6,7 @@ public interface IDocumentAssistantPromptOrchestrator
 {
     OrchestratedPrompt BuildPrompt(ChatRequest request);
 
-    IEnumerable<string> BuildMockResponseChunks(OrchestratedPrompt prompt);
+    StructuredAssistantMessage BuildMockStructuredResponse(OrchestratedPrompt prompt);
+
+    IEnumerable<string> BuildMockResponseChunks(StructuredAssistantMessage message);
 }

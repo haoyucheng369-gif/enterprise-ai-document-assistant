@@ -7,3 +7,12 @@ public sealed record ChatRequest(
 
 public sealed record ChatResponse(
     MessageResponse Message);
+
+public sealed record StructuredChatResponse(
+    StructuredAssistantMessage Message);
+
+public sealed record StructuredAssistantMessage(
+    string Answer,
+    string Confidence,
+    IReadOnlyList<string> Citations,
+    IReadOnlyList<string> SuggestedActions);

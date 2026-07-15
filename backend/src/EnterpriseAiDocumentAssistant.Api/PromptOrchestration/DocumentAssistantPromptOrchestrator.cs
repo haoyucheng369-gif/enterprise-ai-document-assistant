@@ -20,16 +20,31 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
             variables);
     }
 
-    public IEnumerable<string> BuildMockResponseChunks(OrchestratedPrompt prompt)
+    public StructuredAssistantMessage BuildMockStructuredResponse(OrchestratedPrompt prompt)
     {
         var documentContext = GetVariable(prompt, "document_context");
         var userQuestion = GetVariable(prompt, "user_question");
 
-        yield return $"Using prompt template '{prompt.TemplateName}'. ";
-        yield return $"I am reviewing {documentContext}. ";
-        yield return $"Your question was: \"{userQuestion}\". ";
-        yield return "The request now flows through prompt orchestration before model integration. ";
-        yield return "The same prompt envelope can be passed to the AI Gateway in a later step.";
+        return new StructuredAssistantMessage(
+            $"Using prompt template '{prompt.TemplateName}', I am reviewing {documentContext}. Your question was: \"{userQuestion}\". The request now flows through prompt orchestration and structured output validation before model integration.",
+            "medium",
+            [],
+            [
+                "Review the structured response contract.",
+                "Use citations when RAG retrieval is added.",
+                "Route this response through the AI Gateway in a later step."
+            ]);
+    }
+
+    public IEnumerable<string> BuildMockResponseChunks(StructuredAssistantMessage message)
+    {
+        yield return message.Answer;
+        yield return $" Confidence: {message.Confidence}.";
+
+        if (message.SuggestedActions.Count > 0)
+        {
+            yield return $" Suggested action: {message.SuggestedActions[0]}";
+        }
     }
 
     private static string RenderTemplate(

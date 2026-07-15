@@ -86,6 +86,7 @@ sequenceDiagram
 - [x] Chat endpoint
 - [x] Streaming chat response
 - [x] Prompt orchestration
+- [x] Structured output validation
 - [ ] AI Gateway
 - [ ] Document RAG
 - [ ] Tool Gateway and Skills

@@ -1,6 +1,7 @@
 using EnterpriseAiDocumentAssistant.Api.Options;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Services;
+using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +14,7 @@ builder.Services.Configure<AiGatewayOptions>(
 
 builder.Services.AddSingleton<ISystemClock, SystemClock>();
 builder.Services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
+builder.Services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
