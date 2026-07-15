@@ -19,6 +19,7 @@ React chat
   -> MCP Server
   -> Prompt and Tool Harness
   -> Reusable skills
+  -> Conversation Memory
   -> Simple planner
   -> Audit logging
   -> Document ingestion
@@ -127,21 +128,24 @@ Expected outcome:
 
 ---
 
-## Phase 5 - Reusable Skills and Simple Planner
+## Phase 5 - Reusable Skills, Memory, and Simple Planner
 
-Objective: introduce reusable AI capabilities and a deterministic planner.
+Objective: introduce reusable AI capabilities, short-term conversation memory, and a deterministic planner.
 
 Scope:
 
 - `SummarySkill`
 - `RiskAnalysisSkill`
 - Optional `EmailDraftSkill`
+- Conversation memory from recent chat history
+- Memory injection into prompt variables
 - Simple Agent Planner
 - Planner routes to known paths: answer, summarize, risk analysis, tool lookup
 
 Expected outcome:
 
 - Common AI behaviors are modular.
+- The assistant can use recent context when the user asks follow-up questions.
 - The assistant can choose a small number of predictable paths without open-ended autonomy.
 
 ---

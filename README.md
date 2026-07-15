@@ -107,6 +107,7 @@ Simple guardrails
   -> Prompt and Tool Harness
   -> SummarySkill
   -> RiskAnalysisSkill
+  -> Conversation Memory
   -> Simple Agent Planner
   -> Audit logging
   -> AI Gateway

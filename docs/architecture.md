@@ -105,6 +105,7 @@ The first implementation is grouped into six modules:
    - `CreateEmailDraftTool` or `GetHealthStatusTool`
    - `SummarySkill`
    - `RiskAnalysisSkill`
+   - Conversation memory
 
 5. Document RAG
    - Upload
@@ -224,6 +225,17 @@ Responsibilities:
 - Execution logging
 - Result formatting for AI responses
 
+### Conversation Memory
+
+Conversation memory keeps recent context available for follow-up questions without requiring database persistence in the first version.
+
+Responsibilities:
+
+- Select recent user and assistant turns
+- Format recent context for prompt variables
+- Keep memory short and request-scoped at first
+- Support later planner and workflow decisions
+
 ### Harnesses
 
 Harnesses provide repeatable checks for AI-facing capabilities without requiring a large test platform.
@@ -285,6 +297,8 @@ Prompt Orchestration
 Structured output and guardrails
    ↓
 Tool Gateway and/or Skill execution
+   ↓
+Conversation Memory
    ↓
 Simple Agent Planner
    ↓
