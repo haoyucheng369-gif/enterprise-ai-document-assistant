@@ -71,10 +71,10 @@ sequenceDiagram
 |---|---|---|
 | React Workspace | User-facing work area | Document list, document detail, right-side Assistant, citations, tool results |
 | ASP.NET Core API | Backend boundary | `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows` |
-| AI Gateway | Model access layer | Chat calls, embedding calls, model/token/latency logging |
-| Document RAG | Source-grounded answers | Upload, parse, chunk, embed, vector search, citations |
+| Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, guardrails, AI Gateway |
 | Tool Gateway and Skills | Controlled actions | `SearchDocumentsTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill` |
-| MCP / Workflow / A2A | Extension path | MCP `search_documents`, simple planner, one workflow, optional two-agent flow |
+| Document RAG | Source-grounded answers | Upload, parse, chunk, embed, vector search, citations |
+| MCP / Harness / Workflow / A2A | Extension path | MCP for one existing tool, prompt/tool harnesses, one workflow, optional two-agent flow |
 
 ---
 
@@ -87,10 +87,32 @@ sequenceDiagram
 - [x] Streaming chat response
 - [x] Prompt orchestration
 - [x] Structured output validation
+- [ ] Simple guardrails
+- [ ] Tool Gateway and Skills
+- [ ] MCP Server
+- [ ] Prompt and Tool Harness
 - [ ] AI Gateway
 - [ ] Document RAG
-- [ ] Tool Gateway and Skills
-- [ ] MCP and workflow extension
+- [ ] Workflow and A2A extension
+
+---
+
+## Next Implementation Order
+
+```text
+Simple guardrails
+  -> Tool Gateway
+  -> First tool
+  -> MCP Server
+  -> Prompt and Tool Harness
+  -> SummarySkill
+  -> RiskAnalysisSkill
+  -> Simple Agent Planner
+  -> Audit logging
+  -> AI Gateway
+  -> Document RAG
+  -> workflow and A2A extension
+```
 
 ---
 

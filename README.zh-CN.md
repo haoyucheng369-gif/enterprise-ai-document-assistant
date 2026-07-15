@@ -71,10 +71,10 @@ sequenceDiagram
 |---|---|---|
 | React Workspace | 用户工作区 | 文档列表、文档详情、右侧 Assistant、来源引用、工具结果 |
 | ASP.NET Core API | 后端边界 | `/api/chat`、`/api/documents`、`/api/tools`、`/api/workflows` |
-| AI Gateway | 模型访问层 | Chat 调用、Embedding 调用、model/token/latency 记录 |
-| Document RAG | 基于来源的回答 | Upload、Parse、Chunk、Embed、Vector Search、Citations |
+| Prompt and AI Layer | Prompt / AI 控制层 | Prompt Orchestration、Structured Output、Validation、Guardrails、AI Gateway |
 | Tool Gateway and Skills | 受控工具执行 | `SearchDocumentsTool`、`GetDocumentMetadataTool`、`SummarySkill`、`RiskAnalysisSkill` |
-| MCP / Workflow / A2A | 扩展路径 | MCP `search_documents`、简单 Planner、一个 Workflow、可选双 Agent |
+| Document RAG | 基于来源的回答 | Upload、Parse、Chunk、Embed、Vector Search、Citations |
+| MCP / Harness / Workflow / A2A | 扩展路径 | MCP 暴露一个已有 Tool、Prompt/Tool Harness、一个 Workflow、可选双 Agent |
 
 ---
 
@@ -87,10 +87,32 @@ sequenceDiagram
 - [x] Streaming chat response
 - [x] Prompt orchestration
 - [x] Structured output validation
+- [ ] Simple guardrails
+- [ ] Tool Gateway and Skills
+- [ ] MCP Server
+- [ ] Prompt and Tool Harness
 - [ ] AI Gateway
 - [ ] Document RAG
-- [ ] Tool Gateway and Skills
-- [ ] MCP and workflow extension
+- [ ] Workflow and A2A extension
+
+---
+
+## Next Implementation Order
+
+```text
+Simple guardrails
+  -> Tool Gateway
+  -> First tool
+  -> MCP Server
+  -> Prompt and Tool Harness
+  -> SummarySkill
+  -> RiskAnalysisSkill
+  -> Simple Agent Planner
+  -> Audit logging
+  -> AI Gateway
+  -> Document RAG
+  -> workflow and A2A extension
+```
 
 ---
 

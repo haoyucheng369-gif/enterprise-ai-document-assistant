@@ -58,16 +58,20 @@ The first version should prove the whole path with minimal depth:
 
 - One assistant UI
 - One conversation API
-- One document ingestion path
-- One vector search path
 - One or two prompt templates
 - Structured output, response validation, and lightweight guardrails
 - Basic conversation memory
 - A small Tool Gateway
-- A minimal Microsoft Graph integration
-- A minimal MCP Server and client path
-- One simple Agent Planner
+- One or two simple tools
+- A minimal MCP Server for one existing tool
+- Prompt and tool harnesses
+- One or two reusable skills
+- One deterministic planner
+- Basic audit log shape
+- One document ingestion path
+- One vector search path
 - One simple workflow
+- A minimal Microsoft Graph integration
 
 Advanced security, observability, multi-tenant authorization, queue monitoring, and broad admin features are later hardening items.
 
@@ -88,13 +92,21 @@ The first implementation is grouped into six modules:
    - `/api/tools`
    - `/api/workflows`
 
-3. AI Gateway
-   - Unified chat model calls
-   - Unified embedding model calls
-   - Model, token, and latency logging
-   - Simple provider configuration
+3. Prompt and AI Layer
+   - Prompt orchestration
+   - Structured output
+   - Validation
+   - Simple guardrails
+   - AI Gateway
 
-4. Document RAG
+4. Tool Gateway and Skills
+   - `SearchDocumentsTool`
+   - `GetDocumentMetadataTool`
+   - `CreateEmailDraftTool` or `GetHealthStatusTool`
+   - `SummarySkill`
+   - `RiskAnalysisSkill`
+
+5. Document RAG
    - Upload
    - Parse text
    - Chunk
@@ -102,15 +114,9 @@ The first implementation is grouped into six modules:
    - Vector search
    - Answer with citations
 
-5. Tool Gateway and Skills
-   - `SearchDocumentsTool`
-   - `GetDocumentMetadataTool`
-   - `CreateEmailDraftTool` or `GetHealthStatusTool`
-   - `SummarySkill`
-   - `RiskAnalysisSkill`
-
-6. MCP, Workflow, and A2A Extension
-   - MCP Server exposing `search_documents`
+6. MCP, Harness, Workflow, and A2A Extension
+   - MCP Server exposing one existing tool first
+   - Prompt and tool harnesses
    - Workflow: summarize document, identify risks, generate email draft
    - Optional A2A path: `DocumentAgent` and `EmailAgent`
 
@@ -218,6 +224,23 @@ Responsibilities:
 - Execution logging
 - Result formatting for AI responses
 
+### Harnesses
+
+Harnesses provide repeatable checks for AI-facing capabilities without requiring a large test platform.
+
+Examples:
+
+- Prompt harness: run fixed inputs through prompt orchestration and validate structured output
+- Tool harness: run tools with valid and invalid arguments and validate result shapes
+- Skill harness: run summary or risk analysis skills and validate required fields
+
+Responsibilities:
+
+- Fixed test cases
+- Expected output shape checks
+- Guardrail checks
+- Simple execution reports
+
 ### Simple Agent Planner
 
 The first planner should remain deterministic and small. It should choose from a few known paths instead of attempting open-ended autonomous planning.
@@ -259,15 +282,15 @@ Conversation API
    ↓
 Prompt Orchestration
    ↓
-AI Gateway
+Structured output and guardrails
+   ↓
+Tool Gateway and/or Skill execution
    ↓
 Simple Agent Planner
    ↓
-RAG retrieval and/or Tool Gateway execution
+AI Gateway and/or RAG retrieval
    ↓
-Model response generation
-   ↓
-Citation and tool result formatting
+Response formatting with citations and tool results
    ↓
 Streaming response to React UI
 ```
@@ -325,6 +348,7 @@ This allows the assistant to use enterprise capabilities without coupling prompt
 - Prompt templates should be versionable and testable.
 - Structured outputs should be validated before they are used by the UI or workflows.
 - Guardrails should be simple rules at first, such as requiring citations for document answers.
+- MCP can be introduced once at least one backend tool exists.
 - The Agent Planner should choose from known paths instead of performing open-ended autonomous planning.
 - Persistence should be replaceable where possible.
-- MCP and A2A should remain optional extension points until the core assistant and RAG flow are stable.
+- A2A should remain an optional extension point until the core assistant flow is stable.
