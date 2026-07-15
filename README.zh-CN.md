@@ -85,6 +85,7 @@ sequenceDiagram
 - [x] Backend-driven workspace data
 - [x] Chat endpoint
 - [x] Streaming chat response
+- [x] Prompt orchestration
 - [ ] AI Gateway
 - [ ] Document RAG
 - [ ] Tool Gateway and Skills

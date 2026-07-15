@@ -1,4 +1,5 @@
 using EnterpriseAiDocumentAssistant.Api.Contracts;
+using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseAiDocumentAssistant.Api.Controllers;
@@ -7,6 +8,13 @@ namespace EnterpriseAiDocumentAssistant.Api.Controllers;
 [Route("api/chat")]
 public sealed class ChatController : ControllerBase
 {
+    private readonly IDocumentAssistantPromptOrchestrator promptOrchestrator;
+
+    public ChatController(IDocumentAssistantPromptOrchestrator promptOrchestrator)
+    {
+        this.promptOrchestrator = promptOrchestrator;
+    }
+
     [HttpPost]
     [ProducesResponseType<ChatResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -18,15 +26,13 @@ public sealed class ChatController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var trimmedMessage = request.Message.Trim();
-        var documentContext = string.IsNullOrWhiteSpace(request.DocumentId)
-            ? "the selected document"
-            : $"document '{request.DocumentId}'";
+        var prompt = promptOrchestrator.BuildPrompt(request);
+        var responseContent = string.Concat(promptOrchestrator.BuildMockResponseChunks(prompt));
 
         var response = new MessageResponse(
             $"assistant-{Guid.NewGuid():N}",
             "assistant",
-            $"I received your question about {documentContext}: \"{trimmedMessage}\". This is a mock API response; model integration will be added in a later step.");
+            responseContent);
 
         return Ok(new ChatResponse(response));
     }
@@ -47,7 +53,9 @@ public sealed class ChatController : ControllerBase
         Response.Headers.CacheControl = "no-cache";
         Response.Headers.Append("X-Accel-Buffering", "no");
 
-        foreach (var chunk in BuildMockResponseChunks(request))
+        var prompt = promptOrchestrator.BuildPrompt(request);
+
+        foreach (var chunk in promptOrchestrator.BuildMockResponseChunks(prompt))
         {
             await Response.WriteAsync(chunk, cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
@@ -55,18 +63,5 @@ public sealed class ChatController : ControllerBase
         }
 
         return new EmptyResult();
-    }
-
-    private static IEnumerable<string> BuildMockResponseChunks(ChatRequest request)
-    {
-        var trimmedMessage = request.Message.Trim();
-        var documentContext = string.IsNullOrWhiteSpace(request.DocumentId)
-            ? "the selected document"
-            : $"document '{request.DocumentId}'";
-
-        yield return $"I am reviewing {documentContext}. ";
-        yield return $"Your question was: \"{trimmedMessage}\". ";
-        yield return "This response is streamed from the ASP.NET Core API in small chunks. ";
-        yield return "The next backend step can route the same flow through prompt orchestration and the AI Gateway.";
     }
 }
