@@ -87,7 +87,7 @@ sequenceDiagram
 - [x] Streaming chat response
 - [x] Prompt orchestration
 - [x] Structured output validation
-- [ ] Simple guardrails
+- [x] Simple guardrails
 - [ ] Tool Gateway and Skills
 - [ ] MCP Server
 - [ ] Prompt and Tool Harness

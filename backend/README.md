@@ -13,6 +13,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Streaming mock chat endpoint
 - Prompt orchestration service for template variables and response rules
 - Structured assistant response contract and validation
+- Simple chat guardrails for prompt-injection and unauthorized-data requests
 - CORS for the React development server
 - ProblemDetails and simple global error handling
 

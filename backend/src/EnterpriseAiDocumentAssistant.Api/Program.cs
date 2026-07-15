@@ -1,4 +1,5 @@
 using EnterpriseAiDocumentAssistant.Api.Options;
+using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Services;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
@@ -15,6 +16,7 @@ builder.Services.Configure<AiGatewayOptions>(
 builder.Services.AddSingleton<ISystemClock, SystemClock>();
 builder.Services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
 builder.Services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
+builder.Services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();

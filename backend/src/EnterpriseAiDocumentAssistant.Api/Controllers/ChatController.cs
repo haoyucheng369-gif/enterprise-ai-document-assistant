@@ -1,4 +1,5 @@
 using EnterpriseAiDocumentAssistant.Api.Contracts;
+using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 using Microsoft.AspNetCore.Mvc;
@@ -11,13 +12,16 @@ public sealed class ChatController : ControllerBase
 {
     private readonly IDocumentAssistantPromptOrchestrator promptOrchestrator;
     private readonly IStructuredAssistantResponseValidator structuredResponseValidator;
+    private readonly IChatGuardrailEvaluator chatGuardrailEvaluator;
 
     public ChatController(
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
-        IStructuredAssistantResponseValidator structuredResponseValidator)
+        IStructuredAssistantResponseValidator structuredResponseValidator,
+        IChatGuardrailEvaluator chatGuardrailEvaluator)
     {
         this.promptOrchestrator = promptOrchestrator;
         this.structuredResponseValidator = structuredResponseValidator;
+        this.chatGuardrailEvaluator = chatGuardrailEvaluator;
     }
 
     [HttpPost]
@@ -111,8 +115,21 @@ public sealed class ChatController : ControllerBase
     private ActionResult<StructuredAssistantMessage> BuildValidatedStructuredMessage(
         ChatRequest request)
     {
+        var guardrailEvaluation = chatGuardrailEvaluator.Evaluate(request);
+        if (guardrailEvaluation.IsBlocked)
+        {
+            return ValidateStructuredMessage(guardrailEvaluation.Response
+                ?? throw new InvalidOperationException("Guardrail response was not created."));
+        }
+
         var prompt = promptOrchestrator.BuildPrompt(request);
         var structuredMessage = promptOrchestrator.BuildMockStructuredResponse(prompt);
+        return ValidateStructuredMessage(structuredMessage);
+    }
+
+    private ActionResult<StructuredAssistantMessage> ValidateStructuredMessage(
+        StructuredAssistantMessage structuredMessage)
+    {
         var validationResult = structuredResponseValidator.Validate(structuredMessage);
 
         if (validationResult.IsValid)
