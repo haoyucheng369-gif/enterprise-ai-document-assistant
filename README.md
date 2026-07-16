@@ -90,8 +90,8 @@ sequenceDiagram
 - [x] Simple guardrails
 - [x] Tool Gateway
 - [x] First tools
+- [x] MCP Server
 - [ ] Skills
-- [ ] MCP Server
 - [ ] Prompt and Tool Harness
 - [ ] AI Gateway
 - [ ] Document RAG

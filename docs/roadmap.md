@@ -114,7 +114,7 @@ Objective: expose selected tools through MCP and add lightweight verification fo
 Scope:
 
 - Minimal MCP Server
-- MCP `get_health_status` or `get_document_metadata`
+- MCP `get_health_status` and `get_document_metadata`
 - MCP request/response contract
 - Prompt harness with a few fixed test cases
 - Tool harness for argument validation and result shape checks
@@ -122,7 +122,7 @@ Scope:
 
 Expected outcome:
 
-- An MCP-compatible client can call one selected tool.
+- An MCP-style client can discover and call selected tools.
 - Prompt and tool behavior can be checked with repeatable inputs.
 - Tool and MCP executions have a traceable record shape.
 

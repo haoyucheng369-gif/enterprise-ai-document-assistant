@@ -63,7 +63,7 @@ The first version should prove the whole path with minimal depth:
 - Basic conversation memory
 - A small Tool Gateway
 - One or two simple tools
-- A minimal MCP Server for one existing tool
+- A minimal MCP Server for existing tools
 - Prompt and tool harnesses
 - One or two reusable skills
 - One deterministic planner
@@ -116,7 +116,7 @@ The first implementation is grouped into six modules:
    - Answer with citations
 
 6. MCP, Harness, Workflow, and A2A Extension
-   - MCP Server exposing one existing tool first
+   - MCP Server exposing existing tools first
    - Prompt and tool harnesses
    - Workflow: summarize document, identify risks, generate email draft
    - Optional A2A path: `DocumentAgent` and `EmailAgent`
@@ -224,6 +224,22 @@ Responsibilities:
 - Controlled execution
 - Execution logging
 - Result formatting for AI responses
+
+### MCP Interface
+
+The MCP interface exposes selected Tool Gateway capabilities through MCP-style discovery and call endpoints.
+
+Current endpoints:
+
+- `GET /api/mcp/tools/list`
+- `POST /api/mcp/tools/call`
+
+Responsibilities:
+
+- Convert internal tool definitions into MCP-style tool descriptors
+- Convert MCP tool call requests into `ToolExecutionRequest`
+- Reuse the existing Tool Gateway executor instead of duplicating business logic
+- Keep external tool exposure separate from internal tool implementation
 
 ### Conversation Memory
 

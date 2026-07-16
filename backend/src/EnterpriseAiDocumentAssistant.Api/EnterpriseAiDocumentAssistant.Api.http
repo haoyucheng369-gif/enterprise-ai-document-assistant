@@ -42,6 +42,23 @@ Content-Type: application/json
 
 ###
 
+GET {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/mcp/tools/list
+Accept: application/json
+
+###
+
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/mcp/tools/call
+Content-Type: application/json
+
+{
+  "name": "get_document_metadata",
+  "arguments": {
+    "documentId": "contract-review"
+  }
+}
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat
 Content-Type: application/json
 
