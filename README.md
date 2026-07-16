@@ -91,8 +91,8 @@ sequenceDiagram
 - [x] Tool Gateway
 - [x] First tools
 - [x] MCP Server
+- [x] Prompt and Tool Harness
 - [ ] Skills
-- [ ] Prompt and Tool Harness
 - [ ] AI Gateway
 - [ ] Document RAG
 - [ ] Workflow and A2A extension

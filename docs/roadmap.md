@@ -118,6 +118,7 @@ Scope:
 - MCP request/response contract
 - Prompt harness with a few fixed test cases
 - Tool harness for argument validation and result shape checks
+- `GET /api/harness` report for prompt, guardrail, structured output, and tool checks
 - Basic audit log shape for tool and MCP calls
 
 Expected outcome:

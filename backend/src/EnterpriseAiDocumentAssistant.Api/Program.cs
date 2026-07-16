@@ -1,5 +1,6 @@
 using EnterpriseAiDocumentAssistant.Api.Options;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
+using EnterpriseAiDocumentAssistant.Api.Harness;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Services;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
@@ -26,6 +27,7 @@ builder.Services.AddSingleton<ITool, GetHealthStatusTool>();
 builder.Services.AddSingleton<ITool, GetDocumentMetadataTool>();
 builder.Services.AddSingleton<IToolRegistry, InMemoryToolRegistry>();
 builder.Services.AddSingleton<IToolExecutor, ToolExecutor>();
+builder.Services.AddSingleton<IHarnessRunner, HarnessRunner>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();

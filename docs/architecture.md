@@ -269,6 +269,10 @@ Responsibilities:
 - Guardrail checks
 - Simple execution reports
 
+Current endpoint:
+
+- `GET /api/harness`
+
 ### Simple Agent Planner
 
 The first planner should remain deterministic and small. It should choose from a few known paths instead of attempting open-ended autonomous planning.
