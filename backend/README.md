@@ -14,6 +14,8 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Prompt orchestration service for template variables and response rules
 - Structured assistant response contract and validation
 - Simple chat guardrails for prompt-injection and unauthorized-data requests
+- Tool Gateway skeleton with tool listing and execution endpoints
+- `get_health_status` tool backed by the API status provider
 - CORS for the React development server
 - ProblemDetails and simple global error handling
 
@@ -24,6 +26,8 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 | GET | `/health` | Basic service health check |
 | GET | `/api/status` | API status, version, environment, and AI provider placeholder |
 | GET | `/api/workspace` | Initial workspace data for the React shell |
+| GET | `/api/tools` | Registered tool definitions |
+| POST | `/api/tools/execute` | Execute a registered tool through the Tool Gateway |
 | POST | `/api/chat` | Mock assistant response for request/response chat flow |
 | POST | `/api/chat/stream` | Mock assistant response streamed as text chunks |
 | POST | `/api/chat/structured` | Mock assistant response as validated structured JSON |

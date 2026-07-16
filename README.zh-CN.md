@@ -88,7 +88,9 @@ sequenceDiagram
 - [x] Prompt orchestration
 - [x] Structured output validation
 - [x] Simple guardrails
-- [ ] Tool Gateway and Skills
+- [x] Tool Gateway
+- [x] First tool
+- [ ] Skills
 - [ ] MCP Server
 - [ ] Prompt and Tool Harness
 - [ ] AI Gateway

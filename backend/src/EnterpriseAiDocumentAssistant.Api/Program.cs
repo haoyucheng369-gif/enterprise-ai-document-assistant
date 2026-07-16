@@ -3,6 +3,9 @@ using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Services;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
+using EnterpriseAiDocumentAssistant.Api.ToolGateway;
+using EnterpriseAiDocumentAssistant.Api.ToolGateway.Tools;
+using EnterpriseAiDocumentAssistant.Api.Swagger;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,14 +17,21 @@ builder.Services.Configure<AiGatewayOptions>(
     builder.Configuration.GetSection(AiGatewayOptions.SectionName));
 
 builder.Services.AddSingleton<ISystemClock, SystemClock>();
+builder.Services.AddSingleton<IApiStatusProvider, ApiStatusProvider>();
 builder.Services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
 builder.Services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
 builder.Services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
+builder.Services.AddSingleton<ITool, GetHealthStatusTool>();
+builder.Services.AddSingleton<IToolRegistry, InMemoryToolRegistry>();
+builder.Services.AddSingleton<IToolExecutor, ToolExecutor>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.OperationFilter<ToolExecuteExampleOperationFilter>();
+});
 
 builder.Services.AddCors(options =>
 {

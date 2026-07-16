@@ -15,6 +15,21 @@ Accept: application/json
 
 ###
 
+GET {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/tools
+Accept: application/json
+
+###
+
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/tools/execute
+Content-Type: application/json
+
+{
+  "toolName": "get_health_status",
+  "arguments": {}
+}
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat
 Content-Type: application/json
 
