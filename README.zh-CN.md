@@ -89,7 +89,7 @@ sequenceDiagram
 - [x] Structured output validation
 - [x] Simple guardrails
 - [x] Tool Gateway
-- [x] First tool
+- [x] First tools
 - [ ] Skills
 - [ ] MCP Server
 - [ ] Prompt and Tool Harness

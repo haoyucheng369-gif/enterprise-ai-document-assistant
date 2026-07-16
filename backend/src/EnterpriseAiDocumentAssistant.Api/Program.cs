@@ -18,10 +18,12 @@ builder.Services.Configure<AiGatewayOptions>(
 
 builder.Services.AddSingleton<ISystemClock, SystemClock>();
 builder.Services.AddSingleton<IApiStatusProvider, ApiStatusProvider>();
+builder.Services.AddSingleton<IWorkspaceDataProvider, WorkspaceDataProvider>();
 builder.Services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
 builder.Services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
 builder.Services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
 builder.Services.AddSingleton<ITool, GetHealthStatusTool>();
+builder.Services.AddSingleton<ITool, GetDocumentMetadataTool>();
 builder.Services.AddSingleton<IToolRegistry, InMemoryToolRegistry>();
 builder.Services.AddSingleton<IToolExecutor, ToolExecutor>();
 builder.Services.AddProblemDetails();

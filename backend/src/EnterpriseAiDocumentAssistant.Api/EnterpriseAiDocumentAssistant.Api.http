@@ -30,6 +30,18 @@ Content-Type: application/json
 
 ###
 
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/tools/execute
+Content-Type: application/json
+
+{
+  "toolName": "get_document_metadata",
+  "arguments": {
+    "documentId": "contract-review"
+  }
+}
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat
 Content-Type: application/json
 

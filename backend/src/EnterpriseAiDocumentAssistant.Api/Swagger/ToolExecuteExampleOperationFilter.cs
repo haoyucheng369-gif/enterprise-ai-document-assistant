@@ -25,8 +25,11 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
 
         mediaType.Example = new OpenApiObject
         {
-            ["toolName"] = new OpenApiString("get_health_status"),
-            ["arguments"] = new OpenApiObject()
+            ["toolName"] = new OpenApiString("get_document_metadata"),
+            ["arguments"] = new OpenApiObject
+            {
+                ["documentId"] = new OpenApiString("contract-review")
+            }
         };
     }
 }

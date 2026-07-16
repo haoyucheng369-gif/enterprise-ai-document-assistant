@@ -16,6 +16,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Simple chat guardrails for prompt-injection and unauthorized-data requests
 - Tool Gateway skeleton with tool listing and execution endpoints
 - `get_health_status` tool backed by the API status provider
+- `get_document_metadata` tool backed by workspace document data
 - CORS for the React development server
 - ProblemDetails and simple global error handling
 
