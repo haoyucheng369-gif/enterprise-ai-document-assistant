@@ -12,6 +12,8 @@ public static class DocumentAssistantPrompt
         """
         Document context: {{document_context}}
         Conversation turns: {{conversation_turn_count}}
+        Recent conversation:
+        {{conversation_memory}}
         User question: {{user_question}}
         """,
         [
@@ -23,7 +25,8 @@ public static class DocumentAssistantPrompt
     public static IReadOnlyList<PromptVariable> BuildVariables(
         string userQuestion,
         string? documentId,
-        int conversationTurnCount)
+        int conversationTurnCount,
+        string conversationMemory)
     {
         var documentContext = string.IsNullOrWhiteSpace(documentId)
             ? "selected document"
@@ -33,6 +36,7 @@ public static class DocumentAssistantPrompt
         [
             new PromptVariable("document_context", documentContext),
             new PromptVariable("conversation_turn_count", conversationTurnCount.ToString()),
+            new PromptVariable("conversation_memory", conversationMemory),
             new PromptVariable("user_question", userQuestion)
         ];
     }

@@ -48,6 +48,7 @@ public sealed class HarnessRunner : IHarnessRunner
             CheckStructuredOutputAcceptsValidMessage(),
             CheckStructuredOutputRejectsInvalidMessage(),
             CheckGuardrailBlocksInjection(),
+            CheckConversationMemoryIsInjected(),
             CheckToolRegistryListsExpectedTools(),
             CheckSummarySkillSucceeds(),
             CheckRiskAnalysisSkillSucceeds(),
@@ -123,6 +124,25 @@ public sealed class HarnessRunner : IHarnessRunner
             "guardrail blocks prompt injection",
             evaluation.IsBlocked,
             evaluation.IsBlocked ? $"Blocked with reason: {evaluation.Reason}." : "Prompt injection was allowed unexpectedly.");
+    }
+
+    private HarnessCheckResult CheckConversationMemoryIsInjected()
+    {
+        var prompt = promptOrchestrator.BuildPrompt(new ChatRequest(
+            "What about the second point?",
+            "contract-review",
+            [
+                new MessageResponse("h1", "user", "Summarize the contract risks."),
+                new MessageResponse("h2", "assistant", "Focus on renewal, liability, and service credits.")
+            ]));
+
+        var passed = prompt.UserMessage.Contains("liability", StringComparison.OrdinalIgnoreCase)
+            && prompt.Variables.Any(variable => string.Equals(variable.Name, "conversation_memory", StringComparison.Ordinal));
+
+        return Result(
+            "conversation memory is injected into prompt",
+            passed,
+            passed ? "Recent turns were rendered into the prompt." : "Prompt did not include recent conversation memory.");
     }
 
     private HarnessCheckResult CheckToolRegistryListsExpectedTools()

@@ -264,6 +264,12 @@ Responsibilities:
 - Keep memory short and request-scoped at first
 - Support later planner and workflow decisions
 
+Current implementation:
+
+- `ConversationMemoryBuilder` reads recent turns from `ChatRequest.History`
+- `DocumentAssistantPromptOrchestrator` injects `conversation_memory` into the rendered prompt
+- The harness verifies that recent context is included before model integration
+
 ### Harnesses
 
 Harnesses provide repeatable checks for AI-facing capabilities without requiring a large test platform.

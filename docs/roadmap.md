@@ -37,7 +37,7 @@ V1 is implemented as six modules:
 
 - React Workspace: document list, document detail, right-side AI Assistant, citation panel, tool result panel
 - ASP.NET Core API: `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows`
-- Prompt and AI Layer: prompt orchestration, structured output, validation, guardrails, AI Gateway
+- Prompt and AI Layer: prompt orchestration, conversation memory, structured output, validation, guardrails, AI Gateway
 - Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`
 - Document RAG: upload, parse text, chunk, embed, vector search, answer with citations
 - MCP, Harness, Workflow, and Agent Orchestration Extension: MCP `search_documents`, prompt/tool harnesses, document summary to risk analysis to email draft workflow, coordinator-to-agent orchestration, optional `DocumentAgent` to `EmailAgent` handoff

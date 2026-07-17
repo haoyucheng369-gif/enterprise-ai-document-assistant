@@ -95,7 +95,7 @@ sequenceDiagram
 - [x] SummarySkill
 - [x] RiskAnalysisSkill
 - [x] EmailDraftSkill
-- [ ] Conversation Memory
+- [x] Conversation Memory
 - [ ] Simple Agent Planner
 - [ ] Audit Logging
 - [ ] AI Gateway

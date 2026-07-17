@@ -1,3 +1,4 @@
+using EnterpriseAiDocumentAssistant.Api.ConversationMemory;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Harness;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
@@ -17,6 +18,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISystemClock, SystemClock>();
         services.AddSingleton<IApiStatusProvider, ApiStatusProvider>();
         services.AddSingleton<IWorkspaceDataProvider, WorkspaceDataProvider>();
+        services.AddSingleton<IConversationMemoryBuilder, ConversationMemoryBuilder>();
         services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
         services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
         services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
