@@ -48,6 +48,7 @@ public sealed class RiskAnalysisSkill : IRiskAnalysisSkill
     {
         var text = $"{section.Title} {section.Body}";
 
+        // First version uses deterministic signals; AI Gateway can replace this with model reasoning later.
         if (ContainsAny(text, ["renew", "notice"]))
         {
             yield return new RiskItem(

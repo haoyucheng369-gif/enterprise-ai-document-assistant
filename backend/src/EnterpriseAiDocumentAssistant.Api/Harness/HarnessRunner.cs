@@ -41,6 +41,7 @@ public sealed class HarnessRunner : IHarnessRunner
 
     public async Task<HarnessReport> RunAsync(CancellationToken cancellationToken)
     {
+        // Harness checks exercise AI-facing contracts with fixed inputs so regressions are easy to spot.
         var checks = new List<HarnessCheckResult>
         {
             CheckPromptCanBuild(),

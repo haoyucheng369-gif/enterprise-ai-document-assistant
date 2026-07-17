@@ -1,6 +1,6 @@
 # Enterprise AI Document Assistant
 
-A focused React + ASP.NET Core application for connecting the core building blocks of modern AI applications: assistant UI, prompt orchestration, AI Gateway, RAG, vector search, Tool Calling, MCP, simple workflow orchestration, and Microsoft Graph integration.
+A production-oriented React + ASP.NET Core application for connecting the core building blocks of modern AI applications: assistant UI, prompt orchestration, AI Gateway, RAG, vector search, Tool Calling, MCP, simple workflow orchestration, and Microsoft Graph integration.
 
 V1 is intentionally small: one end-to-end document assistant flow, implemented in clear steps.
 
@@ -125,9 +125,14 @@ Simple guardrails
   -> Simple Agent Planner
   -> Audit logging
   -> AI Gateway
-  -> Document RAG
-  -> workflow
-  -> Agent Orchestration and A2A extension
+  -> Document Upload
+  -> Text Parsing and Chunking
+  -> Embeddings
+  -> Vector Search
+  -> RAG Answer with Citations
+  -> Workflow
+  -> Microsoft Graph Integration
+  -> Agent Orchestration and A2A Extension
 ```
 
 ---

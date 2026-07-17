@@ -15,6 +15,7 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
 
     public EmailDraftSkillResponse? Run(EmailDraftSkillRequest request)
     {
+        // Compose existing skills instead of duplicating document summary or risk analysis logic.
         var summary = summarySkill.Run(new SummarySkillRequest(request.DocumentId));
         var riskAnalysis = riskAnalysisSkill.Run(new RiskAnalysisSkillRequest(request.DocumentId));
 

@@ -1,6 +1,6 @@
 # Enterprise AI Document Assistant
 
-一个聚焦型 React + ASP.NET Core AI 文档助手应用，用来串起现代 AI 应用开发的核心模块：Assistant UI、Prompt Orchestration、AI Gateway、RAG、Vector Search、Tool Calling、MCP、简单工作流编排和 Microsoft Graph 集成。
+一个面向生产场景的 React + ASP.NET Core AI 文档助手应用，用来串起现代 AI 应用开发的核心模块：Assistant UI、Prompt Orchestration、AI Gateway、RAG、Vector Search、Tool Calling、MCP、简单工作流编排和 Microsoft Graph 集成。
 
 V1 保持小而完整：先跑通一条端到端文档助手主线，再逐步加深。
 
@@ -125,9 +125,14 @@ Simple guardrails
   -> Simple Agent Planner
   -> Audit logging
   -> AI Gateway
-  -> Document RAG
-  -> workflow
-  -> Agent Orchestration and A2A extension
+  -> Document Upload
+  -> Text Parsing and Chunking
+  -> Embeddings
+  -> Vector Search
+  -> RAG Answer with Citations
+  -> Workflow
+  -> Microsoft Graph Integration
+  -> Agent Orchestration and A2A Extension
 ```
 
 ---

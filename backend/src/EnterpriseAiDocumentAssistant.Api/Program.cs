@@ -6,15 +6,19 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Bind runtime options early so infrastructure and CORS read from one configuration source.
 builder.Services.Configure<FrontendOptions>(
     builder.Configuration.GetSection(FrontendOptions.SectionName));
 builder.Services.Configure<AiGatewayOptions>(
     builder.Configuration.GetSection(AiGatewayOptions.SectionName));
 
+// Keep feature registrations grouped by application boundary instead of growing Program.cs.
 builder.Services
     .AddApplicationServices()
     .AddToolGateway()
     .AddSkills();
+
+// Register ASP.NET Core platform services used by controllers, health checks, errors, and Swagger.
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
@@ -24,6 +28,7 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<ToolExecuteExampleOperationFilter>();
 });
 
+// Frontend origins stay configurable so local and deployed clients can use the same API setup.
 builder.Services.AddCors(options =>
 {
     var frontendOptions = builder.Configuration
@@ -41,6 +46,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Centralize unexpected API failures as ProblemDetails without leaking exception internals.
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
@@ -70,6 +76,7 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+// Swagger remains development-only while the API contracts stay available through controllers.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -80,6 +87,7 @@ app.UseHttpsRedirection();
 app.UseCors(FrontendOptions.CorsPolicyName);
 app.UseAuthorization();
 
+// Health checks and controller routes are the public HTTP surface for this API.
 app.MapHealthChecks("/health");
 app.MapControllers();
 

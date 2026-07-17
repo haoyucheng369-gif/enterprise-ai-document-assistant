@@ -11,6 +11,7 @@ namespace EnterpriseAiDocumentAssistant.Api.Extensions;
 
 public static class ServiceCollectionExtensions
 {
+    // Core application services are shared by controllers, harness checks, and future orchestration.
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddSingleton<ISystemClock, SystemClock>();
@@ -24,6 +25,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    // Tool Gateway registrations keep internal tool execution independent from HTTP or MCP entry points.
     public static IServiceCollection AddToolGateway(this IServiceCollection services)
     {
         services.AddSingleton<ITool, GetHealthStatusTool>();
@@ -34,6 +36,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    // Skills are reusable AI capability modules that can be called by controllers, planners, or workflows.
     public static IServiceCollection AddSkills(this IServiceCollection services)
     {
         services.AddSingleton<ISummarySkill, SummarySkill>();
