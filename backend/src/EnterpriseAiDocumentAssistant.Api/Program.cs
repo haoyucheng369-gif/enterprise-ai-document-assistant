@@ -30,6 +30,7 @@ builder.Services.AddSingleton<IToolRegistry, InMemoryToolRegistry>();
 builder.Services.AddSingleton<IToolExecutor, ToolExecutor>();
 builder.Services.AddSingleton<IHarnessRunner, HarnessRunner>();
 builder.Services.AddSingleton<ISummarySkill, SummarySkill>();
+builder.Services.AddSingleton<IRiskAnalysisSkill, RiskAnalysisSkill>();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();

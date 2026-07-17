@@ -52,6 +52,16 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
             {
                 ["documentId"] = new OpenApiString("contract-review")
             };
+
+            return;
+        }
+
+        if (string.Equals(context.ApiDescription.RelativePath, "api/skills/risk-analysis", StringComparison.OrdinalIgnoreCase))
+        {
+            mediaType.Example = new OpenApiObject
+            {
+                ["documentId"] = new OpenApiString("contract-review")
+            };
         }
     }
 }

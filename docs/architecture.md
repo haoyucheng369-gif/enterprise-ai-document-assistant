@@ -183,6 +183,7 @@ Skills package a focused AI capability behind a stable input and output contract
 Current skill:
 
 - `SummarySkill`: summarizes a selected document through `POST /api/skills/summary`
+- `RiskAnalysisSkill`: extracts risk items through `POST /api/skills/risk-analysis`
 
 ### Document Intelligence
 

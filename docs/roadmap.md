@@ -139,6 +139,7 @@ Scope:
 - `RiskAnalysisSkill`
 - Optional `EmailDraftSkill`
 - `POST /api/skills/summary`
+- `POST /api/skills/risk-analysis`
 - Conversation memory from recent chat history
 - Memory injection into prompt variables
 - Simple Agent Planner

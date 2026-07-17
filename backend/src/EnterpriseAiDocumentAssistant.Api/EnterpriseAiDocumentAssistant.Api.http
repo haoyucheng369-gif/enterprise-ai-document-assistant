@@ -73,6 +73,15 @@ Content-Type: application/json
 
 ###
 
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/skills/risk-analysis
+Content-Type: application/json
+
+{
+  "documentId": "contract-review"
+}
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat
 Content-Type: application/json
 

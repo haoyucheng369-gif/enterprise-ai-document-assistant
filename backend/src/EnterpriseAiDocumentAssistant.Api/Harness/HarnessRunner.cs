@@ -16,6 +16,7 @@ public sealed class HarnessRunner : IHarnessRunner
     private readonly IToolRegistry toolRegistry;
     private readonly IToolExecutor toolExecutor;
     private readonly ISummarySkill summarySkill;
+    private readonly IRiskAnalysisSkill riskAnalysisSkill;
 
     public HarnessRunner(
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
@@ -23,7 +24,8 @@ public sealed class HarnessRunner : IHarnessRunner
         IChatGuardrailEvaluator guardrailEvaluator,
         IToolRegistry toolRegistry,
         IToolExecutor toolExecutor,
-        ISummarySkill summarySkill)
+        ISummarySkill summarySkill,
+        IRiskAnalysisSkill riskAnalysisSkill)
     {
         this.promptOrchestrator = promptOrchestrator;
         this.structuredOutputValidator = structuredOutputValidator;
@@ -31,6 +33,7 @@ public sealed class HarnessRunner : IHarnessRunner
         this.toolRegistry = toolRegistry;
         this.toolExecutor = toolExecutor;
         this.summarySkill = summarySkill;
+        this.riskAnalysisSkill = riskAnalysisSkill;
     }
 
     public async Task<HarnessReport> RunAsync(CancellationToken cancellationToken)
@@ -42,7 +45,8 @@ public sealed class HarnessRunner : IHarnessRunner
             CheckStructuredOutputRejectsInvalidMessage(),
             CheckGuardrailBlocksInjection(),
             CheckToolRegistryListsExpectedTools(),
-            CheckSummarySkillSucceeds()
+            CheckSummarySkillSucceeds(),
+            CheckRiskAnalysisSkillSucceeds()
         };
 
         checks.Add(await CheckDocumentMetadataToolSucceedsAsync(cancellationToken));
@@ -143,6 +147,23 @@ public sealed class HarnessRunner : IHarnessRunner
             "summary skill returns structured summary",
             passed,
             passed ? "SummarySkill returned summary, key points, and sources." : "SummarySkill result was missing expected fields.");
+    }
+
+    private HarnessCheckResult CheckRiskAnalysisSkillSucceeds()
+    {
+        var result = riskAnalysisSkill.Run(new RiskAnalysisSkillRequest("contract-review"));
+        var passed = result is not null
+            && result.Risks.Count > 0
+            && result.Risks.All(risk =>
+                !string.IsNullOrWhiteSpace(risk.Title)
+                && !string.IsNullOrWhiteSpace(risk.Severity)
+                && !string.IsNullOrWhiteSpace(risk.Source)
+                && !string.IsNullOrWhiteSpace(risk.Recommendation));
+
+        return Result(
+            "risk analysis skill returns structured risks",
+            passed,
+            passed ? "RiskAnalysisSkill returned risks with severity, source, and recommendation." : "RiskAnalysisSkill result was missing expected fields.");
     }
 
     private async Task<HarnessCheckResult> CheckDocumentMetadataToolSucceedsAsync(CancellationToken cancellationToken)

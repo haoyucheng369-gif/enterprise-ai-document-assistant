@@ -93,7 +93,7 @@ sequenceDiagram
 - [x] MCP Server
 - [x] Prompt and Tool Harness
 - [x] SummarySkill
-- [ ] RiskAnalysisSkill
+- [x] RiskAnalysisSkill
 - [ ] AI Gateway
 - [ ] Document RAG
 - [ ] Workflow and A2A extension
