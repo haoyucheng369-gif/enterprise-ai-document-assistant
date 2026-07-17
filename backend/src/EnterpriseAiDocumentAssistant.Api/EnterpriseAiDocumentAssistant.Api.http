@@ -64,6 +64,15 @@ Accept: application/json
 
 ###
 
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/skills/summary
+Content-Type: application/json
+
+{
+  "documentId": "contract-review"
+}
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat
 Content-Type: application/json
 

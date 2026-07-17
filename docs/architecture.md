@@ -176,6 +176,14 @@ Responsibilities:
 - Guardrails
 - Reusable AI skills
 
+### Skills
+
+Skills package a focused AI capability behind a stable input and output contract.
+
+Current skill:
+
+- `SummarySkill`: summarizes a selected document through `POST /api/skills/summary`
+
 ### Document Intelligence
 
 Document Intelligence converts uploaded files into usable text and metadata.

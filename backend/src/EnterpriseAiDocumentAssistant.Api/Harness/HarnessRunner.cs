@@ -2,6 +2,7 @@ using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
+using EnterpriseAiDocumentAssistant.Api.Skills;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway;
 
@@ -14,19 +15,22 @@ public sealed class HarnessRunner : IHarnessRunner
     private readonly IChatGuardrailEvaluator guardrailEvaluator;
     private readonly IToolRegistry toolRegistry;
     private readonly IToolExecutor toolExecutor;
+    private readonly ISummarySkill summarySkill;
 
     public HarnessRunner(
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
         IStructuredAssistantResponseValidator structuredOutputValidator,
         IChatGuardrailEvaluator guardrailEvaluator,
         IToolRegistry toolRegistry,
-        IToolExecutor toolExecutor)
+        IToolExecutor toolExecutor,
+        ISummarySkill summarySkill)
     {
         this.promptOrchestrator = promptOrchestrator;
         this.structuredOutputValidator = structuredOutputValidator;
         this.guardrailEvaluator = guardrailEvaluator;
         this.toolRegistry = toolRegistry;
         this.toolExecutor = toolExecutor;
+        this.summarySkill = summarySkill;
     }
 
     public async Task<HarnessReport> RunAsync(CancellationToken cancellationToken)
@@ -37,7 +41,8 @@ public sealed class HarnessRunner : IHarnessRunner
             CheckStructuredOutputAcceptsValidMessage(),
             CheckStructuredOutputRejectsInvalidMessage(),
             CheckGuardrailBlocksInjection(),
-            CheckToolRegistryListsExpectedTools()
+            CheckToolRegistryListsExpectedTools(),
+            CheckSummarySkillSucceeds()
         };
 
         checks.Add(await CheckDocumentMetadataToolSucceedsAsync(cancellationToken));
@@ -124,6 +129,20 @@ public sealed class HarnessRunner : IHarnessRunner
             "tool registry lists expected tools",
             passed,
             passed ? "Expected tools are registered." : "One or more expected tools are missing.");
+    }
+
+    private HarnessCheckResult CheckSummarySkillSucceeds()
+    {
+        var result = summarySkill.Run(new SummarySkillRequest("contract-review"));
+        var passed = result is not null
+            && !string.IsNullOrWhiteSpace(result.Summary)
+            && result.KeyPoints.Count > 0
+            && result.Sources.Count > 0;
+
+        return Result(
+            "summary skill returns structured summary",
+            passed,
+            passed ? "SummarySkill returned summary, key points, and sources." : "SummarySkill result was missing expected fields.");
     }
 
     private async Task<HarnessCheckResult> CheckDocumentMetadataToolSucceedsAsync(CancellationToken cancellationToken)
