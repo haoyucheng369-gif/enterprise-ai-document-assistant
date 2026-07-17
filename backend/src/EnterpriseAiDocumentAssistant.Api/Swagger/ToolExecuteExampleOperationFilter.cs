@@ -62,6 +62,17 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
             {
                 ["documentId"] = new OpenApiString("contract-review")
             };
+
+            return;
+        }
+
+        if (string.Equals(context.ApiDescription.RelativePath, "api/skills/email-draft", StringComparison.OrdinalIgnoreCase))
+        {
+            mediaType.Example = new OpenApiObject
+            {
+                ["documentId"] = new OpenApiString("contract-review"),
+                ["purpose"] = new OpenApiString("Ask the vendor to clarify renewal, liability, and service credit terms.")
+            };
         }
     }
 }

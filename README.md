@@ -72,9 +72,9 @@ sequenceDiagram
 | React Workspace | User-facing work area | Document list, document detail, right-side Assistant, citations, tool results |
 | ASP.NET Core API | Backend boundary | `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows` |
 | Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, guardrails, AI Gateway |
-| Tool Gateway and Skills | Controlled actions | `SearchDocumentsTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill` |
+| Tool Gateway and Skills | Controlled actions | `SearchDocumentsTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill` |
 | Document RAG | Source-grounded answers | Upload, parse, chunk, embed, vector search, citations |
-| MCP / Harness / Workflow / A2A | Extension path | MCP for one existing tool, prompt/tool harnesses, one workflow, optional two-agent flow |
+| MCP / Harness / Workflow / Agent Orchestration | Extension path | MCP for existing tools, prompt/tool harnesses, one workflow, coordinator-to-agent orchestration, optional A2A handoff |
 
 ---
 
@@ -94,9 +94,19 @@ sequenceDiagram
 - [x] Prompt and Tool Harness
 - [x] SummarySkill
 - [x] RiskAnalysisSkill
+- [x] EmailDraftSkill
+- [ ] Conversation Memory
+- [ ] Simple Agent Planner
+- [ ] Audit Logging
 - [ ] AI Gateway
-- [ ] Document RAG
-- [ ] Workflow and A2A extension
+- [ ] Document Upload
+- [ ] Text Parsing and Chunking
+- [ ] Embeddings
+- [ ] Vector Search
+- [ ] RAG Answer with Citations
+- [ ] Workflow
+- [ ] Microsoft Graph Integration
+- [ ] Agent Orchestration and A2A Extension
 
 ---
 
@@ -110,12 +120,14 @@ Simple guardrails
   -> Prompt and Tool Harness
   -> SummarySkill
   -> RiskAnalysisSkill
+  -> EmailDraftSkill
   -> Conversation Memory
   -> Simple Agent Planner
   -> Audit logging
   -> AI Gateway
   -> Document RAG
-  -> workflow and A2A extension
+  -> workflow
+  -> Agent Orchestration and A2A extension
 ```
 
 ---

@@ -17,6 +17,7 @@ public sealed class HarnessRunner : IHarnessRunner
     private readonly IToolExecutor toolExecutor;
     private readonly ISummarySkill summarySkill;
     private readonly IRiskAnalysisSkill riskAnalysisSkill;
+    private readonly IEmailDraftSkill emailDraftSkill;
 
     public HarnessRunner(
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
@@ -25,7 +26,8 @@ public sealed class HarnessRunner : IHarnessRunner
         IToolRegistry toolRegistry,
         IToolExecutor toolExecutor,
         ISummarySkill summarySkill,
-        IRiskAnalysisSkill riskAnalysisSkill)
+        IRiskAnalysisSkill riskAnalysisSkill,
+        IEmailDraftSkill emailDraftSkill)
     {
         this.promptOrchestrator = promptOrchestrator;
         this.structuredOutputValidator = structuredOutputValidator;
@@ -34,6 +36,7 @@ public sealed class HarnessRunner : IHarnessRunner
         this.toolExecutor = toolExecutor;
         this.summarySkill = summarySkill;
         this.riskAnalysisSkill = riskAnalysisSkill;
+        this.emailDraftSkill = emailDraftSkill;
     }
 
     public async Task<HarnessReport> RunAsync(CancellationToken cancellationToken)
@@ -46,7 +49,8 @@ public sealed class HarnessRunner : IHarnessRunner
             CheckGuardrailBlocksInjection(),
             CheckToolRegistryListsExpectedTools(),
             CheckSummarySkillSucceeds(),
-            CheckRiskAnalysisSkillSucceeds()
+            CheckRiskAnalysisSkillSucceeds(),
+            CheckEmailDraftSkillSucceeds()
         };
 
         checks.Add(await CheckDocumentMetadataToolSucceedsAsync(cancellationToken));
@@ -164,6 +168,24 @@ public sealed class HarnessRunner : IHarnessRunner
             "risk analysis skill returns structured risks",
             passed,
             passed ? "RiskAnalysisSkill returned risks with severity, source, and recommendation." : "RiskAnalysisSkill result was missing expected fields.");
+    }
+
+    private HarnessCheckResult CheckEmailDraftSkillSucceeds()
+    {
+        var result = emailDraftSkill.Run(new EmailDraftSkillRequest(
+            "contract-review",
+            "Ask the vendor to clarify renewal, liability, and service credit terms."));
+
+        var passed = result is not null
+            && !string.IsNullOrWhiteSpace(result.Subject)
+            && !string.IsNullOrWhiteSpace(result.Body)
+            && result.BasedOn.Count > 0
+            && result.NextActions.Count > 0;
+
+        return Result(
+            "email draft skill returns structured draft",
+            passed,
+            passed ? "EmailDraftSkill returned subject, body, sources, and next actions." : "EmailDraftSkill result was missing expected fields.");
     }
 
     private async Task<HarnessCheckResult> CheckDocumentMetadataToolSucceedsAsync(CancellationToken cancellationToken)

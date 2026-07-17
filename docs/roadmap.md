@@ -38,9 +38,9 @@ V1 is implemented as six modules:
 - React Workspace: document list, document detail, right-side AI Assistant, citation panel, tool result panel
 - ASP.NET Core API: `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows`
 - Prompt and AI Layer: prompt orchestration, structured output, validation, guardrails, AI Gateway
-- Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`
+- Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`
 - Document RAG: upload, parse text, chunk, embed, vector search, answer with citations
-- MCP, Harness, Workflow, and A2A Extension: MCP `search_documents`, prompt/tool harnesses, document summary to risk analysis to email draft workflow, optional `DocumentAgent` and `EmailAgent`
+- MCP, Harness, Workflow, and Agent Orchestration Extension: MCP `search_documents`, prompt/tool harnesses, document summary to risk analysis to email draft workflow, coordinator-to-agent orchestration, optional `DocumentAgent` to `EmailAgent` handoff
 
 ---
 
@@ -137,9 +137,10 @@ Scope:
 
 - `SummarySkill`
 - `RiskAnalysisSkill`
-- Optional `EmailDraftSkill`
+- `EmailDraftSkill`
 - `POST /api/skills/summary`
 - `POST /api/skills/risk-analysis`
+- `POST /api/skills/email-draft`
 - Conversation memory from recent chat history
 - Memory injection into prompt variables
 - Simple Agent Planner
@@ -212,6 +213,23 @@ Scope:
 Expected outcome:
 
 - The assistant can coordinate document analysis, tool execution, and business output generation in one small workflow.
+
+---
+
+## Phase 9 - Agent Orchestration and A2A Extension
+
+Objective: introduce a light agent coordination path after the workflow is stable.
+
+Scope:
+
+- `CoordinatorAgent` chooses a known path
+- `DocumentAgent` runs summary and risk analysis
+- `EmailAgent` drafts follow-up email content
+- Simple handoff from `DocumentAgent` result to `EmailAgent`
+
+Expected outcome:
+
+- The application shows both coordinator-to-agent orchestration and simple agent-to-agent handoff without open-ended autonomous behavior.
 
 ---
 

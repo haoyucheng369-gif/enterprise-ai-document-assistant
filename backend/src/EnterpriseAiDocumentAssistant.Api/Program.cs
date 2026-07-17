@@ -1,12 +1,5 @@
 using EnterpriseAiDocumentAssistant.Api.Options;
-using EnterpriseAiDocumentAssistant.Api.Guardrails;
-using EnterpriseAiDocumentAssistant.Api.Harness;
-using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
-using EnterpriseAiDocumentAssistant.Api.Services;
-using EnterpriseAiDocumentAssistant.Api.Skills;
-using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
-using EnterpriseAiDocumentAssistant.Api.ToolGateway;
-using EnterpriseAiDocumentAssistant.Api.ToolGateway.Tools;
+using EnterpriseAiDocumentAssistant.Api.Extensions;
 using EnterpriseAiDocumentAssistant.Api.Swagger;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -18,19 +11,10 @@ builder.Services.Configure<FrontendOptions>(
 builder.Services.Configure<AiGatewayOptions>(
     builder.Configuration.GetSection(AiGatewayOptions.SectionName));
 
-builder.Services.AddSingleton<ISystemClock, SystemClock>();
-builder.Services.AddSingleton<IApiStatusProvider, ApiStatusProvider>();
-builder.Services.AddSingleton<IWorkspaceDataProvider, WorkspaceDataProvider>();
-builder.Services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
-builder.Services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
-builder.Services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
-builder.Services.AddSingleton<ITool, GetHealthStatusTool>();
-builder.Services.AddSingleton<ITool, GetDocumentMetadataTool>();
-builder.Services.AddSingleton<IToolRegistry, InMemoryToolRegistry>();
-builder.Services.AddSingleton<IToolExecutor, ToolExecutor>();
-builder.Services.AddSingleton<IHarnessRunner, HarnessRunner>();
-builder.Services.AddSingleton<ISummarySkill, SummarySkill>();
-builder.Services.AddSingleton<IRiskAnalysisSkill, RiskAnalysisSkill>();
+builder.Services
+    .AddApplicationServices()
+    .AddToolGateway()
+    .AddSkills();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();

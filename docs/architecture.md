@@ -65,7 +65,7 @@ The first version should prove the whole path with minimal depth:
 - One or two simple tools
 - A minimal MCP Server for existing tools
 - Prompt and tool harnesses
-- One or two reusable skills
+- Three reusable skills
 - One deterministic planner
 - Basic audit log shape
 - One document ingestion path
@@ -105,6 +105,7 @@ The first implementation is grouped into six modules:
    - `CreateEmailDraftTool` or `GetHealthStatusTool`
    - `SummarySkill`
    - `RiskAnalysisSkill`
+   - `EmailDraftSkill`
    - Conversation memory
 
 5. Document RAG
@@ -115,11 +116,12 @@ The first implementation is grouped into six modules:
    - Vector search
    - Answer with citations
 
-6. MCP, Harness, Workflow, and A2A Extension
+6. MCP, Harness, Workflow, and Agent Orchestration Extension
    - MCP Server exposing existing tools first
    - Prompt and tool harnesses
    - Workflow: summarize document, identify risks, generate email draft
-   - Optional A2A path: `DocumentAgent` and `EmailAgent`
+   - Coordinator-to-agent orchestration
+   - Optional A2A path: `DocumentAgent` handoff to `EmailAgent`
 
 ### React Frontend
 
@@ -184,6 +186,7 @@ Current skill:
 
 - `SummarySkill`: summarizes a selected document through `POST /api/skills/summary`
 - `RiskAnalysisSkill`: extracts risk items through `POST /api/skills/risk-analysis`
+- `EmailDraftSkill`: drafts a follow-up email through `POST /api/skills/email-draft`
 
 ### Document Intelligence
 
@@ -269,7 +272,7 @@ Examples:
 
 - Prompt harness: run fixed inputs through prompt orchestration and validate structured output
 - Tool harness: run tools with valid and invalid arguments and validate result shapes
-- Skill harness: run summary or risk analysis skills and validate required fields
+- Skill harness: run summary, risk analysis, or email draft skills and validate required fields
 
 Responsibilities:
 
@@ -300,6 +303,17 @@ Responsibilities:
 - Plan selection
 - Skill and tool sequencing
 - Basic plan result formatting
+
+### Agent Orchestration And A2A
+
+Agent orchestration remains a later extension after workflow is stable.
+
+Planned shape:
+
+- `CoordinatorAgent`: selects a known path
+- `DocumentAgent`: summarizes documents and identifies risks
+- `EmailAgent`: drafts follow-up email content
+- A2A handoff: pass structured document analysis from `DocumentAgent` to `EmailAgent`
 
 ### Persistence
 
@@ -394,4 +408,4 @@ This allows the assistant to use enterprise capabilities without coupling prompt
 - MCP can be introduced once at least one backend tool exists.
 - The Agent Planner should choose from known paths instead of performing open-ended autonomous planning.
 - Persistence should be replaceable where possible.
-- A2A should remain an optional extension point until the core assistant flow is stable.
+- Agent orchestration and A2A should remain optional extension points until the workflow is stable.

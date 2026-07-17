@@ -72,9 +72,9 @@ sequenceDiagram
 | React Workspace | 用户工作区 | 文档列表、文档详情、右侧 Assistant、来源引用、工具结果 |
 | ASP.NET Core API | 后端边界 | `/api/chat`、`/api/documents`、`/api/tools`、`/api/workflows` |
 | Prompt and AI Layer | Prompt / AI 控制层 | Prompt Orchestration、Structured Output、Validation、Guardrails、AI Gateway |
-| Tool Gateway and Skills | 受控工具执行 | `SearchDocumentsTool`、`GetDocumentMetadataTool`、`SummarySkill`、`RiskAnalysisSkill` |
+| Tool Gateway and Skills | 受控工具执行 | `SearchDocumentsTool`、`GetDocumentMetadataTool`、`SummarySkill`、`RiskAnalysisSkill`、`EmailDraftSkill` |
 | Document RAG | 基于来源的回答 | Upload、Parse、Chunk、Embed、Vector Search、Citations |
-| MCP / Harness / Workflow / A2A | 扩展路径 | MCP 暴露一个已有 Tool、Prompt/Tool Harness、一个 Workflow、可选双 Agent |
+| MCP / Harness / Workflow / Agent Orchestration | 扩展路径 | MCP 暴露已有 Tool、Prompt/Tool Harness、一个 Workflow、协调者调度 Agent、可选 A2A 交接 |
 
 ---
 
@@ -94,9 +94,19 @@ sequenceDiagram
 - [x] Prompt and Tool Harness
 - [x] SummarySkill
 - [x] RiskAnalysisSkill
+- [x] EmailDraftSkill
+- [ ] Conversation Memory
+- [ ] Simple Agent Planner
+- [ ] Audit Logging
 - [ ] AI Gateway
-- [ ] Document RAG
-- [ ] Workflow and A2A extension
+- [ ] Document Upload
+- [ ] Text Parsing and Chunking
+- [ ] Embeddings
+- [ ] Vector Search
+- [ ] RAG Answer with Citations
+- [ ] Workflow
+- [ ] Microsoft Graph Integration
+- [ ] Agent Orchestration and A2A Extension
 
 ---
 
@@ -110,12 +120,14 @@ Simple guardrails
   -> Prompt and Tool Harness
   -> SummarySkill
   -> RiskAnalysisSkill
+  -> EmailDraftSkill
   -> Conversation Memory
   -> Simple Agent Planner
   -> Audit logging
   -> AI Gateway
   -> Document RAG
-  -> workflow and A2A extension
+  -> workflow
+  -> Agent Orchestration and A2A extension
 ```
 
 ---
