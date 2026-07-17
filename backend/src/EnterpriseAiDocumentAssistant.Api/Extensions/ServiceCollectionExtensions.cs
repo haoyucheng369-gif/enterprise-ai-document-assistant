@@ -1,6 +1,7 @@
 using EnterpriseAiDocumentAssistant.Api.ConversationMemory;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Harness;
+using EnterpriseAiDocumentAssistant.Api.Planner;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Services;
 using EnterpriseAiDocumentAssistant.Api.Skills;
@@ -22,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
         services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
         services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
+        services.AddSingleton<IAgentPlanner, SimpleAgentPlanner>();
         services.AddSingleton<IHarnessRunner, HarnessRunner>();
 
         return services;

@@ -310,6 +310,10 @@ Responsibilities:
 - Skill and tool sequencing
 - Basic plan result formatting
 
+Current endpoint:
+
+- `POST /api/planner/plan`
+
 ### Agent Orchestration And A2A
 
 Agent orchestration remains a later extension after workflow is stable.

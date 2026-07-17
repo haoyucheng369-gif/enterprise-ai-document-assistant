@@ -92,6 +92,16 @@ Content-Type: application/json
 
 ###
 
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/planner/plan
+Content-Type: application/json
+
+{
+  "message": "Analyze liability risk in this document.",
+  "documentId": "contract-review"
+}
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat
 Content-Type: application/json
 

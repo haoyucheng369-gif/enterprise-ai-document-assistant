@@ -1,6 +1,7 @@
 using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
+using EnterpriseAiDocumentAssistant.Api.Planner;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Skills;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
@@ -15,6 +16,7 @@ public sealed class HarnessRunner : IHarnessRunner
     private readonly IChatGuardrailEvaluator guardrailEvaluator;
     private readonly IToolRegistry toolRegistry;
     private readonly IToolExecutor toolExecutor;
+    private readonly IAgentPlanner agentPlanner;
     private readonly ISummarySkill summarySkill;
     private readonly IRiskAnalysisSkill riskAnalysisSkill;
     private readonly IEmailDraftSkill emailDraftSkill;
@@ -25,6 +27,7 @@ public sealed class HarnessRunner : IHarnessRunner
         IChatGuardrailEvaluator guardrailEvaluator,
         IToolRegistry toolRegistry,
         IToolExecutor toolExecutor,
+        IAgentPlanner agentPlanner,
         ISummarySkill summarySkill,
         IRiskAnalysisSkill riskAnalysisSkill,
         IEmailDraftSkill emailDraftSkill)
@@ -34,6 +37,7 @@ public sealed class HarnessRunner : IHarnessRunner
         this.guardrailEvaluator = guardrailEvaluator;
         this.toolRegistry = toolRegistry;
         this.toolExecutor = toolExecutor;
+        this.agentPlanner = agentPlanner;
         this.summarySkill = summarySkill;
         this.riskAnalysisSkill = riskAnalysisSkill;
         this.emailDraftSkill = emailDraftSkill;
@@ -55,6 +59,7 @@ public sealed class HarnessRunner : IHarnessRunner
             CheckEmailDraftSkillSucceeds()
         };
 
+        checks.Add(CheckAgentPlannerSelectsRiskAnalysis());
         checks.Add(await CheckDocumentMetadataToolSucceedsAsync(cancellationToken));
         checks.Add(await CheckUnknownToolFailsAsync(cancellationToken));
 
@@ -207,6 +212,22 @@ public sealed class HarnessRunner : IHarnessRunner
             "email draft skill returns structured draft",
             passed,
             passed ? "EmailDraftSkill returned subject, body, sources, and next actions." : "EmailDraftSkill result was missing expected fields.");
+    }
+
+    private HarnessCheckResult CheckAgentPlannerSelectsRiskAnalysis()
+    {
+        var plan = agentPlanner.Plan(new AgentPlanRequest(
+            "Analyze liability risk in this document.",
+            "contract-review"));
+
+        var passed = plan.Intent == "risk_analysis"
+            && plan.Route == "skills.risk-analysis"
+            && plan.Capabilities.Contains("RiskAnalysisSkill");
+
+        return Result(
+            "agent planner selects risk analysis route",
+            passed,
+            passed ? "Planner selected the expected skill route." : "Planner selected an unexpected route.");
     }
 
     private async Task<HarnessCheckResult> CheckDocumentMetadataToolSucceedsAsync(CancellationToken cancellationToken)
