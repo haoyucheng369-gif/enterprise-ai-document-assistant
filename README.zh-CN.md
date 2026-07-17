@@ -97,7 +97,7 @@ sequenceDiagram
 - [x] EmailDraftSkill
 - [x] Conversation Memory
 - [x] Simple Agent Planner
-- [ ] Audit Logging
+- [x] Audit Logging
 - [ ] AI Gateway
 - [ ] Document Upload
 - [ ] Text Parsing and Chunking

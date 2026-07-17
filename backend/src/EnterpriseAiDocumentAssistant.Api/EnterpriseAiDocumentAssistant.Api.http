@@ -64,6 +64,11 @@ Accept: application/json
 
 ###
 
+GET {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/audit/events
+Accept: application/json
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/skills/summary
 Content-Type: application/json
 

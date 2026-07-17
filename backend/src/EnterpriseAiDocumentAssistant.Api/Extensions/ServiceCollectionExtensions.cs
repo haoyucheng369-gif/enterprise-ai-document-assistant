@@ -1,3 +1,4 @@
+using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.ConversationMemory;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Harness;
@@ -17,6 +18,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddSingleton<ISystemClock, SystemClock>();
+        services.AddSingleton<IAuditLogger, InMemoryAuditLogger>();
         services.AddSingleton<IApiStatusProvider, ApiStatusProvider>();
         services.AddSingleton<IWorkspaceDataProvider, WorkspaceDataProvider>();
         services.AddSingleton<IConversationMemoryBuilder, ConversationMemoryBuilder>();

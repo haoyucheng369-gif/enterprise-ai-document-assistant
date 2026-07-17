@@ -1,10 +1,39 @@
+using System.Diagnostics;
+using EnterpriseAiDocumentAssistant.Api.Audit;
+
 namespace EnterpriseAiDocumentAssistant.Api.Planner;
 
 public sealed class SimpleAgentPlanner : IAgentPlanner
 {
     private const string DefaultDocumentId = "contract-review";
+    private readonly IAuditLogger auditLogger;
+
+    public SimpleAgentPlanner(IAuditLogger auditLogger)
+    {
+        this.auditLogger = auditLogger;
+    }
 
     public AgentPlanResponse Plan(AgentPlanRequest request)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var plan = CreatePlan(request);
+
+        auditLogger.Record(new AuditEventRequest(
+            "planner",
+            "plan_created",
+            plan.Route,
+            true,
+            stopwatch.ElapsedMilliseconds,
+            new Dictionary<string, string>
+            {
+                ["intent"] = plan.Intent,
+                ["documentId"] = plan.DocumentId
+            }));
+
+        return plan;
+    }
+
+    private static AgentPlanResponse CreatePlan(AgentPlanRequest request)
     {
         var message = request.Message.Trim();
         var documentId = string.IsNullOrWhiteSpace(request.DocumentId)

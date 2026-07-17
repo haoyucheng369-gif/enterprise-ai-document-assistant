@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
@@ -13,15 +15,18 @@ public sealed class ChatController : ControllerBase
     private readonly IDocumentAssistantPromptOrchestrator promptOrchestrator;
     private readonly IStructuredAssistantResponseValidator structuredResponseValidator;
     private readonly IChatGuardrailEvaluator chatGuardrailEvaluator;
+    private readonly IAuditLogger auditLogger;
 
     public ChatController(
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
         IStructuredAssistantResponseValidator structuredResponseValidator,
-        IChatGuardrailEvaluator chatGuardrailEvaluator)
+        IChatGuardrailEvaluator chatGuardrailEvaluator,
+        IAuditLogger auditLogger)
     {
         this.promptOrchestrator = promptOrchestrator;
         this.structuredResponseValidator = structuredResponseValidator;
         this.chatGuardrailEvaluator = chatGuardrailEvaluator;
+        this.auditLogger = auditLogger;
     }
 
     [HttpPost]
@@ -29,6 +34,8 @@ public sealed class ChatController : ControllerBase
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public ActionResult<ChatResponse> Post(ChatRequest request)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         if (string.IsNullOrWhiteSpace(request.Message))
         {
             ModelState.AddModelError(nameof(request.Message), "Message is required.");
@@ -51,6 +58,7 @@ public sealed class ChatController : ControllerBase
             "assistant",
             responseContent);
 
+        RecordChatAudit("chat_completed", "api/chat", request, true, stopwatch.ElapsedMilliseconds);
         return Ok(new ChatResponse(response));
     }
 
@@ -59,6 +67,8 @@ public sealed class ChatController : ControllerBase
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public ActionResult<StructuredChatResponse> Structured(ChatRequest request)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         if (string.IsNullOrWhiteSpace(request.Message))
         {
             ModelState.AddModelError(nameof(request.Message), "Message is required.");
@@ -74,6 +84,7 @@ public sealed class ChatController : ControllerBase
         var message = structuredMessage.Value
             ?? throw new InvalidOperationException("Structured message was not created.");
 
+        RecordChatAudit("structured_chat_completed", "api/chat/structured", request, true, stopwatch.ElapsedMilliseconds);
         return Ok(new StructuredChatResponse(message));
     }
 
@@ -83,6 +94,8 @@ public sealed class ChatController : ControllerBase
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Stream(ChatRequest request, CancellationToken cancellationToken)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         if (string.IsNullOrWhiteSpace(request.Message))
         {
             ModelState.AddModelError(nameof(request.Message), "Message is required.");
@@ -109,6 +122,7 @@ public sealed class ChatController : ControllerBase
             await Task.Delay(120, cancellationToken);
         }
 
+        RecordChatAudit("stream_chat_completed", "api/chat/stream", request, true, stopwatch.ElapsedMilliseconds);
         return new EmptyResult();
     }
 
@@ -141,5 +155,25 @@ public sealed class ChatController : ControllerBase
             title: "StructuredOutputValidationFailed",
             detail: string.Join(" ", validationResult.Errors),
             statusCode: StatusCodes.Status502BadGateway);
+    }
+
+    private void RecordChatAudit(
+        string action,
+        string route,
+        ChatRequest request,
+        bool succeeded,
+        long durationMs)
+    {
+        auditLogger.Record(new AuditEventRequest(
+            "chat",
+            action,
+            route,
+            succeeded,
+            durationMs,
+            new Dictionary<string, string>
+            {
+                ["documentId"] = request.DocumentId ?? string.Empty,
+                ["historyCount"] = (request.History?.Count ?? 0).ToString()
+            }));
     }
 }

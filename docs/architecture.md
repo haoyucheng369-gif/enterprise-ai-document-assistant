@@ -388,6 +388,25 @@ Grounded answer with citations
 
 ---
 
+## Audit Trail
+
+The first audit trail records key AI application decisions and executions in memory.
+
+Current endpoint:
+
+- `GET /api/audit/events`
+
+Tracked categories:
+
+- `chat`
+- `planner`
+- `tool`
+- `skill`
+
+The current implementation is intentionally replaceable. A later infrastructure step can swap `InMemoryAuditLogger` for structured logging, database storage, or OpenTelemetry without changing the calling code.
+
+---
+
 ## Integration Strategy
 
 Enterprise integrations are isolated behind adapters and tools.

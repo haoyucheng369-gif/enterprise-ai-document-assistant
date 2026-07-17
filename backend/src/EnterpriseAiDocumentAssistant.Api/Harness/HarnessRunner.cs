@@ -1,4 +1,5 @@
 using System.Text.Json;
+using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Planner;
@@ -17,6 +18,7 @@ public sealed class HarnessRunner : IHarnessRunner
     private readonly IToolRegistry toolRegistry;
     private readonly IToolExecutor toolExecutor;
     private readonly IAgentPlanner agentPlanner;
+    private readonly IAuditLogger auditLogger;
     private readonly ISummarySkill summarySkill;
     private readonly IRiskAnalysisSkill riskAnalysisSkill;
     private readonly IEmailDraftSkill emailDraftSkill;
@@ -28,6 +30,7 @@ public sealed class HarnessRunner : IHarnessRunner
         IToolRegistry toolRegistry,
         IToolExecutor toolExecutor,
         IAgentPlanner agentPlanner,
+        IAuditLogger auditLogger,
         ISummarySkill summarySkill,
         IRiskAnalysisSkill riskAnalysisSkill,
         IEmailDraftSkill emailDraftSkill)
@@ -38,6 +41,7 @@ public sealed class HarnessRunner : IHarnessRunner
         this.toolRegistry = toolRegistry;
         this.toolExecutor = toolExecutor;
         this.agentPlanner = agentPlanner;
+        this.auditLogger = auditLogger;
         this.summarySkill = summarySkill;
         this.riskAnalysisSkill = riskAnalysisSkill;
         this.emailDraftSkill = emailDraftSkill;
@@ -62,6 +66,7 @@ public sealed class HarnessRunner : IHarnessRunner
         checks.Add(CheckAgentPlannerSelectsRiskAnalysis());
         checks.Add(await CheckDocumentMetadataToolSucceedsAsync(cancellationToken));
         checks.Add(await CheckUnknownToolFailsAsync(cancellationToken));
+        checks.Add(CheckAuditLoggerCapturesEvents());
 
         var passed = checks.Count(check => check.Passed);
         var failed = checks.Count - passed;
@@ -265,6 +270,18 @@ public sealed class HarnessRunner : IHarnessRunner
             "unknown tool fails safely",
             !result.Succeeded,
             !result.Succeeded ? result.Error ?? "Unknown tool failed." : "Unknown tool succeeded unexpectedly.");
+    }
+
+    private HarnessCheckResult CheckAuditLoggerCapturesEvents()
+    {
+        var events = auditLogger.ListRecent();
+        var passed = events.Any(auditEvent => auditEvent.Category == "tool")
+            && events.Any(auditEvent => auditEvent.Category == "planner");
+
+        return Result(
+            "audit logger captures planner and tool events",
+            passed,
+            passed ? "Audit trail contains recent planner and tool events." : "Audit trail did not include expected events.");
     }
 
     private static HarnessCheckResult Result(string name, bool passed, string detail)

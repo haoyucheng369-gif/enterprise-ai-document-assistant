@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.Skills;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,15 +12,18 @@ public sealed class SkillsController : ControllerBase
     private readonly ISummarySkill summarySkill;
     private readonly IRiskAnalysisSkill riskAnalysisSkill;
     private readonly IEmailDraftSkill emailDraftSkill;
+    private readonly IAuditLogger auditLogger;
 
     public SkillsController(
         ISummarySkill summarySkill,
         IRiskAnalysisSkill riskAnalysisSkill,
-        IEmailDraftSkill emailDraftSkill)
+        IEmailDraftSkill emailDraftSkill,
+        IAuditLogger auditLogger)
     {
         this.summarySkill = summarySkill;
         this.riskAnalysisSkill = riskAnalysisSkill;
         this.emailDraftSkill = emailDraftSkill;
+        this.auditLogger = auditLogger;
     }
 
     [HttpPost("summary")]
@@ -27,6 +32,8 @@ public sealed class SkillsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public ActionResult<SummarySkillResponse> Summarize(SummarySkillRequest request)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         if (string.IsNullOrWhiteSpace(request.DocumentId))
         {
             ModelState.AddModelError(nameof(request.DocumentId), "DocumentId is required.");
@@ -37,6 +44,7 @@ public sealed class SkillsController : ControllerBase
 
         if (result is null)
         {
+            RecordSkillAudit("summary", "skills.summary", request.DocumentId, false, stopwatch.ElapsedMilliseconds);
             return NotFound(new ProblemDetails
             {
                 Status = StatusCodes.Status404NotFound,
@@ -45,6 +53,7 @@ public sealed class SkillsController : ControllerBase
             });
         }
 
+        RecordSkillAudit("summary", "skills.summary", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
         return Ok(result);
     }
 
@@ -54,6 +63,8 @@ public sealed class SkillsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public ActionResult<RiskAnalysisSkillResponse> AnalyzeRisks(RiskAnalysisSkillRequest request)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         if (string.IsNullOrWhiteSpace(request.DocumentId))
         {
             ModelState.AddModelError(nameof(request.DocumentId), "DocumentId is required.");
@@ -64,6 +75,7 @@ public sealed class SkillsController : ControllerBase
 
         if (result is null)
         {
+            RecordSkillAudit("risk_analysis", "skills.risk-analysis", request.DocumentId, false, stopwatch.ElapsedMilliseconds);
             return NotFound(new ProblemDetails
             {
                 Status = StatusCodes.Status404NotFound,
@@ -72,6 +84,7 @@ public sealed class SkillsController : ControllerBase
             });
         }
 
+        RecordSkillAudit("risk_analysis", "skills.risk-analysis", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
         return Ok(result);
     }
 
@@ -81,6 +94,8 @@ public sealed class SkillsController : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public ActionResult<EmailDraftSkillResponse> DraftEmail(EmailDraftSkillRequest request)
     {
+        var stopwatch = Stopwatch.StartNew();
+
         if (string.IsNullOrWhiteSpace(request.DocumentId))
         {
             ModelState.AddModelError(nameof(request.DocumentId), "DocumentId is required.");
@@ -91,6 +106,7 @@ public sealed class SkillsController : ControllerBase
 
         if (result is null)
         {
+            RecordSkillAudit("email_draft", "skills.email-draft", request.DocumentId, false, stopwatch.ElapsedMilliseconds);
             return NotFound(new ProblemDetails
             {
                 Status = StatusCodes.Status404NotFound,
@@ -99,6 +115,26 @@ public sealed class SkillsController : ControllerBase
             });
         }
 
+        RecordSkillAudit("email_draft", "skills.email-draft", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
         return Ok(result);
+    }
+
+    private void RecordSkillAudit(
+        string action,
+        string route,
+        string documentId,
+        bool succeeded,
+        long durationMs)
+    {
+        auditLogger.Record(new AuditEventRequest(
+            "skill",
+            action,
+            route,
+            succeeded,
+            durationMs,
+            new Dictionary<string, string>
+            {
+                ["documentId"] = documentId
+            }));
     }
 }
