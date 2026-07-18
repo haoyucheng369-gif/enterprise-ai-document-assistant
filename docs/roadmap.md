@@ -25,15 +25,16 @@ React chat
   -> Document ingestion
   -> workflow extension
   -> light enterprise integration
-  -> classification and extraction skills
-  -> agent handoff extension
+  -> classification skill
   -> real model provider
+  -> extraction skill
+  -> agent handoff extension
   -> persistence
   -> RAG with citations
   -> grounded-answer guardrails
 ```
 
-The implementation order intentionally brings Tool, MCP, Skill, Harness, classification, and extraction concepts earlier because they are common, concrete, and easier to understand before full RAG.
+The implementation order intentionally brings Tool, MCP, Skill, Harness, and classification concepts earlier because they are common, concrete, and easier to understand before full RAG. After the first classification slice, the real AI Gateway provider is introduced so later skills are no longer purely mock-based.
 
 ---
 
@@ -228,25 +229,59 @@ Expected outcome:
 
 ---
 
-## Phase 9 - Classification and Extraction
+## Phase 9 - Classification
 
-Objective: add common business AI capabilities that return validated structured results.
+Objective: add a common business AI capability that returns a validated structured result.
 
 Scope:
 
 - Document classification
 - Priority and risk level classification
-- Contract field extraction
 - Validated JSON response contracts
-- Harness checks for fixed classification and extraction cases
+- Harness checks for fixed classification cases
 
 Expected outcome:
 
-- The assistant can classify documents and extract key fields in a format that backend code can consume safely.
+- The assistant can classify documents in a format that backend code can consume safely.
 
 ---
 
-## Phase 10 - Agent Orchestration and A2A
+## Phase 10 - Real AI Gateway Provider
+
+Objective: replace the mock model path with a configurable OpenAI or Azure OpenAI provider before adding more AI-heavy skills.
+
+Scope:
+
+- Provider configuration
+- Chat model call
+- Timeout and cancellation
+- Safe request logging
+- Token, latency, and provider metadata
+
+Expected outcome:
+
+- The same chat, skill, and workflow boundaries can run against a real model provider.
+
+---
+
+## Phase 11 - Structured Extraction
+
+Objective: extract business fields into validated JSON through the AI Gateway.
+
+Scope:
+
+- Contract field extraction
+- Parties, renewal terms, liability cap, deadlines, and follow-up actions
+- Validated JSON response contracts
+- Harness checks for fixed extraction cases
+
+Expected outcome:
+
+- The assistant can extract key fields in a format that backend code can consume safely.
+
+---
+
+## Phase 12 - Agent Orchestration and A2A
 
 Objective: show a small agent handoff without introducing broad autonomous behavior.
 
@@ -263,25 +298,7 @@ Expected outcome:
 
 ---
 
-## Phase 11 - Real AI Gateway Provider
-
-Objective: replace the mock model path with a configurable OpenAI or Azure OpenAI provider.
-
-Scope:
-
-- Provider configuration
-- Chat model call
-- Timeout and cancellation
-- Safe request logging
-- Token, latency, and provider metadata
-
-Expected outcome:
-
-- The same chat, skill, and workflow boundaries can run against a real model provider.
-
----
-
-## Phase 12 - Persistence
+## Phase 13 - Persistence
 
 Objective: replace selected in-memory stores with a small persistence boundary before retrieval features depend on stable state.
 
@@ -300,7 +317,7 @@ Expected outcome:
 
 ---
 
-## Phase 13 - Document RAG
+## Phase 14 - Document RAG
 
 Objective: enable source-grounded document question answering after ingestion and workflow concepts are in place.
 

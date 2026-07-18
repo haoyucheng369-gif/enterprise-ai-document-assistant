@@ -121,9 +121,9 @@ sequenceDiagram
 
 ```text
 ClassificationSkill
+  -> Real AI Gateway Provider
   -> StructuredExtractionSkill
   -> Agent Orchestration and A2A Extension
-  -> Real AI Gateway Provider
   -> Persistence
   -> Embeddings
   -> Vector Search

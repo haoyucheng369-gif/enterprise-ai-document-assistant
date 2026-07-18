@@ -176,6 +176,7 @@ Planned near-term extension:
 
 - Add a real OpenAI or Azure OpenAI provider behind the same `IAiGateway` contract
 - Keep provider configuration, timeout, cancellation, token metadata, and safe logging inside the gateway boundary
+- Introduce the real provider before the second wave of AI-heavy skills
 
 ### Prompt Orchestration
 
@@ -203,7 +204,7 @@ Current skill:
 Planned near-term skills:
 
 - `ClassificationSkill`: classifies document type, priority, and risk level
-- `StructuredExtractionSkill`: extracts business fields into validated JSON
+- `StructuredExtractionSkill`: extracts business fields into validated JSON through the AI Gateway
 
 ### Document Intelligence
 
