@@ -172,6 +172,11 @@ Current implementation:
 - Gateway responses include provider, model, latency, and token estimates
 - Gateway calls are recorded in the audit trail
 
+Planned near-term extension:
+
+- Add a real OpenAI or Azure OpenAI provider behind the same `IAiGateway` contract
+- Keep provider configuration, timeout, cancellation, token metadata, and safe logging inside the gateway boundary
+
 ### Prompt Orchestration
 
 Prompt orchestration manages repeatable AI behavior instead of scattering prompt strings across controllers or UI code.
@@ -194,6 +199,11 @@ Current skill:
 - `SummarySkill`: summarizes a selected document through `POST /api/skills/summary`
 - `RiskAnalysisSkill`: extracts risk items through `POST /api/skills/risk-analysis`
 - `EmailDraftSkill`: drafts a follow-up email through `POST /api/skills/email-draft`
+
+Planned near-term skills:
+
+- `ClassificationSkill`: classifies document type, priority, and risk level
+- `StructuredExtractionSkill`: extracts business fields into validated JSON
 
 ### Document Intelligence
 
@@ -229,6 +239,8 @@ Responsibilities:
 - Context retrieval
 - Citation tracking
 - Grounded answer generation
+- No-answer behavior when reliable context is missing
+- Later hybrid search and semantic ranking hooks
 
 ### Tool Gateway
 

@@ -104,22 +104,32 @@ sequenceDiagram
 - [x] Text Parsing and Chunking
 - [x] Workflow
 - [x] Microsoft Graph Integration
+- [ ] ClassificationSkill
+- [ ] StructuredExtractionSkill
 - [ ] Agent Orchestration and A2A Extension
+- [ ] Real AI Gateway Provider
 - [ ] Persistence
 - [ ] Embeddings
 - [ ] Vector Search
 - [ ] RAG Answer with Citations
+- [ ] No-answer Guardrail
+- [ ] Hybrid Search and Semantic Ranking
 
 ---
 
 ## Next Implementation Order
 
 ```text
-Agent Orchestration and A2A Extension
+ClassificationSkill
+  -> StructuredExtractionSkill
+  -> Agent Orchestration and A2A Extension
+  -> Real AI Gateway Provider
   -> Persistence
   -> Embeddings
   -> Vector Search
   -> RAG Answer with Citations
+  -> No-answer Guardrail
+  -> Hybrid Search and Semantic Ranking
 ```
 
 ---

@@ -25,12 +25,15 @@ React chat
   -> Document ingestion
   -> workflow extension
   -> light enterprise integration
+  -> classification and extraction skills
   -> agent handoff extension
+  -> real model provider
   -> persistence
   -> RAG with citations
+  -> grounded-answer guardrails
 ```
 
-The implementation order intentionally brings Tool, MCP, Skill, and Harness concepts earlier because they are common, concrete, and easier to understand before full RAG.
+The implementation order intentionally brings Tool, MCP, Skill, Harness, classification, and extraction concepts earlier because they are common, concrete, and easier to understand before full RAG.
 
 ---
 
@@ -41,7 +44,7 @@ V1 is implemented as six modules:
 - React Workspace: document list, document detail, right-side AI Assistant, citation panel, tool result panel
 - ASP.NET Core API: `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows`
 - Prompt and AI Layer: prompt orchestration, conversation memory, structured output, validation, guardrails, AI Gateway
-- Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`
+- Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ClassificationSkill`, `StructuredExtractionSkill`
 - Document RAG: upload, parse text, chunk, embed, vector search, answer with citations
 - Persistence: conversation history, document metadata, workflow records, audit/tool records; MongoDB or relational storage can be selected later
 - MCP, Harness, Workflow, and Agent Orchestration Extension: MCP `search_documents`, prompt/tool harnesses, document summary to risk analysis to email draft workflow, coordinator-to-agent orchestration, optional `DocumentAgent` to `EmailAgent` handoff
@@ -225,7 +228,60 @@ Expected outcome:
 
 ---
 
-## Phase 9 - Persistence
+## Phase 9 - Classification and Extraction
+
+Objective: add common business AI capabilities that return validated structured results.
+
+Scope:
+
+- Document classification
+- Priority and risk level classification
+- Contract field extraction
+- Validated JSON response contracts
+- Harness checks for fixed classification and extraction cases
+
+Expected outcome:
+
+- The assistant can classify documents and extract key fields in a format that backend code can consume safely.
+
+---
+
+## Phase 10 - Agent Orchestration and A2A
+
+Objective: show a small agent handoff without introducing broad autonomous behavior.
+
+Scope:
+
+- `CoordinatorAgent` selects the document review path
+- `DocumentAgent` prepares summary, risk, classification, and extraction output
+- `EmailAgent` receives structured handoff data and prepares follow-up content
+- Harness check for the agent handoff
+
+Expected outcome:
+
+- The project demonstrates agent orchestration as a controlled application pattern.
+
+---
+
+## Phase 11 - Real AI Gateway Provider
+
+Objective: replace the mock model path with a configurable OpenAI or Azure OpenAI provider.
+
+Scope:
+
+- Provider configuration
+- Chat model call
+- Timeout and cancellation
+- Safe request logging
+- Token, latency, and provider metadata
+
+Expected outcome:
+
+- The same chat, skill, and workflow boundaries can run against a real model provider.
+
+---
+
+## Phase 12 - Persistence
 
 Objective: replace selected in-memory stores with a small persistence boundary before retrieval features depend on stable state.
 
@@ -244,7 +300,7 @@ Expected outcome:
 
 ---
 
-## Phase 10 - Document RAG
+## Phase 13 - Document RAG
 
 Objective: enable source-grounded document question answering after ingestion and workflow concepts are in place.
 
@@ -255,6 +311,8 @@ Scope:
 - Semantic retrieval
 - RAG-based question answering
 - Source citation support
+- No-answer behavior when retrieval has no reliable context
+- Later hybrid search and semantic ranking hooks
 
 Expected outcome:
 
