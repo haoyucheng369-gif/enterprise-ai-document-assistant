@@ -214,7 +214,7 @@ Current endpoint:
 - `POST /api/documents/upload`
 - `GET /api/documents/uploads`
 
-Current implementation stores upload metadata only. Text parsing, chunking, embeddings, and retrieval remain separate steps.
+Current implementation extracts lightweight preview text for `.txt`, `.md`, `.pdf`, and `.docx`, then returns preview chunks. Embeddings and retrieval remain separate steps.
 
 ### RAG
 

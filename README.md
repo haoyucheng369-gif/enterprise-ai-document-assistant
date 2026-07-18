@@ -100,7 +100,7 @@ sequenceDiagram
 - [x] Audit Logging
 - [x] AI Gateway
 - [x] Document Upload
-- [ ] Text Parsing and Chunking
+- [x] Text Parsing and Chunking
 - [ ] Workflow
 - [ ] Microsoft Graph Integration
 - [ ] Agent Orchestration and A2A Extension

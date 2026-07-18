@@ -1,6 +1,7 @@
 using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.ConversationMemory;
+using EnterpriseAiDocumentAssistant.Api.DocumentParsing;
 using EnterpriseAiDocumentAssistant.Api.DocumentUpload;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Harness;
@@ -24,6 +25,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IApiStatusProvider, ApiStatusProvider>();
         services.AddSingleton<IWorkspaceDataProvider, WorkspaceDataProvider>();
         services.AddSingleton<IConversationMemoryBuilder, ConversationMemoryBuilder>();
+        services.AddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
+        services.AddSingleton<IDocumentChunker, SimpleDocumentChunker>();
         services.AddSingleton<IDocumentUploadService, InMemoryDocumentUploadService>();
         services.AddSingleton<IAiGateway, MockAiGateway>();
         services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();

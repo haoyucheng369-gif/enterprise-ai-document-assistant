@@ -60,13 +60,7 @@ function App() {
         type: uploadedDocument.type,
         updatedAt: uploadedDocument.updatedAt,
         status: uploadedDocument.status,
-        sections: [
-          {
-            label: 'Upload metadata',
-            title: 'Document received',
-            body: `${uploadedDocument.title}.${uploadedDocument.type.toLowerCase()} was uploaded successfully. Size: ${uploadedDocument.sizeBytes.toLocaleString()} bytes. Text parsing and chunking will be added in the next step.`,
-          },
-        ],
+        sections: uploadedDocument.sections,
       }
 
       setUploadedDocuments((currentDocuments) => [

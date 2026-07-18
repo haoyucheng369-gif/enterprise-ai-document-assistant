@@ -55,6 +55,7 @@ export type DocumentUploadResponse = {
   updatedAt: string
   status: string
   sizeBytes: number
+  sections: DocumentSection[]
 }
 
 export type DataConnectionState = 'loading' | 'loaded' | 'unavailable'

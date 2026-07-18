@@ -276,8 +276,9 @@ public sealed class HarnessRunner : IHarnessRunner
 
         var passed = result.Succeeded
             && result.Document is not null
-            && result.Document.Status == "Uploaded"
-            && result.Document.Type == "TXT";
+            && result.Document.Status == "Parsed"
+            && result.Document.Type == "TXT"
+            && result.Document.Sections.Count > 0;
 
         return Result(
             "document upload accepts supported file",

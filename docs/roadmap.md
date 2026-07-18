@@ -196,7 +196,7 @@ Scope:
 Expected outcome:
 
 - A user can upload a supported document.
-- The backend can validate the file and return document metadata.
+- The backend can validate the file and return preview sections.
 - Later retrieval steps have a clear entry point.
 
 ---

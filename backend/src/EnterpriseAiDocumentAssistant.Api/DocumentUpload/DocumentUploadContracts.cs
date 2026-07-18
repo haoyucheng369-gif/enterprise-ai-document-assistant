@@ -1,3 +1,5 @@
+using EnterpriseAiDocumentAssistant.Api.DocumentParsing;
+
 namespace EnterpriseAiDocumentAssistant.Api.DocumentUpload;
 
 public sealed record DocumentUploadResponse(
@@ -6,7 +8,8 @@ public sealed record DocumentUploadResponse(
     string Type,
     string UpdatedAt,
     string Status,
-    long SizeBytes);
+    long SizeBytes,
+    IReadOnlyList<DocumentPreviewSection> Sections);
 
 public sealed class DocumentUploadForm
 {

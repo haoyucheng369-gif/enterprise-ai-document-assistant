@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using EnterpriseAiDocumentAssistant.Api.Audit;
+using EnterpriseAiDocumentAssistant.Api.DocumentParsing;
 using EnterpriseAiDocumentAssistant.Api.Services;
 
 namespace EnterpriseAiDocumentAssistant.Api.DocumentUpload;
@@ -17,46 +18,55 @@ public sealed class InMemoryDocumentUploadService : IDocumentUploadService
 
     private readonly ConcurrentQueue<DocumentUploadResponse> uploads = new();
     private readonly IAuditLogger auditLogger;
+    private readonly IDocumentChunker documentChunker;
+    private readonly IDocumentTextExtractor documentTextExtractor;
     private readonly ISystemClock systemClock;
 
     public InMemoryDocumentUploadService(
         IAuditLogger auditLogger,
+        IDocumentChunker documentChunker,
+        IDocumentTextExtractor documentTextExtractor,
         ISystemClock systemClock)
     {
         this.auditLogger = auditLogger;
+        this.documentChunker = documentChunker;
+        this.documentTextExtractor = documentTextExtractor;
         this.systemClock = systemClock;
     }
 
-    public Task<DocumentUploadResult> UploadAsync(
+    public async Task<DocumentUploadResult> UploadAsync(
         IFormFile? file,
         CancellationToken cancellationToken)
     {
         if (file is null || file.Length == 0)
         {
-            return Task.FromResult(Failed("File is required."));
+            return Failed("File is required.");
         }
 
         if (file.Length > MaxFileSizeBytes)
         {
-            return Task.FromResult(Failed("File size must be 5 MB or smaller."));
+            return Failed("File size must be 5 MB or smaller.");
         }
 
         var extension = Path.GetExtension(file.FileName);
         if (!AllowedExtensions.Contains(extension))
         {
-            return Task.FromResult(Failed("Supported file types are .txt, .md, .pdf, and .docx."));
+            return Failed("Supported file types are .txt, .md, .pdf, and .docx.");
         }
 
         cancellationToken.ThrowIfCancellationRequested();
+        var extraction = await documentTextExtractor.ExtractAsync(file, extension, cancellationToken);
+        var sections = documentChunker.BuildPreviewSections(extraction.Text, extraction.Warnings);
 
-        // The first ingestion step stores metadata only; parsing and content storage come later.
+        // Upload now returns lightweight parsed preview sections; full indexing remains a later RAG step.
         var document = new DocumentUploadResponse(
             $"upload-{Guid.NewGuid():N}",
             Path.GetFileNameWithoutExtension(file.FileName),
             extension.TrimStart('.').ToUpperInvariant(),
             systemClock.UtcNow.ToString("yyyy-MM-dd"),
-            "Uploaded",
-            file.Length);
+            "Parsed",
+            file.Length,
+            sections);
 
         uploads.Enqueue(document);
         auditLogger.Record(new AuditEventRequest(
@@ -72,7 +82,7 @@ public sealed class InMemoryDocumentUploadService : IDocumentUploadService
                 ["sizeBytes"] = file.Length.ToString()
             }));
 
-        return Task.FromResult(new DocumentUploadResult(true, document, null));
+        return new DocumentUploadResult(true, document, null);
     }
 
     public IReadOnlyList<DocumentUploadResponse> ListRecent()
