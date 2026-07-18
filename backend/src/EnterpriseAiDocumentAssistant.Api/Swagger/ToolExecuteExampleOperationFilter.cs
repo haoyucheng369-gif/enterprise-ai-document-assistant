@@ -84,6 +84,17 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
                 ["message"] = new OpenApiString("Analyze liability risk in this document."),
                 ["documentId"] = new OpenApiString("contract-review")
             };
+
+            return;
+        }
+
+        if (string.Equals(context.ApiDescription.RelativePath, "api/workflows/document-review", StringComparison.OrdinalIgnoreCase))
+        {
+            mediaType.Example = new OpenApiObject
+            {
+                ["documentId"] = new OpenApiString("contract-review"),
+                ["emailPurpose"] = new OpenApiString("Ask the vendor to clarify renewal, liability, and service credit terms.")
+            };
         }
     }
 }

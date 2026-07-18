@@ -26,6 +26,7 @@ React chat
   -> workflow extension
   -> light enterprise integration
   -> agent handoff extension
+  -> persistence
   -> RAG with citations
 ```
 
@@ -42,6 +43,7 @@ V1 is implemented as six modules:
 - Prompt and AI Layer: prompt orchestration, conversation memory, structured output, validation, guardrails, AI Gateway
 - Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`
 - Document RAG: upload, parse text, chunk, embed, vector search, answer with citations
+- Persistence: conversation history, document metadata, workflow records, audit/tool records; MongoDB or relational storage can be selected later
 - MCP, Harness, Workflow, and Agent Orchestration Extension: MCP `search_documents`, prompt/tool harnesses, document summary to risk analysis to email draft workflow, coordinator-to-agent orchestration, optional `DocumentAgent` to `EmailAgent` handoff
 
 ---
@@ -212,13 +214,36 @@ Scope:
 - Optional Agent-to-Agent handoff: `DocumentAgent` to `EmailAgent`
 - Basic workflow state persistence
 
+Current V1 progress:
+
+- `POST /api/workflows/document-review` runs summary, risk analysis, and email draft generation in sequence
+
 Expected outcome:
 
 - The assistant can coordinate document analysis, tool execution, and business output generation in one small workflow.
 
 ---
 
-## Phase 9 - Document RAG
+## Phase 9 - Persistence
+
+Objective: replace selected in-memory stores with a small persistence boundary before retrieval features depend on stable state.
+
+Scope:
+
+- Conversation history
+- Uploaded document metadata
+- Workflow execution records
+- Audit and tool execution records
+- MongoDB or relational storage behind repository interfaces
+
+Expected outcome:
+
+- Restarting the API does not erase the core application state.
+- Storage remains replaceable without changing controllers, skills, tools, or workflows.
+
+---
+
+## Phase 10 - Document RAG
 
 Objective: enable source-grounded document question answering after ingestion and workflow concepts are in place.
 

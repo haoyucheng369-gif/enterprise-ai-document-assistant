@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { streamChatMessage } from './api/chatApi'
 import { uploadDocument } from './api/documentApi'
+import { runDocumentReviewWorkflow } from './api/workflowApi'
 import { AssistantPanel } from './components/assistant/AssistantPanel'
 import { DocumentNav } from './components/documents/DocumentNav'
 import { DocumentWorkspace } from './components/documents/DocumentWorkspace'
 import { useApiStatus } from './hooks/useApiStatus'
 import { useWorkspaceData } from './hooks/useWorkspaceData'
-import type { DocumentItem, Message } from './types'
+import type { DocumentItem, DocumentReviewWorkflowResponse, Message } from './types'
 
 function App() {
   const apiStatus = useApiStatus()
@@ -15,6 +16,9 @@ function App() {
   const [uploadedDocuments, setUploadedDocuments] = useState<DocumentItem[]>([])
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'failed'>('idle')
+  const [workflowState, setWorkflowState] = useState<'idle' | 'running' | 'failed'>('idle')
+  const [workflowResult, setWorkflowResult] =
+    useState<DocumentReviewWorkflowResponse | null>(null)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
 
   useEffect(() => {
@@ -141,6 +145,24 @@ function App() {
     }
   }
 
+  async function handleRunWorkflow() {
+    setWorkflowState('running')
+    setWorkflowResult(null)
+
+    try {
+      const result = await runDocumentReviewWorkflow({
+        documentId: selectedDocument.id,
+        emailPurpose:
+          'Ask the vendor to clarify renewal, liability, and service credit terms.',
+      })
+
+      setWorkflowResult(result)
+      setWorkflowState('idle')
+    } catch {
+      setWorkflowState('failed')
+    }
+  }
+
   return (
     <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[288px_minmax(0,1fr)_500px] 2xl:grid-cols-[300px_minmax(0,1fr)_540px]">
       <DocumentNav
@@ -153,7 +175,10 @@ function App() {
       <DocumentWorkspace
         citations={citations}
         document={selectedDocument}
+        onRunWorkflow={handleRunWorkflow}
         toolResult={toolResult}
+        workflowResult={workflowResult}
+        workflowState={workflowState}
       />
       <AssistantPanel
         apiState={apiStatus.state}

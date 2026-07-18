@@ -74,6 +74,7 @@ sequenceDiagram
 | Prompt and AI Layer | Prompt / AI 控制层 | Prompt Orchestration、Structured Output、Validation、Guardrails、AI Gateway |
 | Tool Gateway and Skills | 受控工具执行 | `SearchDocumentsTool`、`GetDocumentMetadataTool`、`SummarySkill`、`RiskAnalysisSkill`、`EmailDraftSkill` |
 | Document RAG | 基于来源的回答 | Upload、Parse、Chunk、Embed、Vector Search、Citations |
+| Persistence | 应用状态存储 | Conversation history、document metadata、workflow records、audit/tool records；MongoDB 保持可选 |
 | MCP / Harness / Workflow / Agent Orchestration | 扩展路径 | MCP 暴露已有 Tool、Prompt/Tool Harness、一个 Workflow、协调者调度 Agent、可选 A2A 交接 |
 
 ---
@@ -101,9 +102,10 @@ sequenceDiagram
 - [x] AI Gateway
 - [x] Document Upload
 - [x] Text Parsing and Chunking
-- [ ] Workflow
+- [x] Workflow
 - [ ] Microsoft Graph Integration
 - [ ] Agent Orchestration and A2A Extension
+- [ ] Persistence
 - [ ] Embeddings
 - [ ] Vector Search
 - [ ] RAG Answer with Citations
@@ -130,6 +132,7 @@ Simple guardrails
   -> Workflow
   -> Microsoft Graph Integration
   -> Agent Orchestration and A2A Extension
+  -> Persistence
   -> Embeddings
   -> Vector Search
   -> RAG Answer with Citations
@@ -145,6 +148,7 @@ Simple guardrails
 | Backend | ASP.NET Core Web API |
 | AI | OpenAI / Azure OpenAI，适配 Semantic Kernel 或 Microsoft.Extensions.AI 的设计 |
 | Retrieval | Embeddings、Vector Store、Source Citations |
+| Persistence | 先使用 in-memory，后续可接 MongoDB 或关系型数据库 |
 | Integration | Microsoft Graph、REST APIs、MCP |
 
 ---

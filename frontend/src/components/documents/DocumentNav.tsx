@@ -1,4 +1,11 @@
-import { FileText, Upload } from 'lucide-react'
+import {
+  File,
+  FileCode,
+  FileText,
+  FileType,
+  type LucideIcon,
+  Upload,
+} from 'lucide-react'
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 import type { DocumentItem } from '../../types'
 
@@ -107,43 +114,84 @@ export function DocumentNav({
       </button>
 
       <div className="mt-3 grid gap-2">
-        {documents.map((document) => (
-          <button
-            className={`grid cursor-pointer gap-1 rounded-md border p-3 text-left transition ${
-              document.id === selectedDocumentId
-                ? 'border-blue-300 bg-blue-50'
-                : 'border-slate-200 bg-white hover:bg-slate-50'
-            }`}
-            key={document.id}
-            onClick={() => onSelectDocument(document.id)}
-            type="button"
-          >
-            <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <FileText
-                className={
-                  document.id === selectedDocumentId
-                    ? 'text-blue-600'
-                    : 'text-slate-400'
-                }
-                size={15}
-              />
-              {document.title}
-            </span>
-            <span className="text-xs text-slate-500">
-              {document.type} - {document.updatedAt}
-            </span>
-            <span
-              className={`mt-1 w-fit rounded-sm px-2 py-0.5 text-[11px] font-medium ${
-                document.status === 'Queued'
-                  ? 'bg-amber-50 text-amber-700'
-                  : 'bg-emerald-50 text-emerald-700'
+        {documents.map((document) => {
+          const fileIcon = getDocumentIcon(document.type)
+          const Icon = fileIcon.icon
+
+          return (
+            <button
+              className={`grid cursor-pointer gap-1 rounded-md border p-3 text-left transition ${
+                document.id === selectedDocumentId
+                  ? 'border-blue-300 bg-blue-50'
+                  : 'border-slate-200 bg-white hover:bg-slate-50'
               }`}
+              key={document.id}
+              onClick={() => onSelectDocument(document.id)}
+              type="button"
             >
-              {document.status}
-            </span>
-          </button>
-        ))}
+              <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                <span
+                  className={`grid size-5 shrink-0 place-items-center rounded-sm ${fileIcon.background} ${fileIcon.color}`}
+                >
+                  <Icon size={14} />
+                </span>
+                {document.title}
+              </span>
+              <span className="text-xs text-slate-500">
+                {document.type} - {document.updatedAt}
+              </span>
+              <span
+                className={`mt-1 w-fit rounded-sm px-2 py-0.5 text-[11px] font-medium ${
+                  document.status === 'Queued'
+                    ? 'bg-amber-50 text-amber-700'
+                    : 'bg-emerald-50 text-emerald-700'
+                }`}
+              >
+                {document.status}
+              </span>
+            </button>
+          )
+        })}
       </div>
     </aside>
   )
+}
+
+function getDocumentIcon(type: string): {
+  icon: LucideIcon
+  color: string
+  background: string
+} {
+  switch (type.toUpperCase()) {
+    case 'PDF':
+      return {
+        icon: FileText,
+        color: 'text-rose-600',
+        background: 'bg-rose-50',
+      }
+    case 'DOCX':
+      return {
+        icon: FileType,
+        color: 'text-blue-600',
+        background: 'bg-blue-50',
+      }
+    case 'MD':
+      return {
+        icon: FileCode,
+        color: 'text-violet-600',
+        background: 'bg-violet-50',
+      }
+    case 'TXT':
+      return {
+        icon: FileText,
+        color: 'text-slate-600',
+        background: 'bg-slate-100',
+      }
+    default:
+      return {
+        icon: File,
+        color: 'text-emerald-600',
+        background: 'bg-emerald-50',
+      }
+  }
 }

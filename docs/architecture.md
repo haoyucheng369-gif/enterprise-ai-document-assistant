@@ -328,6 +328,20 @@ Current endpoint:
 
 - `POST /api/planner/plan`
 
+### Simple Workflow
+
+The first workflow coordinates existing skills in a fixed sequence instead of introducing a full workflow engine.
+
+Current sequence:
+
+- `SummarySkill`
+- `RiskAnalysisSkill`
+- `EmailDraftSkill`
+
+Current endpoint:
+
+- `POST /api/workflows/document-review`
+
 ### Agent Orchestration And A2A
 
 Agent orchestration remains a later extension after workflow is stable.
@@ -349,6 +363,12 @@ Storage responsibilities:
 - Vector store: embeddings and semantic retrieval indexes
 - File or object storage: uploaded source documents
 - Optional document database or JSON columns: conversation memory, flexible AI records, and workflow state
+
+Current V1 stance:
+
+- In-memory storage keeps the early implementation simple
+- A later persistence step can introduce MongoDB or relational storage behind repository interfaces
+- MongoDB is useful for flexible AI records, but it is not the core RAG mechanism
 
 ---
 

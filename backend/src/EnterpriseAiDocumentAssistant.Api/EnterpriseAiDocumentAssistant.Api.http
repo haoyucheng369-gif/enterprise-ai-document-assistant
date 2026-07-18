@@ -124,6 +124,16 @@ Content-Type: application/json
 
 ###
 
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/workflows/document-review
+Content-Type: application/json
+
+{
+  "documentId": "contract-review",
+  "emailPurpose": "Ask the vendor to clarify renewal, liability, and service credit terms."
+}
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat
 Content-Type: application/json
 

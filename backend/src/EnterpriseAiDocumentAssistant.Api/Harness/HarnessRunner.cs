@@ -9,6 +9,7 @@ using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Skills;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway;
+using EnterpriseAiDocumentAssistant.Api.Workflows;
 
 namespace EnterpriseAiDocumentAssistant.Api.Harness;
 
@@ -23,6 +24,7 @@ public sealed class HarnessRunner : IHarnessRunner
     private readonly IAgentPlanner agentPlanner;
     private readonly IAuditLogger auditLogger;
     private readonly IDocumentUploadService documentUploadService;
+    private readonly IDocumentReviewWorkflow documentReviewWorkflow;
     private readonly ISummarySkill summarySkill;
     private readonly IRiskAnalysisSkill riskAnalysisSkill;
     private readonly IEmailDraftSkill emailDraftSkill;
@@ -37,6 +39,7 @@ public sealed class HarnessRunner : IHarnessRunner
         IAgentPlanner agentPlanner,
         IAuditLogger auditLogger,
         IDocumentUploadService documentUploadService,
+        IDocumentReviewWorkflow documentReviewWorkflow,
         ISummarySkill summarySkill,
         IRiskAnalysisSkill riskAnalysisSkill,
         IEmailDraftSkill emailDraftSkill)
@@ -50,6 +53,7 @@ public sealed class HarnessRunner : IHarnessRunner
         this.agentPlanner = agentPlanner;
         this.auditLogger = auditLogger;
         this.documentUploadService = documentUploadService;
+        this.documentReviewWorkflow = documentReviewWorkflow;
         this.summarySkill = summarySkill;
         this.riskAnalysisSkill = riskAnalysisSkill;
         this.emailDraftSkill = emailDraftSkill;
@@ -73,6 +77,7 @@ public sealed class HarnessRunner : IHarnessRunner
 
         checks.Add(await CheckAiGatewayReturnsStructuredMessageAsync(cancellationToken));
         checks.Add(await CheckDocumentUploadAcceptsSupportedFileAsync(cancellationToken));
+        checks.Add(CheckDocumentReviewWorkflowSucceeds());
         checks.Add(CheckAgentPlannerSelectsRiskAnalysis());
         checks.Add(await CheckDocumentMetadataToolSucceedsAsync(cancellationToken));
         checks.Add(await CheckUnknownToolFailsAsync(cancellationToken));
@@ -286,6 +291,25 @@ public sealed class HarnessRunner : IHarnessRunner
             passed ? "Upload service returned document metadata." : result.Error ?? "Upload service did not return expected metadata.");
     }
 
+    private HarnessCheckResult CheckDocumentReviewWorkflowSucceeds()
+    {
+        var result = documentReviewWorkflow.Run(new DocumentReviewWorkflowRequest(
+            "contract-review",
+            "Ask the vendor to clarify renewal, liability, and service credit terms."));
+
+        var passed = result is not null
+            && result.Status == "Completed"
+            && result.Steps.Count == 3
+            && !string.IsNullOrWhiteSpace(result.Summary.Summary)
+            && result.RiskAnalysis.Risks.Count > 0
+            && !string.IsNullOrWhiteSpace(result.EmailDraft.Body);
+
+        return Result(
+            "document review workflow runs skill sequence",
+            passed,
+            passed ? "Workflow returned summary, risks, and email draft." : "Workflow did not return expected skill outputs.");
+    }
+
     private async Task<HarnessCheckResult> CheckDocumentMetadataToolSucceedsAsync(CancellationToken cancellationToken)
     {
         using var document = JsonDocument.Parse("""{"documentId":"contract-review"}""");
@@ -328,12 +352,13 @@ public sealed class HarnessRunner : IHarnessRunner
         var events = auditLogger.ListRecent();
         var passed = events.Any(auditEvent => auditEvent.Category == "tool")
             && events.Any(auditEvent => auditEvent.Category == "planner")
-            && events.Any(auditEvent => auditEvent.Category == "ai_gateway");
+            && events.Any(auditEvent => auditEvent.Category == "ai_gateway")
+            && events.Any(auditEvent => auditEvent.Category == "workflow");
 
         return Result(
-            "audit logger captures planner, tool, and gateway events",
+            "audit logger captures planner, tool, gateway, and workflow events",
             passed,
-            passed ? "Audit trail contains recent planner, tool, and gateway events." : "Audit trail did not include expected events.");
+            passed ? "Audit trail contains recent planner, tool, gateway, and workflow events." : "Audit trail did not include expected events.");
     }
 
     private static HarnessCheckResult Result(string name, bool passed, string detail)

@@ -12,6 +12,7 @@ using EnterpriseAiDocumentAssistant.Api.Skills;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway.Tools;
+using EnterpriseAiDocumentAssistant.Api.Workflows;
 
 namespace EnterpriseAiDocumentAssistant.Api.Extensions;
 
@@ -33,6 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
         services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
         services.AddSingleton<IAgentPlanner, SimpleAgentPlanner>();
+        services.AddSingleton<IDocumentReviewWorkflow, DocumentReviewWorkflow>();
         services.AddSingleton<IHarnessRunner, HarnessRunner>();
 
         return services;

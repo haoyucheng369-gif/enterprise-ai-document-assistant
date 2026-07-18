@@ -74,6 +74,7 @@ sequenceDiagram
 | Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, guardrails, AI Gateway |
 | Tool Gateway and Skills | Controlled actions | `SearchDocumentsTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill` |
 | Document RAG | Source-grounded answers | Upload, parse, chunk, embed, vector search, citations |
+| Persistence | Application state | Conversation history, document metadata, workflow records, audit/tool records; MongoDB remains optional |
 | MCP / Harness / Workflow / Agent Orchestration | Extension path | MCP for existing tools, prompt/tool harnesses, one workflow, coordinator-to-agent orchestration, optional A2A handoff |
 
 ---
@@ -101,9 +102,10 @@ sequenceDiagram
 - [x] AI Gateway
 - [x] Document Upload
 - [x] Text Parsing and Chunking
-- [ ] Workflow
+- [x] Workflow
 - [ ] Microsoft Graph Integration
 - [ ] Agent Orchestration and A2A Extension
+- [ ] Persistence
 - [ ] Embeddings
 - [ ] Vector Search
 - [ ] RAG Answer with Citations
@@ -130,6 +132,7 @@ Simple guardrails
   -> Workflow
   -> Microsoft Graph Integration
   -> Agent Orchestration and A2A Extension
+  -> Persistence
   -> Embeddings
   -> Vector Search
   -> RAG Answer with Citations
@@ -145,6 +148,7 @@ Simple guardrails
 | Backend | ASP.NET Core Web API |
 | AI | OpenAI / Azure OpenAI, Semantic Kernel or Microsoft.Extensions.AI friendly design |
 | Retrieval | Embeddings, vector store, source citations |
+| Persistence | In-memory first, MongoDB or relational storage later |
 | Integration | Microsoft Graph, REST APIs, MCP |
 
 ---

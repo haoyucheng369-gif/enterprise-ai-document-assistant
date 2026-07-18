@@ -58,6 +58,57 @@ export type DocumentUploadResponse = {
   sections: DocumentSection[]
 }
 
+export type WorkflowStep = {
+  name: string
+  status: string
+  detail: string
+}
+
+export type WorkflowRisk = {
+  title: string
+  severity: string
+  source: string
+  recommendation: string
+}
+
+export type WorkflowSummary = {
+  documentId: string
+  title: string
+  summary: string
+  keyPoints: string[]
+  sources: string[]
+}
+
+export type WorkflowRiskAnalysis = {
+  documentId: string
+  title: string
+  risks: WorkflowRisk[]
+  missingInformation: string[]
+}
+
+export type WorkflowEmailDraft = {
+  documentId: string
+  subject: string
+  body: string
+  basedOn: string[]
+  nextActions: string[]
+}
+
+export type DocumentReviewWorkflowRequest = {
+  documentId: string
+  emailPurpose: string
+}
+
+export type DocumentReviewWorkflowResponse = {
+  workflowId: string
+  status: string
+  documentId: string
+  steps: WorkflowStep[]
+  summary: WorkflowSummary
+  riskAnalysis: WorkflowRiskAnalysis
+  emailDraft: WorkflowEmailDraft
+}
+
 export type DataConnectionState = 'loading' | 'loaded' | 'unavailable'
 
 export type ChatRequest = {
