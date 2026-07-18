@@ -5,6 +5,7 @@ using EnterpriseAiDocumentAssistant.Api.DocumentParsing;
 using EnterpriseAiDocumentAssistant.Api.DocumentUpload;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Harness;
+using EnterpriseAiDocumentAssistant.Api.Integrations.MicrosoftGraph;
 using EnterpriseAiDocumentAssistant.Api.Planner;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Services;
@@ -36,6 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
         services.AddSingleton<IAgentPlanner, SimpleAgentPlanner>();
         services.AddSingleton<IDocumentReviewWorkflow, DocumentReviewWorkflow>();
+        services.AddSingleton<IMicrosoftGraphGateway, MockMicrosoftGraphGateway>();
         services.AddSingleton<IHarnessRunner, HarnessRunner>();
 
         return services;

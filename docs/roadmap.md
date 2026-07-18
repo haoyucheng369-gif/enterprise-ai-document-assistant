@@ -217,6 +217,7 @@ Scope:
 Current V1 progress:
 
 - `POST /api/workflows/document-review` runs summary, risk analysis, and email draft generation in sequence
+- `POST /api/integrations/graph/email-draft` creates a mock Microsoft Graph email draft
 
 Expected outcome:
 

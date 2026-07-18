@@ -26,6 +26,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Mock AI Gateway
 - Document upload, text extraction, and chunking
 - Document review workflow
+- Mock Microsoft Graph email draft integration
 - CORS for the React development server
 - ProblemDetails and simple global error handling
 
@@ -49,6 +50,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 | POST | `/api/skills/email-draft` | Run the email draft skill |
 | POST | `/api/planner/plan` | Build a deterministic agent plan |
 | POST | `/api/workflows/document-review` | Run the document review workflow |
+| POST | `/api/integrations/graph/email-draft` | Create a mock Microsoft Graph email draft |
 | POST | `/api/chat` | Mock assistant response for request/response chat flow |
 | POST | `/api/chat/stream` | Mock assistant response streamed as text chunks |
 | POST | `/api/chat/structured` | Mock assistant response as validated structured JSON |

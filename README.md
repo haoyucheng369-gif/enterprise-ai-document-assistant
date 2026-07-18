@@ -103,7 +103,7 @@ sequenceDiagram
 - [x] Document Upload
 - [x] Text Parsing and Chunking
 - [x] Workflow
-- [ ] Microsoft Graph Integration
+- [x] Microsoft Graph Integration
 - [ ] Agent Orchestration and A2A Extension
 - [ ] Persistence
 - [ ] Embeddings
@@ -115,8 +115,7 @@ sequenceDiagram
 ## Next Implementation Order
 
 ```text
-Microsoft Graph Integration
-  -> Agent Orchestration and A2A Extension
+Agent Orchestration and A2A Extension
   -> Persistence
   -> Embeddings
   -> Vector Search

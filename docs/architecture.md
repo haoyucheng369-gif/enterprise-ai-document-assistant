@@ -436,6 +436,7 @@ Tracked categories:
 - `planner`
 - `tool`
 - `skill`
+- `integration`
 
 The current implementation is intentionally replaceable. A later infrastructure step can swap `InMemoryAuditLogger` for structured logging, database storage, or OpenTelemetry without changing the calling code.
 
@@ -452,6 +453,12 @@ Examples:
 - SQL Data Adapter
 - Health Check Adapter
 - MCP Tool Adapter
+
+Current implementation:
+
+- `IMicrosoftGraphGateway` is the enterprise integration boundary
+- `MockMicrosoftGraphGateway` returns an Outlook-style draft response without OAuth
+- `POST /api/integrations/graph/email-draft` exposes the first Graph integration shape
 
 This allows the assistant to use enterprise capabilities without coupling prompts or UI components directly to external SDKs.
 

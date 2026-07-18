@@ -134,6 +134,18 @@ Content-Type: application/json
 
 ###
 
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/integrations/graph/email-draft
+Content-Type: application/json
+
+{
+  "documentId": "contract-review",
+  "to": "vendor@example.com",
+  "subject": "Questions about Vendor Service Agreement",
+  "body": "Please clarify renewal, liability, and service credit terms before approval."
+}
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/chat
 Content-Type: application/json
 
