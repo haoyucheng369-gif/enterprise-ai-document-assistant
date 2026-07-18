@@ -48,6 +48,15 @@ export type WorkspaceResponse = {
   toolResult: ToolResult
 }
 
+export type DocumentUploadResponse = {
+  id: string
+  title: string
+  type: string
+  updatedAt: string
+  status: string
+  sizeBytes: number
+}
+
 export type DataConnectionState = 'loading' | 'loaded' | 'unavailable'
 
 export type ChatRequest = {

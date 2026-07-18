@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react'
 import { streamChatMessage } from './api/chatApi'
+import { uploadDocument } from './api/documentApi'
 import { AssistantPanel } from './components/assistant/AssistantPanel'
 import { DocumentNav } from './components/documents/DocumentNav'
 import { DocumentWorkspace } from './components/documents/DocumentWorkspace'
 import { useApiStatus } from './hooks/useApiStatus'
 import { useWorkspaceData } from './hooks/useWorkspaceData'
-import type { Message } from './types'
+import type { DocumentItem, Message } from './types'
 
 function App() {
   const apiStatus = useApiStatus()
   const workspace = useWorkspaceData()
   const [messages, setMessages] = useState<Message[]>([])
+  const [uploadedDocuments, setUploadedDocuments] = useState<DocumentItem[]>([])
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'failed'>('idle')
   const [isSendingMessage, setIsSendingMessage] = useState(false)
 
   useEffect(() => {
@@ -40,7 +44,41 @@ function App() {
   }
 
   const { citations, documents, toolResult } = workspace.data
-  const selectedDocument = documents[0]
+  const visibleDocuments = [...uploadedDocuments, ...documents]
+  const selectedDocument =
+    visibleDocuments.find((document) => document.id === selectedDocumentId)
+    ?? visibleDocuments[0]
+
+  async function handleUploadDocument(file: File) {
+    setUploadState('uploading')
+
+    try {
+      const uploadedDocument = await uploadDocument(file)
+      const documentItem: DocumentItem = {
+        id: uploadedDocument.id,
+        title: uploadedDocument.title,
+        type: uploadedDocument.type,
+        updatedAt: uploadedDocument.updatedAt,
+        status: uploadedDocument.status,
+        sections: [
+          {
+            label: 'Upload metadata',
+            title: 'Document received',
+            body: `${uploadedDocument.title}.${uploadedDocument.type.toLowerCase()} was uploaded successfully. Size: ${uploadedDocument.sizeBytes.toLocaleString()} bytes. Text parsing and chunking will be added in the next step.`,
+          },
+        ],
+      }
+
+      setUploadedDocuments((currentDocuments) => [
+        documentItem,
+        ...currentDocuments,
+      ])
+      setSelectedDocumentId(documentItem.id)
+      setUploadState('idle')
+    } catch {
+      setUploadState('failed')
+    }
+  }
 
   async function handleSendMessage(message: string) {
     const userMessage: Message = {
@@ -111,7 +149,13 @@ function App() {
 
   return (
     <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[288px_minmax(0,1fr)_500px] 2xl:grid-cols-[300px_minmax(0,1fr)_540px]">
-      <DocumentNav documents={documents} selectedDocumentId={selectedDocument.id} />
+      <DocumentNav
+        documents={visibleDocuments}
+        onSelectDocument={setSelectedDocumentId}
+        onUploadDocument={handleUploadDocument}
+        selectedDocumentId={selectedDocument.id}
+        uploadState={uploadState}
+      />
       <DocumentWorkspace
         citations={citations}
         document={selectedDocument}

@@ -23,8 +23,10 @@ React chat
   -> Simple planner
   -> Audit logging
   -> Document ingestion
-  -> RAG with citations
   -> workflow extension
+  -> light enterprise integration
+  -> agent handoff extension
+  -> RAG with citations
 ```
 
 The implementation order intentionally brings Tool, MCP, Skill, and Harness concepts earlier because they are common, concrete, and easier to understand before full RAG.
@@ -180,9 +182,9 @@ Current V1 status:
 
 ---
 
-## Phase 7 - Document Intelligence and RAG
+## Phase 7 - Document Ingestion and Parsing
 
-Objective: enable source-grounded document question answering.
+Objective: establish the document ingestion path before the full RAG slice.
 
 Scope:
 
@@ -190,6 +192,38 @@ Scope:
 - Text extraction
 - Document metadata capture
 - Chunking strategy
+
+Expected outcome:
+
+- A user can upload a supported document.
+- The backend can validate the file and return document metadata.
+- Later retrieval steps have a clear entry point.
+
+---
+
+## Phase 8 - Workflow and Light Enterprise Integration
+
+Objective: coordinate simple multi-step flows and connect one light enterprise integration before the full RAG slice.
+
+Scope:
+
+- Simple workflow: summarize document, identify risks, generate email draft
+- One Microsoft Graph integration for an Outlook or Calendar scenario
+- Optional Agent-to-Agent handoff: `DocumentAgent` to `EmailAgent`
+- Basic workflow state persistence
+
+Expected outcome:
+
+- The assistant can coordinate document analysis, tool execution, and business output generation in one small workflow.
+
+---
+
+## Phase 9 - Document RAG
+
+Objective: enable source-grounded document question answering after ingestion and workflow concepts are in place.
+
+Scope:
+
 - Embedding generation through the AI Gateway
 - Vector store integration
 - Semantic retrieval
@@ -201,40 +235,6 @@ Expected outcome:
 - A user can upload a document and ask questions about it.
 - Answers are grounded in retrieved document sections.
 - The UI can show sources for generated answers.
-
----
-
-## Phase 8 - Workflow and Light Enterprise Integration
-
-Objective: coordinate simple multi-step flows and connect one light enterprise integration.
-
-Scope:
-
-- Simple workflow: summarize document, identify risks, generate email draft
-- Optional Agent-to-Agent handoff: `DocumentAgent` to `EmailAgent`
-- One Microsoft Graph integration for an Outlook or Calendar scenario
-- Basic workflow state persistence
-
-Expected outcome:
-
-- The assistant can coordinate document analysis, tool execution, and business output generation in one small workflow.
-
----
-
-## Phase 9 - Agent Orchestration and A2A Extension
-
-Objective: introduce a light agent coordination path after the workflow is stable.
-
-Scope:
-
-- `CoordinatorAgent` chooses a known path
-- `DocumentAgent` runs summary and risk analysis
-- `EmailAgent` drafts follow-up email content
-- Simple handoff from `DocumentAgent` result to `EmailAgent`
-
-Expected outcome:
-
-- The application shows both coordinator-to-agent orchestration and simple agent-to-agent handoff without open-ended autonomous behavior.
 
 ---
 

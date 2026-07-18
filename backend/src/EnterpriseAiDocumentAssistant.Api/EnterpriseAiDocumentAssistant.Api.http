@@ -69,6 +69,23 @@ Accept: application/json
 
 ###
 
+GET {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/documents/uploads
+Accept: application/json
+
+###
+
+POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/documents/upload
+Content-Type: multipart/form-data; boundary=upload-boundary
+
+--upload-boundary
+Content-Disposition: form-data; name="file"; filename="sample-contract.txt"
+Content-Type: text/plain
+
+Sample contract text for upload metadata validation.
+--upload-boundary--
+
+###
+
 POST {{EnterpriseAiDocumentAssistant.Api_HostAddress}}/api/skills/summary
 Content-Type: application/json
 

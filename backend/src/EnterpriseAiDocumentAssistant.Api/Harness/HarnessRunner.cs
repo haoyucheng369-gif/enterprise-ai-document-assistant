@@ -2,6 +2,7 @@ using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
+using EnterpriseAiDocumentAssistant.Api.DocumentUpload;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Planner;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
@@ -21,6 +22,7 @@ public sealed class HarnessRunner : IHarnessRunner
     private readonly IToolExecutor toolExecutor;
     private readonly IAgentPlanner agentPlanner;
     private readonly IAuditLogger auditLogger;
+    private readonly IDocumentUploadService documentUploadService;
     private readonly ISummarySkill summarySkill;
     private readonly IRiskAnalysisSkill riskAnalysisSkill;
     private readonly IEmailDraftSkill emailDraftSkill;
@@ -34,6 +36,7 @@ public sealed class HarnessRunner : IHarnessRunner
         IToolExecutor toolExecutor,
         IAgentPlanner agentPlanner,
         IAuditLogger auditLogger,
+        IDocumentUploadService documentUploadService,
         ISummarySkill summarySkill,
         IRiskAnalysisSkill riskAnalysisSkill,
         IEmailDraftSkill emailDraftSkill)
@@ -46,6 +49,7 @@ public sealed class HarnessRunner : IHarnessRunner
         this.toolExecutor = toolExecutor;
         this.agentPlanner = agentPlanner;
         this.auditLogger = auditLogger;
+        this.documentUploadService = documentUploadService;
         this.summarySkill = summarySkill;
         this.riskAnalysisSkill = riskAnalysisSkill;
         this.emailDraftSkill = emailDraftSkill;
@@ -68,6 +72,7 @@ public sealed class HarnessRunner : IHarnessRunner
         };
 
         checks.Add(await CheckAiGatewayReturnsStructuredMessageAsync(cancellationToken));
+        checks.Add(await CheckDocumentUploadAcceptsSupportedFileAsync(cancellationToken));
         checks.Add(CheckAgentPlannerSelectsRiskAnalysis());
         checks.Add(await CheckDocumentMetadataToolSucceedsAsync(cancellationToken));
         checks.Add(await CheckUnknownToolFailsAsync(cancellationToken));
@@ -261,6 +266,23 @@ public sealed class HarnessRunner : IHarnessRunner
             "agent planner selects risk analysis route",
             passed,
             passed ? "Planner selected the expected skill route." : "Planner selected an unexpected route.");
+    }
+
+    private async Task<HarnessCheckResult> CheckDocumentUploadAcceptsSupportedFileAsync(CancellationToken cancellationToken)
+    {
+        await using var stream = new MemoryStream("sample content"u8.ToArray());
+        var file = new FormFile(stream, 0, stream.Length, "file", "sample-contract.txt");
+        var result = await documentUploadService.UploadAsync(file, cancellationToken);
+
+        var passed = result.Succeeded
+            && result.Document is not null
+            && result.Document.Status == "Uploaded"
+            && result.Document.Type == "TXT";
+
+        return Result(
+            "document upload accepts supported file",
+            passed,
+            passed ? "Upload service returned document metadata." : result.Error ?? "Upload service did not return expected metadata.");
     }
 
     private async Task<HarnessCheckResult> CheckDocumentMetadataToolSucceedsAsync(CancellationToken cancellationToken)

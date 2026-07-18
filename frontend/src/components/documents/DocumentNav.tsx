@@ -1,15 +1,44 @@
 import { FileText, Upload } from 'lucide-react'
+import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 import type { DocumentItem } from '../../types'
 
 type DocumentNavProps = {
   documents: DocumentItem[]
   selectedDocumentId: string
+  uploadState: 'idle' | 'uploading' | 'failed'
+  onSelectDocument: (documentId: string) => void
+  onUploadDocument: (file: File) => Promise<void>
 }
 
 export function DocumentNav({
   documents,
+  onSelectDocument,
+  onUploadDocument,
   selectedDocumentId,
+  uploadState,
 }: DocumentNavProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [isDraggingFile, setIsDraggingFile] = useState(false)
+
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (file) {
+      await onUploadDocument(file)
+    }
+  }
+
+  async function handleDrop(event: DragEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    setIsDraggingFile(false)
+
+    const file = event.dataTransfer.files[0]
+    if (file) {
+      await onUploadDocument(file)
+    }
+  }
+
   return (
     <aside
       aria-label="Documents"
@@ -32,14 +61,50 @@ export function DocumentNav({
 
       <div className="mt-6 flex items-center justify-between">
         <span className="text-sm font-semibold text-slate-700">Documents</span>
-        <button
-          aria-label="Upload document"
-          className="inline-flex size-8 cursor-pointer items-center justify-center rounded-md border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-          type="button"
-        >
-          <Upload size={15} />
-        </button>
+        <input
+          ref={inputRef}
+          accept=".txt,.md,.pdf,.docx"
+          className="hidden"
+          onChange={handleFileChange}
+          type="file"
+        />
       </div>
+
+      <button
+        aria-label="Upload document"
+        className={`mt-3 grid w-full cursor-pointer place-items-center gap-2 rounded-md border border-dashed px-3 py-4 text-center transition ${
+          isDraggingFile
+            ? 'border-blue-400 bg-blue-50 text-blue-700'
+            : 'border-slate-300 bg-slate-50 text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700'
+        } ${uploadState === 'uploading' ? 'cursor-wait opacity-75' : ''}`}
+        disabled={uploadState === 'uploading'}
+        onClick={() => inputRef.current?.click()}
+        onDragEnter={(event) => {
+          event.preventDefault()
+          setIsDraggingFile(true)
+        }}
+        onDragLeave={(event) => {
+          event.preventDefault()
+          setIsDraggingFile(false)
+        }}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={handleDrop}
+        type="button"
+      >
+        <span className="grid size-8 place-items-center rounded-md bg-white text-blue-600 shadow-sm ring-1 ring-slate-200">
+          <Upload size={16} />
+        </span>
+        <span className="text-xs font-medium">
+          {uploadState === 'uploading' ? 'Uploading document' : 'Drop file or browse'}
+        </span>
+        <span
+          className={`text-[11px] ${
+            uploadState === 'failed' ? 'text-rose-600' : 'text-slate-400'
+          }`}
+        >
+          {uploadState === 'failed' ? 'Upload failed' : 'TXT, MD, PDF, DOCX'}
+        </span>
+      </button>
 
       <div className="mt-3 grid gap-2">
         {documents.map((document) => (
@@ -50,6 +115,7 @@ export function DocumentNav({
                 : 'border-slate-200 bg-white hover:bg-slate-50'
             }`}
             key={document.id}
+            onClick={() => onSelectDocument(document.id)}
             type="button"
           >
             <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">

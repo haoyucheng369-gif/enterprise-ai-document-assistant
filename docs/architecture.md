@@ -209,6 +209,13 @@ Responsibilities:
 - Document summary preparation
 - Risk and obligation extraction support
 
+Current endpoint:
+
+- `POST /api/documents/upload`
+- `GET /api/documents/uploads`
+
+Current implementation stores upload metadata only. Text parsing, chunking, embeddings, and retrieval remain separate steps.
+
 ### RAG
 
 RAG connects document retrieval with model responses.

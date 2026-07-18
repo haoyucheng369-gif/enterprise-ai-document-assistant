@@ -99,14 +99,14 @@ sequenceDiagram
 - [x] Simple Agent Planner
 - [x] Audit Logging
 - [x] AI Gateway
-- [ ] Document Upload
+- [x] Document Upload
 - [ ] Text Parsing and Chunking
-- [ ] Embeddings
-- [ ] Vector Search
-- [ ] RAG Answer with Citations
 - [ ] Workflow
 - [ ] Microsoft Graph Integration
 - [ ] Agent Orchestration and A2A Extension
+- [ ] Embeddings
+- [ ] Vector Search
+- [ ] RAG Answer with Citations
 
 ---
 
@@ -127,12 +127,12 @@ Simple guardrails
   -> AI Gateway
   -> Document Upload
   -> Text Parsing and Chunking
-  -> Embeddings
-  -> Vector Search
-  -> RAG Answer with Citations
   -> Workflow
   -> Microsoft Graph Integration
   -> Agent Orchestration and A2A Extension
+  -> Embeddings
+  -> Vector Search
+  -> RAG Answer with Citations
 ```
 
 ---
