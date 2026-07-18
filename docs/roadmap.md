@@ -173,6 +173,11 @@ Expected outcome:
 - Model calls are not scattered across business code.
 - The backend can evolve toward multiple model providers without changing the frontend.
 
+Current V1 status:
+
+- AI Gateway abstraction is in place with `MockAiGateway`
+- Real OpenAI or Azure OpenAI providers remain a later provider implementation step
+
 ---
 
 ## Phase 7 - Document Intelligence and RAG

@@ -98,7 +98,7 @@ sequenceDiagram
 - [x] Conversation Memory
 - [x] Simple Agent Planner
 - [x] Audit Logging
-- [ ] AI Gateway
+- [x] AI Gateway
 - [ ] Document Upload
 - [ ] Text Parsing and Chunking
 - [ ] Embeddings

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using EnterpriseAiDocumentAssistant.Api.Audit;
+using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
@@ -13,17 +14,20 @@ namespace EnterpriseAiDocumentAssistant.Api.Controllers;
 public sealed class ChatController : ControllerBase
 {
     private readonly IDocumentAssistantPromptOrchestrator promptOrchestrator;
+    private readonly IAiGateway aiGateway;
     private readonly IStructuredAssistantResponseValidator structuredResponseValidator;
     private readonly IChatGuardrailEvaluator chatGuardrailEvaluator;
     private readonly IAuditLogger auditLogger;
 
     public ChatController(
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
+        IAiGateway aiGateway,
         IStructuredAssistantResponseValidator structuredResponseValidator,
         IChatGuardrailEvaluator chatGuardrailEvaluator,
         IAuditLogger auditLogger)
     {
         this.promptOrchestrator = promptOrchestrator;
+        this.aiGateway = aiGateway;
         this.structuredResponseValidator = structuredResponseValidator;
         this.chatGuardrailEvaluator = chatGuardrailEvaluator;
         this.auditLogger = auditLogger;
@@ -32,7 +36,9 @@ public sealed class ChatController : ControllerBase
     [HttpPost]
     [ProducesResponseType<ChatResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    public ActionResult<ChatResponse> Post(ChatRequest request)
+    public async Task<ActionResult<ChatResponse>> Post(
+        ChatRequest request,
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -42,7 +48,7 @@ public sealed class ChatController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var structuredMessage = BuildValidatedStructuredMessage(request);
+        var structuredMessage = await BuildValidatedStructuredMessageAsync(request, cancellationToken);
         if (structuredMessage.Result is not null)
         {
             return structuredMessage.Result;
@@ -51,7 +57,7 @@ public sealed class ChatController : ControllerBase
         var message = structuredMessage.Value
             ?? throw new InvalidOperationException("Structured message was not created.");
         var responseContent = string.Concat(
-            promptOrchestrator.BuildMockResponseChunks(message));
+            aiGateway.BuildResponseChunks(message));
 
         var response = new MessageResponse(
             $"assistant-{Guid.NewGuid():N}",
@@ -65,7 +71,9 @@ public sealed class ChatController : ControllerBase
     [HttpPost("structured")]
     [ProducesResponseType<StructuredChatResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    public ActionResult<StructuredChatResponse> Structured(ChatRequest request)
+    public async Task<ActionResult<StructuredChatResponse>> Structured(
+        ChatRequest request,
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -75,7 +83,7 @@ public sealed class ChatController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var structuredMessage = BuildValidatedStructuredMessage(request);
+        var structuredMessage = await BuildValidatedStructuredMessageAsync(request, cancellationToken);
         if (structuredMessage.Result is not null)
         {
             return structuredMessage.Result;
@@ -106,7 +114,7 @@ public sealed class ChatController : ControllerBase
         Response.Headers.CacheControl = "no-cache";
         Response.Headers.Append("X-Accel-Buffering", "no");
 
-        var structuredMessage = BuildValidatedStructuredMessage(request);
+        var structuredMessage = await BuildValidatedStructuredMessageAsync(request, cancellationToken);
         if (structuredMessage.Result is not null)
         {
             return structuredMessage.Result;
@@ -115,7 +123,7 @@ public sealed class ChatController : ControllerBase
         var message = structuredMessage.Value
             ?? throw new InvalidOperationException("Structured message was not created.");
 
-        foreach (var chunk in promptOrchestrator.BuildMockResponseChunks(message))
+        foreach (var chunk in aiGateway.BuildResponseChunks(message))
         {
             await Response.WriteAsync(chunk, cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
@@ -126,8 +134,9 @@ public sealed class ChatController : ControllerBase
         return new EmptyResult();
     }
 
-    private ActionResult<StructuredAssistantMessage> BuildValidatedStructuredMessage(
-        ChatRequest request)
+    private async Task<ActionResult<StructuredAssistantMessage>> BuildValidatedStructuredMessageAsync(
+        ChatRequest request,
+        CancellationToken cancellationToken)
     {
         var guardrailEvaluation = chatGuardrailEvaluator.Evaluate(request);
         if (guardrailEvaluation.IsBlocked)
@@ -137,8 +146,11 @@ public sealed class ChatController : ControllerBase
         }
 
         var prompt = promptOrchestrator.BuildPrompt(request);
-        var structuredMessage = promptOrchestrator.BuildMockStructuredResponse(prompt);
-        return ValidateStructuredMessage(structuredMessage);
+        var modelResponse = await aiGateway.GenerateChatResponseAsync(
+            new ChatModelRequest(prompt),
+            cancellationToken);
+
+        return ValidateStructuredMessage(modelResponse.Message);
     }
 
     private ActionResult<StructuredAssistantMessage> ValidateStructuredMessage(

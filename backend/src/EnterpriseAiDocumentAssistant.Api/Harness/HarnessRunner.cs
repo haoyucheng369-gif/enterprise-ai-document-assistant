@@ -1,5 +1,6 @@
 using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Audit;
+using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Planner;
@@ -15,6 +16,7 @@ public sealed class HarnessRunner : IHarnessRunner
     private readonly IDocumentAssistantPromptOrchestrator promptOrchestrator;
     private readonly IStructuredAssistantResponseValidator structuredOutputValidator;
     private readonly IChatGuardrailEvaluator guardrailEvaluator;
+    private readonly IAiGateway aiGateway;
     private readonly IToolRegistry toolRegistry;
     private readonly IToolExecutor toolExecutor;
     private readonly IAgentPlanner agentPlanner;
@@ -27,6 +29,7 @@ public sealed class HarnessRunner : IHarnessRunner
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
         IStructuredAssistantResponseValidator structuredOutputValidator,
         IChatGuardrailEvaluator guardrailEvaluator,
+        IAiGateway aiGateway,
         IToolRegistry toolRegistry,
         IToolExecutor toolExecutor,
         IAgentPlanner agentPlanner,
@@ -38,6 +41,7 @@ public sealed class HarnessRunner : IHarnessRunner
         this.promptOrchestrator = promptOrchestrator;
         this.structuredOutputValidator = structuredOutputValidator;
         this.guardrailEvaluator = guardrailEvaluator;
+        this.aiGateway = aiGateway;
         this.toolRegistry = toolRegistry;
         this.toolExecutor = toolExecutor;
         this.agentPlanner = agentPlanner;
@@ -63,6 +67,7 @@ public sealed class HarnessRunner : IHarnessRunner
             CheckEmailDraftSkillSucceeds()
         };
 
+        checks.Add(await CheckAiGatewayReturnsStructuredMessageAsync(cancellationToken));
         checks.Add(CheckAgentPlannerSelectsRiskAnalysis());
         checks.Add(await CheckDocumentMetadataToolSucceedsAsync(cancellationToken));
         checks.Add(await CheckUnknownToolFailsAsync(cancellationToken));
@@ -168,6 +173,29 @@ public sealed class HarnessRunner : IHarnessRunner
             "tool registry lists expected tools",
             passed,
             passed ? "Expected tools are registered." : "One or more expected tools are missing.");
+    }
+
+    private async Task<HarnessCheckResult> CheckAiGatewayReturnsStructuredMessageAsync(CancellationToken cancellationToken)
+    {
+        var prompt = promptOrchestrator.BuildPrompt(new ChatRequest(
+            "What should I review first?",
+            "contract-review",
+            []));
+
+        var response = await aiGateway.GenerateChatResponseAsync(
+            new ChatModelRequest(prompt),
+            cancellationToken);
+
+        var passed = response.Provider == "Mock"
+            && response.Model == "mock-document-assistant"
+            && !string.IsNullOrWhiteSpace(response.Message.Answer)
+            && response.InputTokenEstimate > 0
+            && response.OutputTokenEstimate > 0;
+
+        return Result(
+            "ai gateway returns structured model response",
+            passed,
+            passed ? "MockAiGateway returned model metadata and structured content." : "AI Gateway response was incomplete.");
     }
 
     private HarnessCheckResult CheckSummarySkillSucceeds()
@@ -276,12 +304,13 @@ public sealed class HarnessRunner : IHarnessRunner
     {
         var events = auditLogger.ListRecent();
         var passed = events.Any(auditEvent => auditEvent.Category == "tool")
-            && events.Any(auditEvent => auditEvent.Category == "planner");
+            && events.Any(auditEvent => auditEvent.Category == "planner")
+            && events.Any(auditEvent => auditEvent.Category == "ai_gateway");
 
         return Result(
-            "audit logger captures planner and tool events",
+            "audit logger captures planner, tool, and gateway events",
             passed,
-            passed ? "Audit trail contains recent planner and tool events." : "Audit trail did not include expected events.");
+            passed ? "Audit trail contains recent planner, tool, and gateway events." : "Audit trail did not include expected events.");
     }
 
     private static HarnessCheckResult Result(string name, bool passed, string detail)

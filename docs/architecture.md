@@ -165,6 +165,13 @@ Responsibilities:
 
 The backend should be compatible with Microsoft-friendly AI abstractions such as Semantic Kernel and Microsoft.Extensions.AI when they fit the implementation.
 
+Current implementation:
+
+- `IAiGateway` is the application-facing model boundary
+- `MockAiGateway` returns structured assistant messages without calling an external provider
+- Gateway responses include provider, model, latency, and token estimates
+- Gateway calls are recorded in the audit trail
+
 ### Prompt Orchestration
 
 Prompt orchestration manages repeatable AI behavior instead of scattering prompt strings across controllers or UI code.
