@@ -4,20 +4,16 @@ namespace EnterpriseAiDocumentAssistant.Api.Skills;
 
 public sealed class SummarySkill : ISummarySkill
 {
-    private readonly IWorkspaceDataProvider workspaceDataProvider;
+    private readonly IApplicationDocumentProvider applicationDocumentProvider;
 
-    public SummarySkill(IWorkspaceDataProvider workspaceDataProvider)
+    public SummarySkill(IApplicationDocumentProvider applicationDocumentProvider)
     {
-        this.workspaceDataProvider = workspaceDataProvider;
+        this.applicationDocumentProvider = applicationDocumentProvider;
     }
 
     public SummarySkillResponse? Run(SummarySkillRequest request)
     {
-        var document = workspaceDataProvider.GetWorkspace()
-            .Documents
-            .FirstOrDefault(candidate =>
-                string.Equals(candidate.Id, request.DocumentId, StringComparison.OrdinalIgnoreCase));
-
+        var document = applicationDocumentProvider.FindById(request.DocumentId);
         if (document is null)
         {
             return null;

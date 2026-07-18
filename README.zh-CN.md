@@ -115,22 +115,7 @@ sequenceDiagram
 ## Next Implementation Order
 
 ```text
-Simple guardrails
-  -> Tool Gateway
-  -> First tool
-  -> MCP Server
-  -> Prompt and Tool Harness
-  -> SummarySkill
-  -> RiskAnalysisSkill
-  -> EmailDraftSkill
-  -> Conversation Memory
-  -> Simple Agent Planner
-  -> Audit logging
-  -> AI Gateway
-  -> Document Upload
-  -> Text Parsing and Chunking
-  -> Workflow
-  -> Microsoft Graph Integration
+Microsoft Graph Integration
   -> Agent Orchestration and A2A Extension
   -> Persistence
   -> Embeddings

@@ -5,11 +5,11 @@ namespace EnterpriseAiDocumentAssistant.Api.ToolGateway.Tools;
 
 public sealed class GetDocumentMetadataTool : ITool
 {
-    private readonly IWorkspaceDataProvider workspaceDataProvider;
+    private readonly IApplicationDocumentProvider applicationDocumentProvider;
 
-    public GetDocumentMetadataTool(IWorkspaceDataProvider workspaceDataProvider)
+    public GetDocumentMetadataTool(IApplicationDocumentProvider applicationDocumentProvider)
     {
-        this.workspaceDataProvider = workspaceDataProvider;
+        this.applicationDocumentProvider = applicationDocumentProvider;
     }
 
     public ToolDefinition Definition { get; } = new(
@@ -36,11 +36,7 @@ public sealed class GetDocumentMetadataTool : ITool
                 new Dictionary<string, object?>()));
         }
 
-        var document = workspaceDataProvider.GetWorkspace()
-            .Documents
-            .FirstOrDefault(candidate =>
-                string.Equals(candidate.Id, documentId, StringComparison.OrdinalIgnoreCase));
-
+        var document = applicationDocumentProvider.FindById(documentId);
         if (document is null)
         {
             return Task.FromResult(new ToolExecutionResult(

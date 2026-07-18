@@ -1,47 +1,39 @@
 # Frontend
 
-React Workspace for Enterprise AI Document Assistant.
+React workspace for Enterprise AI Document Assistant.
+
+This README is scoped to the frontend only. Project status and roadmap live in the root README files.
 
 ## Current Scope
 
-- Document list
-- Document detail view
-- Right-side AI Assistant shell
-- Citation panel placeholder
-- Tool result panel placeholder
-- Tailwind CSS utility styling
-- Component-based workspace structure
+- Document list and selected document preview
+- Upload drop zone for TXT, MD, PDF, and DOCX files
+- File-type icons in the document list
+- Right-side Assistant panel with streaming chat rendering
+- Citation, tool result, and workflow result panels
+- Document review workflow action from the workspace header
 - API status connection to the ASP.NET Core backend
-- Workspace data loaded from the ASP.NET Core backend
-- Mock chat request/response through the ASP.NET Core backend
-- Streaming chat response rendering in the Assistant panel
+- Component-based structure with Tailwind CSS
 
 ## Structure
 
 ```text
 src/
-├── components/
-│   ├── assistant/
-│   │   └── AssistantPanel.tsx
-│   ├── documents/
-│   │   ├── DocumentNav.tsx
-│   │   ├── DocumentPreview.tsx
-│   │   └── DocumentWorkspace.tsx
-│   ├── insights/
-│   │   ├── CitationPanel.tsx
-│   │   └── ToolResultPanel.tsx
-│   └── layout/
-│       └── WorkspaceHeader.tsx
-├── hooks/
-│   ├── useWorkspaceData.ts
-│   └── useApiStatus.ts
-├── api/
-│   ├── workspaceApi.ts
-│   ├── chatApi.ts
-│   └── statusApi.ts
-├── App.tsx
-├── index.css
-└── types.ts
+  api/
+    chatApi.ts
+    documentApi.ts
+    statusApi.ts
+    workspaceApi.ts
+    workflowApi.ts
+  components/
+    assistant/
+    documents/
+    insights/
+    layout/
+  hooks/
+  App.tsx
+  index.css
+  types.ts
 ```
 
 ## Configuration

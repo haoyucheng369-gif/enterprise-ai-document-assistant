@@ -29,6 +29,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
         services.AddSingleton<IDocumentChunker, SimpleDocumentChunker>();
         services.AddSingleton<IDocumentUploadService, InMemoryDocumentUploadService>();
+        services.AddSingleton<IApplicationDocumentProvider, ApplicationDocumentProvider>();
         services.AddSingleton<IAiGateway, MockAiGateway>();
         services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
         services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();

@@ -5,20 +5,16 @@ namespace EnterpriseAiDocumentAssistant.Api.Skills;
 
 public sealed class RiskAnalysisSkill : IRiskAnalysisSkill
 {
-    private readonly IWorkspaceDataProvider workspaceDataProvider;
+    private readonly IApplicationDocumentProvider applicationDocumentProvider;
 
-    public RiskAnalysisSkill(IWorkspaceDataProvider workspaceDataProvider)
+    public RiskAnalysisSkill(IApplicationDocumentProvider applicationDocumentProvider)
     {
-        this.workspaceDataProvider = workspaceDataProvider;
+        this.applicationDocumentProvider = applicationDocumentProvider;
     }
 
     public RiskAnalysisSkillResponse? Run(RiskAnalysisSkillRequest request)
     {
-        var document = workspaceDataProvider.GetWorkspace()
-            .Documents
-            .FirstOrDefault(candidate =>
-                string.Equals(candidate.Id, request.DocumentId, StringComparison.OrdinalIgnoreCase));
-
+        var document = applicationDocumentProvider.FindById(request.DocumentId);
         if (document is null)
         {
             return null;
