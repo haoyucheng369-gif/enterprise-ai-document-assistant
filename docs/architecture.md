@@ -199,10 +199,10 @@ Current skill:
 - `SummarySkill`: summarizes a selected document through `POST /api/skills/summary`
 - `RiskAnalysisSkill`: extracts risk items through `POST /api/skills/risk-analysis`
 - `EmailDraftSkill`: drafts a follow-up email through `POST /api/skills/email-draft`
+- `ClassificationSkill`: classifies document type, priority, and risk level
 
 Planned near-term skills:
 
-- `ClassificationSkill`: classifies document type, priority, and risk level
 - `StructuredExtractionSkill`: extracts business fields into validated JSON through the AI Gateway
 
 ### Document Intelligence

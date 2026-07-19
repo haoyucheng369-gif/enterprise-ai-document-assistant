@@ -30,6 +30,7 @@ public sealed class HarnessRunner : IHarnessRunner
     private readonly ISummarySkill summarySkill;
     private readonly IRiskAnalysisSkill riskAnalysisSkill;
     private readonly IEmailDraftSkill emailDraftSkill;
+    private readonly IClassificationSkill classificationSkill;
 
     public HarnessRunner(
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
@@ -45,7 +46,8 @@ public sealed class HarnessRunner : IHarnessRunner
         IMicrosoftGraphGateway microsoftGraphGateway,
         ISummarySkill summarySkill,
         IRiskAnalysisSkill riskAnalysisSkill,
-        IEmailDraftSkill emailDraftSkill)
+        IEmailDraftSkill emailDraftSkill,
+        IClassificationSkill classificationSkill)
     {
         this.promptOrchestrator = promptOrchestrator;
         this.structuredOutputValidator = structuredOutputValidator;
@@ -61,6 +63,7 @@ public sealed class HarnessRunner : IHarnessRunner
         this.summarySkill = summarySkill;
         this.riskAnalysisSkill = riskAnalysisSkill;
         this.emailDraftSkill = emailDraftSkill;
+        this.classificationSkill = classificationSkill;
     }
 
     public async Task<HarnessReport> RunAsync(CancellationToken cancellationToken)
@@ -80,6 +83,7 @@ public sealed class HarnessRunner : IHarnessRunner
         };
 
         checks.Add(await CheckAiGatewayReturnsStructuredMessageAsync(cancellationToken));
+        checks.Add(await CheckClassificationSkillSucceedsAsync(cancellationToken));
         checks.Add(await CheckDocumentUploadAcceptsSupportedFileAsync(cancellationToken));
         checks.Add(CheckDocumentReviewWorkflowSucceeds());
         checks.Add(CheckMicrosoftGraphEmailDraftSucceeds());
@@ -198,7 +202,7 @@ public sealed class HarnessRunner : IHarnessRunner
             []));
 
         var response = await aiGateway.GenerateChatResponseAsync(
-            new ChatModelRequest(prompt),
+            new ChatModelRequest(prompt, "Mock"),
             cancellationToken);
 
         var passed = !string.IsNullOrWhiteSpace(response.Provider)
@@ -260,6 +264,24 @@ public sealed class HarnessRunner : IHarnessRunner
             "email draft skill returns structured draft",
             passed,
             passed ? "EmailDraftSkill returned subject, body, sources, and next actions." : "EmailDraftSkill result was missing expected fields.");
+    }
+
+    private async Task<HarnessCheckResult> CheckClassificationSkillSucceedsAsync(CancellationToken cancellationToken)
+    {
+        var result = await classificationSkill.RunAsync(
+            new ClassificationSkillRequest("contract-review", "Mock"),
+            cancellationToken);
+
+        var passed = result is not null
+            && result.Category == "Contract"
+            && !string.IsNullOrWhiteSpace(result.Priority)
+            && result.Confidence > 0
+            && result.Signals.Count > 0;
+
+        return Result(
+            "classification skill returns structured category",
+            passed,
+            passed ? "ClassificationSkill returned category, priority, confidence, and signals." : "ClassificationSkill result was missing expected fields.");
     }
 
     private HarnessCheckResult CheckAgentPlannerSelectsRiskAnalysis()

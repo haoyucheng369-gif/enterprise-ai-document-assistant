@@ -63,6 +63,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ISummarySkill, SummarySkill>();
         services.AddSingleton<IRiskAnalysisSkill, RiskAnalysisSkill>();
         services.AddSingleton<IEmailDraftSkill, EmailDraftSkill>();
+        services.AddSingleton<IClassificationSkill, ClassificationSkill>();
 
         return services;
     }

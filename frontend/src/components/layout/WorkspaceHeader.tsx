@@ -1,15 +1,19 @@
-import { Workflow } from 'lucide-react'
+import { Tags, Workflow } from 'lucide-react'
 import type { DocumentItem } from '../../types'
 
 type WorkspaceHeaderProps = {
   document: DocumentItem
+  isClassifying: boolean
   isWorkflowRunning: boolean
+  onClassifyDocument: () => Promise<void>
   onRunWorkflow: () => Promise<void>
 }
 
 export function WorkspaceHeader({
   document,
+  isClassifying,
   isWorkflowRunning,
+  onClassifyDocument,
   onRunWorkflow,
 }: WorkspaceHeaderProps) {
   return (
@@ -21,6 +25,15 @@ export function WorkspaceHeader({
         <h2 className="text-xl font-semibold text-slate-950">{document.title}</h2>
       </div>
       <div className="flex gap-2">
+        <button
+          className="inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 text-sm font-medium text-blue-800 transition hover:bg-blue-100 disabled:cursor-wait disabled:opacity-70"
+          disabled={isClassifying}
+          onClick={onClassifyDocument}
+          type="button"
+        >
+          <Tags size={16} />
+          {isClassifying ? 'Classifying' : 'Classify'}
+        </button>
         <button
           className="inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 text-sm font-medium text-indigo-800 transition hover:bg-indigo-100 disabled:cursor-wait disabled:opacity-70"
           disabled={isWorkflowRunning}

@@ -77,6 +77,17 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
             return;
         }
 
+        if (string.Equals(context.ApiDescription.RelativePath, "api/skills/classification", StringComparison.OrdinalIgnoreCase))
+        {
+            mediaType.Example = new OpenApiObject
+            {
+                ["documentId"] = new OpenApiString("contract-review"),
+                ["aiProvider"] = new OpenApiString("OpenAI")
+            };
+
+            return;
+        }
+
         if (string.Equals(context.ApiDescription.RelativePath, "api/planner/plan", StringComparison.OrdinalIgnoreCase))
         {
             mediaType.Example = new OpenApiObject

@@ -25,8 +25,8 @@ React chat
   -> Document ingestion
   -> workflow extension
   -> light enterprise integration
-  -> classification skill
   -> real model provider
+  -> classification skill
   -> extraction skill
   -> agent handoff extension
   -> persistence
@@ -34,7 +34,7 @@ React chat
   -> grounded-answer guardrails
 ```
 
-The implementation order intentionally brings Tool, MCP, Skill, Harness, and classification concepts earlier because they are common, concrete, and easier to understand before full RAG. After the first classification slice, the real AI Gateway provider is introduced so later skills are no longer purely mock-based.
+The implementation order intentionally brings Tool, MCP, Skill, Harness, and real model provider concepts earlier because they are common, concrete, and easier to understand before full RAG. Classification now uses the runtime provider selector so the same capability can run against local mock or a real model path.
 
 ---
 
@@ -243,6 +243,12 @@ Scope:
 Expected outcome:
 
 - The assistant can classify documents in a format that backend code can consume safely.
+
+Current V1 progress:
+
+- `POST /api/skills/classification` returns category, priority, confidence, reason, signals, and sources
+- The React workspace can run classification for the selected document with the active AI provider
+- Harness checks validate the classification contract through the mock path
 
 ---
 

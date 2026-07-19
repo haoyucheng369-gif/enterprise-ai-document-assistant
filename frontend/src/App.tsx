@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { classifyDocument } from './api/classificationApi'
 import { streamChatMessage } from './api/chatApi'
 import { uploadDocument } from './api/documentApi'
 import { runDocumentReviewWorkflow } from './api/workflowApi'
@@ -9,6 +10,7 @@ import { useApiStatus } from './hooks/useApiStatus'
 import { useWorkspaceData } from './hooks/useWorkspaceData'
 import type {
   AiProviderSelection,
+  ClassificationSkillResponse,
   DocumentItem,
   DocumentReviewWorkflowResponse,
   Message,
@@ -40,6 +42,10 @@ function App() {
   const [workflowState, setWorkflowState] = useState<'idle' | 'running' | 'failed'>('idle')
   const [workflowResult, setWorkflowResult] =
     useState<DocumentReviewWorkflowResponse | null>(null)
+  const [classificationState, setClassificationState] =
+    useState<'idle' | 'running' | 'failed'>('idle')
+  const [classificationResult, setClassificationResult] =
+    useState<ClassificationSkillResponse | null>(null)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
   const [aiProvider, setAiProvider] =
     useState<AiProviderSelection>(getStoredAiProvider)
@@ -51,8 +57,14 @@ function App() {
   }, [workspace.data])
 
   useEffect(() => {
+    // Persist the last selected provider so repeated local testing does not require re-selecting it.
     localStorage.setItem(aiProviderStorageKey, aiProvider)
   }, [aiProvider])
+
+  useEffect(() => {
+    setClassificationResult(null)
+    setClassificationState('idle')
+  }, [selectedDocumentId])
 
   if (workspace.state === 'loading') {
     return (
@@ -191,6 +203,23 @@ function App() {
     }
   }
 
+  async function handleClassifyDocument() {
+    setClassificationState('running')
+    setClassificationResult(null)
+
+    try {
+      const result = await classifyDocument({
+        documentId: selectedDocument.id,
+        aiProvider,
+      })
+
+      setClassificationResult(result)
+      setClassificationState('idle')
+    } catch {
+      setClassificationState('failed')
+    }
+  }
+
   return (
     <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[288px_minmax(0,1fr)_500px] 2xl:grid-cols-[300px_minmax(0,1fr)_540px]">
       <DocumentNav
@@ -202,7 +231,10 @@ function App() {
       />
       <DocumentWorkspace
         citations={citations}
+        classificationResult={classificationResult}
+        classificationState={classificationState}
         document={selectedDocument}
+        onClassifyDocument={handleClassifyDocument}
         onRunWorkflow={handleRunWorkflow}
         toolResult={toolResult}
         workflowResult={workflowResult}

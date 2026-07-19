@@ -24,6 +24,7 @@ public sealed class RoutingAiGateway : IAiGateway
         ChatModelRequest request,
         CancellationToken cancellationToken)
     {
+        // Per-request provider routing lets the UI switch between local mock and real providers without restarting the API.
         var provider = ResolveProvider(request.ProviderOverride);
         var routedRequest = request with { ProviderOverride = provider };
 

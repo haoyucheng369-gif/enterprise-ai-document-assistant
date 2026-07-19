@@ -130,6 +130,7 @@ public sealed class OpenAiGateway : IAiGateway
             ? string.Empty
             : $"{Environment.NewLine}Output rules:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", request.Prompt.OutputRules)}";
 
+        // The gateway forces a stable outer response shape while prompts can specialize the answer content.
         var payload = new Dictionary<string, object?>
         {
             ["messages"] = new object[]
@@ -203,6 +204,8 @@ public sealed class OpenAiGateway : IAiGateway
     {
         using var document = JsonDocument.Parse(responseJson);
         var root = document.RootElement;
+
+        // Chat completions returns the model message as JSON text inside choices[0].message.content.
         var content = root
             .GetProperty("choices")[0]
             .GetProperty("message")

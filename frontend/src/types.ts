@@ -96,6 +96,23 @@ export type WorkflowEmailDraft = {
   nextActions: string[]
 }
 
+export type ClassificationSkillRequest = {
+  documentId: string
+  aiProvider: AiProviderSelection
+}
+
+export type ClassificationSkillResponse = {
+  documentId: string
+  title: string
+  category: string
+  priority: string
+  confidence: number
+  reason: string
+  signals: string[]
+  sources: string[]
+  provider: string
+}
+
 export type DocumentReviewWorkflowRequest = {
   documentId: string
   emailPurpose: string

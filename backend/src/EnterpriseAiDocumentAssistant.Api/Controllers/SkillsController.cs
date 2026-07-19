@@ -12,17 +12,20 @@ public sealed class SkillsController : ControllerBase
     private readonly ISummarySkill summarySkill;
     private readonly IRiskAnalysisSkill riskAnalysisSkill;
     private readonly IEmailDraftSkill emailDraftSkill;
+    private readonly IClassificationSkill classificationSkill;
     private readonly IAuditLogger auditLogger;
 
     public SkillsController(
         ISummarySkill summarySkill,
         IRiskAnalysisSkill riskAnalysisSkill,
         IEmailDraftSkill emailDraftSkill,
+        IClassificationSkill classificationSkill,
         IAuditLogger auditLogger)
     {
         this.summarySkill = summarySkill;
         this.riskAnalysisSkill = riskAnalysisSkill;
         this.emailDraftSkill = emailDraftSkill;
+        this.classificationSkill = classificationSkill;
         this.auditLogger = auditLogger;
     }
 
@@ -116,6 +119,39 @@ public sealed class SkillsController : ControllerBase
         }
 
         RecordSkillAudit("email_draft", "skills.email-draft", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
+        return Ok(result);
+    }
+
+    [HttpPost("classification")]
+    [ProducesResponseType<ClassificationSkillResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ClassificationSkillResponse>> Classify(
+        ClassificationSkillRequest request,
+        CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        if (string.IsNullOrWhiteSpace(request.DocumentId))
+        {
+            ModelState.AddModelError(nameof(request.DocumentId), "DocumentId is required.");
+            return ValidationProblem(ModelState);
+        }
+
+        var result = await classificationSkill.RunAsync(request, cancellationToken);
+
+        if (result is null)
+        {
+            RecordSkillAudit("classification", "skills.classification", request.DocumentId, false, stopwatch.ElapsedMilliseconds);
+            return NotFound(new ProblemDetails
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "DocumentNotFound",
+                Detail = $"Document '{request.DocumentId}' was not found."
+            });
+        }
+
+        RecordSkillAudit("classification", "skills.classification", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
         return Ok(result);
     }
 

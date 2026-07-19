@@ -105,7 +105,7 @@ sequenceDiagram
 - [x] Workflow
 - [x] Microsoft Graph Integration
 - [x] Real AI Gateway Provider
-- [ ] ClassificationSkill
+- [x] ClassificationSkill
 - [ ] StructuredExtractionSkill
 - [ ] Agent Orchestration and A2A Extension
 - [ ] Persistence
@@ -120,8 +120,7 @@ sequenceDiagram
 ## Next Implementation Order
 
 ```text
-ClassificationSkill
-  -> StructuredExtractionSkill
+StructuredExtractionSkill
   -> Agent Orchestration and A2A Extension
   -> Persistence
   -> Embeddings
