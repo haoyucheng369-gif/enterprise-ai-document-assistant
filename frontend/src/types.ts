@@ -41,6 +41,8 @@ export type ApiStatusResponse = {
 
 export type ApiConnectionState = 'loading' | 'connected' | 'unavailable'
 
+export type AiProviderSelection = 'Mock' | 'OpenAI' | 'AzureOpenAI'
+
 export type WorkspaceResponse = {
   documents: DocumentItem[]
   messages: Message[]
@@ -115,6 +117,7 @@ export type ChatRequest = {
   message: string
   documentId: string | null
   history: Message[]
+  aiProvider: AiProviderSelection
 }
 
 export type ChatResponse = {

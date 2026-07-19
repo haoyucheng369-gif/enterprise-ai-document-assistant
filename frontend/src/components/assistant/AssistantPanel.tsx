@@ -1,13 +1,21 @@
 import { MessageSquare, Send } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import type { ApiConnectionState, ApiStatusResponse, Message } from '../../types'
+import type {
+  AiProviderSelection,
+  ApiConnectionState,
+  ApiStatusResponse,
+  Message,
+} from '../../types'
 import { ApiStatusBadge } from '../layout/ApiStatusBadge'
+import { AiProviderSelector } from './AiProviderSelector'
 
 type AssistantPanelProps = {
   messages: Message[]
   apiState: ApiConnectionState
   apiStatus: ApiStatusResponse | null
+  aiProvider: AiProviderSelection
   isSending: boolean
+  onSelectAiProvider: (provider: AiProviderSelection) => void
   onSendMessage: (message: string) => Promise<void>
 }
 
@@ -15,7 +23,9 @@ export function AssistantPanel({
   messages,
   apiState,
   apiStatus,
+  aiProvider,
   isSending,
+  onSelectAiProvider,
   onSendMessage,
 }: AssistantPanelProps) {
   const [draftMessage, setDraftMessage] = useState('')
@@ -62,7 +72,7 @@ export function AssistantPanel({
       aria-label="AI Assistant"
       className="min-h-0 border-t border-slate-200 bg-white px-5 py-4 lg:col-span-2 xl:col-span-1 xl:border-l xl:border-t-0"
     >
-      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-4">
+      <div className="grid h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)_auto] gap-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="inline-flex items-center gap-2 text-base font-semibold text-slate-950">
@@ -73,6 +83,10 @@ export function AssistantPanel({
           </div>
           <ApiStatusBadge state={apiState} status={apiStatus} />
         </div>
+        <AiProviderSelector
+          onSelectProvider={onSelectAiProvider}
+          selectedProvider={aiProvider}
+        />
 
         <div
           className="flex min-h-0 flex-col gap-2 overflow-y-auto pr-1"

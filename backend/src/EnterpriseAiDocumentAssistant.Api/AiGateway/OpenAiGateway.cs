@@ -36,8 +36,9 @@ public sealed class OpenAiGateway : IAiGateway
 
         try
         {
-            EnsureConfigured();
-            using var httpRequest = BuildHttpRequest(request);
+            var provider = ResolveProvider(request.ProviderOverride);
+            EnsureConfigured(provider);
+            using var httpRequest = BuildHttpRequest(request, provider);
             using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
             var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
 
@@ -47,8 +48,9 @@ public sealed class OpenAiGateway : IAiGateway
                     $"AI provider request failed with {(int)response.StatusCode}.");
             }
 
-            var modelResponse = ParseResponse(responseJson, stopwatch.ElapsedMilliseconds);
+            var modelResponse = ParseResponse(provider, responseJson, stopwatch.ElapsedMilliseconds);
             RecordAudit(
+                provider,
                 true,
                 modelResponse.LatencyMs,
                 modelResponse.InputTokenEstimate,
@@ -58,7 +60,12 @@ public sealed class OpenAiGateway : IAiGateway
         }
         catch
         {
-            RecordAudit(false, stopwatch.ElapsedMilliseconds, null, null);
+            RecordAudit(
+                ResolveProvider(request.ProviderOverride),
+                false,
+                stopwatch.ElapsedMilliseconds,
+                null,
+                null);
             throw;
         }
     }
@@ -74,12 +81,12 @@ public sealed class OpenAiGateway : IAiGateway
         }
     }
 
-    private void EnsureConfigured()
+    private void EnsureConfigured(string provider)
     {
         if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
             throw new InvalidOperationException(
-                "AiGateway:ApiKey is required when AiGateway:Provider is OpenAI or AzureOpenAI.");
+                $"AiGateway:ApiKey is required when the selected AI provider is {provider}.");
         }
 
         if (string.IsNullOrWhiteSpace(options.ChatModel))
@@ -88,10 +95,9 @@ public sealed class OpenAiGateway : IAiGateway
         }
     }
 
-    private HttpRequestMessage BuildHttpRequest(ChatModelRequest request)
+    private HttpRequestMessage BuildHttpRequest(ChatModelRequest request, string provider)
     {
         var endpoint = options.Endpoint.TrimEnd('/');
-        var provider = options.Provider.Trim();
         var isAzureOpenAi = string.Equals(provider, "AzureOpenAI", StringComparison.OrdinalIgnoreCase);
         var requestUri = isAzureOpenAi
             ? $"{endpoint}/openai/deployments/{Uri.EscapeDataString(options.ChatModel)}/chat/completions?api-version={Uri.EscapeDataString(options.ApiVersion)}"
@@ -193,7 +199,7 @@ public sealed class OpenAiGateway : IAiGateway
         return payload;
     }
 
-    private ChatModelResponse ParseResponse(string responseJson, long latencyMs)
+    private ChatModelResponse ParseResponse(string provider, string responseJson, long latencyMs)
     {
         using var document = JsonDocument.Parse(responseJson);
         var root = document.RootElement;
@@ -220,7 +226,7 @@ public sealed class OpenAiGateway : IAiGateway
             ?? EstimateTokens(message.Answer);
 
         return new ChatModelResponse(
-            options.Provider,
+            provider,
             options.ChatModel,
             message,
             inputTokens,
@@ -229,6 +235,7 @@ public sealed class OpenAiGateway : IAiGateway
     }
 
     private void RecordAudit(
+        string provider,
         bool succeeded,
         long durationMs,
         int? inputTokenEstimate,
@@ -252,10 +259,17 @@ public sealed class OpenAiGateway : IAiGateway
         auditLogger.Record(new AuditEventRequest(
             "ai_gateway",
             succeeded ? "chat_model_completed" : "chat_model_failed",
-            options.Provider,
+            provider,
             succeeded,
             durationMs,
             metadata));
+    }
+
+    private string ResolveProvider(string? requestedProvider)
+    {
+        return string.IsNullOrWhiteSpace(requestedProvider)
+            ? options.Provider
+            : requestedProvider.Trim();
     }
 
     private static int? ReadInt(JsonElement usage, string propertyName)

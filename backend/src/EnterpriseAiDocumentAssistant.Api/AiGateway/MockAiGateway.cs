@@ -1,23 +1,17 @@
 using System.Diagnostics;
 using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
-using EnterpriseAiDocumentAssistant.Api.Options;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
-using Microsoft.Extensions.Options;
 
 namespace EnterpriseAiDocumentAssistant.Api.AiGateway;
 
 public sealed class MockAiGateway : IAiGateway
 {
     private readonly IAuditLogger auditLogger;
-    private readonly AiGatewayOptions options;
 
-    public MockAiGateway(
-        IAuditLogger auditLogger,
-        IOptions<AiGatewayOptions> options)
+    public MockAiGateway(IAuditLogger auditLogger)
     {
         this.auditLogger = auditLogger;
-        this.options = options.Value;
     }
 
     public Task<ChatModelResponse> GenerateChatResponseAsync(
@@ -26,9 +20,12 @@ public sealed class MockAiGateway : IAiGateway
     {
         var stopwatch = Stopwatch.StartNew();
         var message = BuildMockStructuredResponse(request.Prompt);
+        var provider = string.IsNullOrWhiteSpace(request.ProviderOverride)
+            ? "Mock"
+            : request.ProviderOverride;
         var response = new ChatModelResponse(
-            options.Provider,
-            options.ChatModel,
+            provider,
+            "mock-document-assistant",
             message,
             EstimateTokens(request.Prompt.SystemMessage) + EstimateTokens(request.Prompt.UserMessage),
             EstimateTokens(message.Answer),
@@ -38,7 +35,7 @@ public sealed class MockAiGateway : IAiGateway
         auditLogger.Record(new AuditEventRequest(
             "ai_gateway",
             "chat_model_completed",
-            options.Provider,
+            provider,
             true,
             response.LatencyMs,
             new Dictionary<string, string>

@@ -7,7 +7,28 @@ import { DocumentNav } from './components/documents/DocumentNav'
 import { DocumentWorkspace } from './components/documents/DocumentWorkspace'
 import { useApiStatus } from './hooks/useApiStatus'
 import { useWorkspaceData } from './hooks/useWorkspaceData'
-import type { DocumentItem, DocumentReviewWorkflowResponse, Message } from './types'
+import type {
+  AiProviderSelection,
+  DocumentItem,
+  DocumentReviewWorkflowResponse,
+  Message,
+} from './types'
+
+const aiProviderStorageKey = 'enterprise-ai-document-assistant.aiProvider'
+
+function getStoredAiProvider(): AiProviderSelection {
+  const storedProvider = localStorage.getItem(aiProviderStorageKey)
+
+  if (
+    storedProvider === 'Mock'
+    || storedProvider === 'OpenAI'
+    || storedProvider === 'AzureOpenAI'
+  ) {
+    return storedProvider
+  }
+
+  return 'OpenAI'
+}
 
 function App() {
   const apiStatus = useApiStatus()
@@ -20,12 +41,18 @@ function App() {
   const [workflowResult, setWorkflowResult] =
     useState<DocumentReviewWorkflowResponse | null>(null)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
+  const [aiProvider, setAiProvider] =
+    useState<AiProviderSelection>(getStoredAiProvider)
 
   useEffect(() => {
     if (workspace.data !== null) {
       setMessages(workspace.data.messages)
     }
   }, [workspace.data])
+
+  useEffect(() => {
+    localStorage.setItem(aiProviderStorageKey, aiProvider)
+  }, [aiProvider])
 
   if (workspace.state === 'loading') {
     return (
@@ -104,6 +131,7 @@ function App() {
           message,
           documentId: selectedDocument.id,
           history: nextMessages,
+          aiProvider,
         },
         (chunk) => {
           setMessages((currentMessages) =>
@@ -183,8 +211,10 @@ function App() {
       <AssistantPanel
         apiState={apiStatus.state}
         apiStatus={apiStatus.status}
+        aiProvider={aiProvider}
         isSending={isSendingMessage}
         messages={messages}
+        onSelectAiProvider={setAiProvider}
         onSendMessage={handleSendMessage}
       />
     </main>

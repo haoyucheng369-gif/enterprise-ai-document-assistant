@@ -88,6 +88,21 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
             return;
         }
 
+        if (string.Equals(context.ApiDescription.RelativePath, "api/chat", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(context.ApiDescription.RelativePath, "api/chat/structured", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(context.ApiDescription.RelativePath, "api/chat/stream", StringComparison.OrdinalIgnoreCase))
+        {
+            mediaType.Example = new OpenApiObject
+            {
+                ["message"] = new OpenApiString("What should I review first in this agreement?"),
+                ["documentId"] = new OpenApiString("contract-review"),
+                ["history"] = new OpenApiArray(),
+                ["aiProvider"] = new OpenApiString("OpenAI")
+            };
+
+            return;
+        }
+
         if (string.Equals(context.ApiDescription.RelativePath, "api/workflows/document-review", StringComparison.OrdinalIgnoreCase))
         {
             mediaType.Example = new OpenApiObject

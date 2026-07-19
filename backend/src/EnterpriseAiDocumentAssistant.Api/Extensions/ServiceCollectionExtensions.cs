@@ -15,7 +15,6 @@ using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway.Tools;
 using EnterpriseAiDocumentAssistant.Api.Workflows;
-using Microsoft.Extensions.Options;
 
 namespace EnterpriseAiDocumentAssistant.Api.Extensions;
 
@@ -35,16 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IApplicationDocumentProvider, ApplicationDocumentProvider>();
         services.AddSingleton<MockAiGateway>();
         services.AddHttpClient<OpenAiGateway>();
-        services.AddSingleton<IAiGateway>(serviceProvider =>
-        {
-            var options = serviceProvider
-                .GetRequiredService<IOptions<AiGatewayOptions>>()
-                .Value;
-
-            return IsRealProvider(options.Provider)
-                ? serviceProvider.GetRequiredService<OpenAiGateway>()
-                : serviceProvider.GetRequiredService<MockAiGateway>();
-        });
+        services.AddSingleton<IAiGateway, RoutingAiGateway>();
         services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
         services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
         services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
@@ -77,9 +67,4 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    private static bool IsRealProvider(string provider)
-    {
-        return string.Equals(provider, "OpenAI", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(provider, "AzureOpenAI", StringComparison.OrdinalIgnoreCase);
-    }
 }

@@ -147,7 +147,7 @@ public sealed class ChatController : ControllerBase
 
         var prompt = promptOrchestrator.BuildPrompt(request);
         var modelResponse = await aiGateway.GenerateChatResponseAsync(
-            new ChatModelRequest(prompt),
+            new ChatModelRequest(prompt, request.AiProvider),
             cancellationToken);
 
         return ValidateStructuredMessage(modelResponse.Message);
@@ -185,7 +185,8 @@ public sealed class ChatController : ControllerBase
             new Dictionary<string, string>
             {
                 ["documentId"] = request.DocumentId ?? string.Empty,
-                ["historyCount"] = (request.History?.Count ?? 0).ToString()
+                ["historyCount"] = (request.History?.Count ?? 0).ToString(),
+                ["aiProvider"] = request.AiProvider ?? string.Empty
             }));
     }
 }

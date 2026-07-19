@@ -4,7 +4,8 @@ using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 namespace EnterpriseAiDocumentAssistant.Api.AiGateway;
 
 public sealed record ChatModelRequest(
-    OrchestratedPrompt Prompt);
+    OrchestratedPrompt Prompt,
+    string? ProviderOverride = null);
 
 public sealed record ChatModelResponse(
     string Provider,

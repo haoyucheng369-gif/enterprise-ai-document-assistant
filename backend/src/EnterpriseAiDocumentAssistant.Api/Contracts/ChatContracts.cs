@@ -3,7 +3,8 @@ namespace EnterpriseAiDocumentAssistant.Api.Contracts;
 public sealed record ChatRequest(
     string Message,
     string? DocumentId,
-    IReadOnlyList<MessageResponse> History);
+    IReadOnlyList<MessageResponse> History,
+    string? AiProvider = null);
 
 public sealed record ChatResponse(
     MessageResponse Message);
