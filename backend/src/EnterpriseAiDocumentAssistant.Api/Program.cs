@@ -6,6 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Local settings are optional and ignored by Git, so API keys stay on the developer machine.
+builder.Configuration.AddJsonFile(
+    "appsettings.Local.json",
+    optional: true,
+    reloadOnChange: true);
+
 // Bind runtime options early so infrastructure and CORS read from one configuration source.
 builder.Services.Configure<FrontendOptions>(
     builder.Configuration.GetSection(FrontendOptions.SectionName));

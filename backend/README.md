@@ -24,6 +24,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Simple agent planner
 - In-memory audit trail
 - Mock AI Gateway
+- Configurable OpenAI / Azure OpenAI Gateway provider
 - Document upload, text extraction, and chunking
 - Document review workflow
 - Mock Microsoft Graph email draft integration
@@ -61,4 +62,41 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 ```bash
 dotnet build EnterpriseAiDocumentAssistant.sln
 dotnet run --project src/EnterpriseAiDocumentAssistant.Api
+```
+
+## AI Gateway Configuration
+
+The API uses `Mock` by default. For local development with a real provider, create this ignored file:
+
+```text
+src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
+```
+
+OpenAI example:
+
+```json
+{
+  "AiGateway": {
+    "Provider": "OpenAI",
+    "ChatModel": "<model-name>",
+    "ApiKey": "<api-key>",
+    "Endpoint": "https://api.openai.com",
+    "TimeoutSeconds": 30
+  }
+}
+```
+
+Azure OpenAI example:
+
+```json
+{
+  "AiGateway": {
+    "Provider": "AzureOpenAI",
+    "Endpoint": "https://<resource-name>.openai.azure.com",
+    "ChatModel": "<deployment-name>",
+    "ApiKey": "<api-key>",
+    "ApiVersion": "<api-version>",
+    "TimeoutSeconds": 30
+  }
+}
 ```

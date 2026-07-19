@@ -104,10 +104,10 @@ sequenceDiagram
 - [x] Text Parsing and Chunking
 - [x] Workflow
 - [x] Microsoft Graph Integration
+- [x] Real AI Gateway Provider
 - [ ] ClassificationSkill
 - [ ] StructuredExtractionSkill
 - [ ] Agent Orchestration and A2A Extension
-- [ ] Real AI Gateway Provider
 - [ ] Persistence
 - [ ] Embeddings
 - [ ] Vector Search
@@ -121,7 +121,6 @@ sequenceDiagram
 
 ```text
 ClassificationSkill
-  -> Real AI Gateway Provider
   -> StructuredExtractionSkill
   -> Agent Orchestration and A2A Extension
   -> Persistence
@@ -161,6 +160,14 @@ cd frontend
 npm install
 npm run dev
 ```
+
+Backend local AI provider settings can be placed in:
+
+```text
+backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
+```
+
+Edit that local file with your provider, model, and API key. The local file is ignored by Git.
 
 ---
 

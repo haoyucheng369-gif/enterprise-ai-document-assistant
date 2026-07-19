@@ -169,14 +169,13 @@ Current implementation:
 
 - `IAiGateway` is the application-facing model boundary
 - `MockAiGateway` returns structured assistant messages without calling an external provider
+- `OpenAiGateway` supports configurable OpenAI and Azure OpenAI chat completions
 - Gateway responses include provider, model, latency, and token estimates
 - Gateway calls are recorded in the audit trail
 
 Planned near-term extension:
 
-- Add a real OpenAI or Azure OpenAI provider behind the same `IAiGateway` contract
-- Keep provider configuration, timeout, cancellation, token metadata, and safe logging inside the gateway boundary
-- Introduce the real provider before the second wave of AI-heavy skills
+- Use the real provider from Classification and Structured Extraction without changing controller boundaries
 
 ### Prompt Orchestration
 

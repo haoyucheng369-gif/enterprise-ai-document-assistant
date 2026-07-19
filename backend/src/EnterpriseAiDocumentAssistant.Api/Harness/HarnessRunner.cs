@@ -201,8 +201,8 @@ public sealed class HarnessRunner : IHarnessRunner
             new ChatModelRequest(prompt),
             cancellationToken);
 
-        var passed = response.Provider == "Mock"
-            && response.Model == "mock-document-assistant"
+        var passed = !string.IsNullOrWhiteSpace(response.Provider)
+            && !string.IsNullOrWhiteSpace(response.Model)
             && !string.IsNullOrWhiteSpace(response.Message.Answer)
             && response.InputTokenEstimate > 0
             && response.OutputTokenEstimate > 0;
@@ -210,7 +210,7 @@ public sealed class HarnessRunner : IHarnessRunner
         return Result(
             "ai gateway returns structured model response",
             passed,
-            passed ? "MockAiGateway returned model metadata and structured content." : "AI Gateway response was incomplete.");
+            passed ? "AI Gateway returned provider metadata and structured content." : "AI Gateway response was incomplete.");
     }
 
     private HarnessCheckResult CheckSummarySkillSucceeds()

@@ -262,6 +262,11 @@ Expected outcome:
 
 - The same chat, skill, and workflow boundaries can run against a real model provider.
 
+Current V1 progress:
+
+- `OpenAiGateway` can be selected with `AiGateway:Provider=OpenAI` or `AiGateway:Provider=AzureOpenAI`
+- The default provider remains `Mock` so local development works without secrets
+
 ---
 
 ## Phase 11 - Structured Extraction
