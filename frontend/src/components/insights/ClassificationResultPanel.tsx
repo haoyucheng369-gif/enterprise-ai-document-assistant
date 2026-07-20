@@ -50,7 +50,7 @@ export function ClassificationResultPanel({
             </p>
             <p className="mt-1 text-sm text-slate-700">
               Priority: <span className="font-medium">{result.priority}</span>
-              <span className="text-slate-400"> · </span>
+              <span className="text-slate-400"> / </span>
               Confidence: {Math.round(result.confidence * 100)}%
             </p>
           </div>

@@ -37,10 +37,10 @@ public sealed class SkillsController : ControllerBase
     {
         var stopwatch = Stopwatch.StartNew();
 
-        if (string.IsNullOrWhiteSpace(request.DocumentId))
+        var validationResult = ValidateDocumentId(request.DocumentId);
+        if (validationResult is not null)
         {
-            ModelState.AddModelError(nameof(request.DocumentId), "DocumentId is required.");
-            return ValidationProblem(ModelState);
+            return validationResult;
         }
 
         var result = summarySkill.Run(request);
@@ -48,12 +48,7 @@ public sealed class SkillsController : ControllerBase
         if (result is null)
         {
             RecordSkillAudit("summary", "skills.summary", request.DocumentId, false, stopwatch.ElapsedMilliseconds);
-            return NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "DocumentNotFound",
-                Detail = $"Document '{request.DocumentId}' was not found."
-            });
+            return DocumentNotFound(request.DocumentId);
         }
 
         RecordSkillAudit("summary", "skills.summary", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
@@ -68,10 +63,10 @@ public sealed class SkillsController : ControllerBase
     {
         var stopwatch = Stopwatch.StartNew();
 
-        if (string.IsNullOrWhiteSpace(request.DocumentId))
+        var validationResult = ValidateDocumentId(request.DocumentId);
+        if (validationResult is not null)
         {
-            ModelState.AddModelError(nameof(request.DocumentId), "DocumentId is required.");
-            return ValidationProblem(ModelState);
+            return validationResult;
         }
 
         var result = riskAnalysisSkill.Run(request);
@@ -79,12 +74,7 @@ public sealed class SkillsController : ControllerBase
         if (result is null)
         {
             RecordSkillAudit("risk_analysis", "skills.risk-analysis", request.DocumentId, false, stopwatch.ElapsedMilliseconds);
-            return NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "DocumentNotFound",
-                Detail = $"Document '{request.DocumentId}' was not found."
-            });
+            return DocumentNotFound(request.DocumentId);
         }
 
         RecordSkillAudit("risk_analysis", "skills.risk-analysis", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
@@ -99,10 +89,10 @@ public sealed class SkillsController : ControllerBase
     {
         var stopwatch = Stopwatch.StartNew();
 
-        if (string.IsNullOrWhiteSpace(request.DocumentId))
+        var validationResult = ValidateDocumentId(request.DocumentId);
+        if (validationResult is not null)
         {
-            ModelState.AddModelError(nameof(request.DocumentId), "DocumentId is required.");
-            return ValidationProblem(ModelState);
+            return validationResult;
         }
 
         var result = emailDraftSkill.Run(request);
@@ -110,12 +100,7 @@ public sealed class SkillsController : ControllerBase
         if (result is null)
         {
             RecordSkillAudit("email_draft", "skills.email-draft", request.DocumentId, false, stopwatch.ElapsedMilliseconds);
-            return NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "DocumentNotFound",
-                Detail = $"Document '{request.DocumentId}' was not found."
-            });
+            return DocumentNotFound(request.DocumentId);
         }
 
         RecordSkillAudit("email_draft", "skills.email-draft", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
@@ -132,10 +117,10 @@ public sealed class SkillsController : ControllerBase
     {
         var stopwatch = Stopwatch.StartNew();
 
-        if (string.IsNullOrWhiteSpace(request.DocumentId))
+        var validationResult = ValidateDocumentId(request.DocumentId);
+        if (validationResult is not null)
         {
-            ModelState.AddModelError(nameof(request.DocumentId), "DocumentId is required.");
-            return ValidationProblem(ModelState);
+            return validationResult;
         }
 
         var result = await classificationSkill.RunAsync(request, cancellationToken);
@@ -143,16 +128,32 @@ public sealed class SkillsController : ControllerBase
         if (result is null)
         {
             RecordSkillAudit("classification", "skills.classification", request.DocumentId, false, stopwatch.ElapsedMilliseconds);
-            return NotFound(new ProblemDetails
-            {
-                Status = StatusCodes.Status404NotFound,
-                Title = "DocumentNotFound",
-                Detail = $"Document '{request.DocumentId}' was not found."
-            });
+            return DocumentNotFound(request.DocumentId);
         }
 
         RecordSkillAudit("classification", "skills.classification", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
         return Ok(result);
+    }
+
+    private ActionResult? ValidateDocumentId(string documentId)
+    {
+        if (!string.IsNullOrWhiteSpace(documentId))
+        {
+            return null;
+        }
+
+        ModelState.AddModelError(nameof(documentId), "DocumentId is required.");
+        return ValidationProblem(ModelState);
+    }
+
+    private NotFoundObjectResult DocumentNotFound(string documentId)
+    {
+        return NotFound(new ProblemDetails
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "DocumentNotFound",
+            Detail = $"Document '{documentId}' was not found."
+        });
     }
 
     private void RecordSkillAudit(

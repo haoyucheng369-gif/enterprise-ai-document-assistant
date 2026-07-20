@@ -47,7 +47,8 @@ public sealed class ClassificationSkill : IClassificationSkill
             new ChatModelRequest(prompt, provider),
             cancellationToken);
 
-        return TryParseModelClassification(document, modelResponse.Message.Answer, provider)
+        return TryMapCategoryOnlyAnswer(document, modelResponse.Message.Answer, provider)
+            ?? TryParseModelClassification(document, modelResponse.Message.Answer, provider)
             ?? BuildFallbackClassification(document, provider, modelResponse.Message.Answer);
     }
 
@@ -94,7 +95,7 @@ public sealed class ClassificationSkill : IClassificationSkill
             "You classify enterprise documents for a document assistant. Keep the classification practical and conservative.",
             userMessage,
             [
-                "Set answer to a single minified JSON object with category, priority, confidence, reason, signals, and sources.",
+                "Set answer to a single minified JSON object with category, priority, confidence, reason, signals, and sources. Do not return only the category label.",
                 "Allowed category values: Contract, Policy, Report, Resume, TechnicalDocument, Other.",
                 "Allowed priority values: Low, Medium, High.",
                 "Confidence must be a number from 0 to 1.",
@@ -108,74 +109,63 @@ public sealed class ClassificationSkill : IClassificationSkill
         string provider)
     {
         var text = $"{document.Title} {document.Type} {string.Join(' ', document.Sections.Select(section => $"{section.Title} {section.Body}"))}";
-        var sources = GetTopSources(document);
 
         if (ContainsAny(text, ["agreement", "liability", "renewal", "service credit", "vendor"]))
         {
-            return new ClassificationSkillResponse(
-                document.Id,
-                document.Title,
+            return BuildResponse(
+                document,
+                provider,
                 "Contract",
                 "High",
                 0.82,
                 "The document contains contract-style terms such as renewal, liability, vendor, or service credit language.",
-                ["renewal/liability/service credit signals"],
-                sources,
-                provider);
+                ["renewal/liability/service credit signals"]);
         }
 
         if (ContainsAny(text, ["policy", "security", "data protection", "access"]))
         {
-            return new ClassificationSkillResponse(
-                document.Id,
-                document.Title,
+            return BuildResponse(
+                document,
+                provider,
                 "Policy",
                 "Medium",
                 0.78,
                 "The document contains policy and control language.",
-                ["policy/security/access signals"],
-                sources,
-                provider);
+                ["policy/security/access signals"]);
         }
 
         if (ContainsAny(text, ["report", "q1", "q2", "q3", "q4", "operations"]))
         {
-            return new ClassificationSkillResponse(
-                document.Id,
-                document.Title,
+            return BuildResponse(
+                document,
+                provider,
                 "Report",
                 "Medium",
                 0.74,
                 "The document looks like an operational report.",
-                ["reporting/operations signals"],
-                sources,
-                provider);
+                ["reporting/operations signals"]);
         }
 
         if (ContainsAny(text, ["developer", "experience", "skills", "linkedin", "github"]))
         {
-            return new ClassificationSkillResponse(
-                document.Id,
-                document.Title,
+            return BuildResponse(
+                document,
+                provider,
                 "Resume",
                 "Low",
                 0.76,
                 "The document contains professional profile and experience signals.",
-                ["profile/experience/skills signals"],
-                sources,
-                provider);
+                ["profile/experience/skills signals"]);
         }
 
-        return new ClassificationSkillResponse(
-            document.Id,
-            document.Title,
+        return BuildResponse(
+            document,
+            provider,
             "Other",
             "Low",
             0.55,
             "No strong enterprise document category signal was found.",
-            [],
-            sources,
-            provider);
+            []);
     }
 
     private static ClassificationSkillResponse? TryParseModelClassification(
@@ -183,21 +173,25 @@ public sealed class ClassificationSkill : IClassificationSkill
         string answer,
         string provider)
     {
+        if (!answer.TrimStart().StartsWith('{'))
+        {
+            return null;
+        }
+
         try
         {
             using var jsonDocument = JsonDocument.Parse(answer);
             var root = jsonDocument.RootElement;
 
-            return new ClassificationSkillResponse(
-                document.Id,
-                document.Title,
+            return BuildResponse(
+                document,
+                provider,
                 ReadString(root, "category", "Other"),
                 NormalizePriority(ReadString(root, "priority", "Low")),
                 Clamp(ReadDouble(root, "confidence", 0.5), 0, 1),
                 ReadString(root, "reason", "The model returned a classification without a detailed reason."),
                 ReadStringArray(root, "signals"),
-                ReadStringArray(root, "sources"),
-                provider);
+                ReadStringArray(root, "sources"));
         }
         catch (JsonException)
         {
@@ -205,22 +199,64 @@ public sealed class ClassificationSkill : IClassificationSkill
         }
     }
 
+    private static ClassificationSkillResponse? TryMapCategoryOnlyAnswer(
+        DocumentItemResponse document,
+        string answer,
+        string provider)
+    {
+        var category = NormalizeCategory(answer);
+        if (category is null)
+        {
+            return null;
+        }
+
+        // Some models may return only the category label despite the prompt; keep that usable and visible.
+        return BuildResponse(
+            document,
+            provider,
+            category,
+            category == "Contract" ? "Medium" : "Low",
+            0.6,
+            $"The model returned a category label only: {category}.",
+            [$"category label: {category}"]);
+    }
+
     private static ClassificationSkillResponse BuildFallbackClassification(
         DocumentItemResponse document,
         string provider,
         string modelAnswer)
     {
-        return new ClassificationSkillResponse(
-            document.Id,
-            document.Title,
+        return BuildResponse(
+            document,
+            provider,
             "Other",
             "Low",
             0.5,
             string.IsNullOrWhiteSpace(modelAnswer)
                 ? "The model did not return a parseable classification."
                 : modelAnswer,
-            [],
-            GetTopSources(document),
+            []);
+    }
+
+    private static ClassificationSkillResponse BuildResponse(
+        DocumentItemResponse document,
+        string provider,
+        string category,
+        string priority,
+        double confidence,
+        string reason,
+        IReadOnlyList<string> signals,
+        IReadOnlyList<string>? sources = null)
+    {
+        return new ClassificationSkillResponse(
+            document.Id,
+            document.Title,
+            category,
+            priority,
+            confidence,
+            reason,
+            signals,
+            sources?.Count > 0 ? sources : GetTopSources(document),
             provider);
     }
 
@@ -285,6 +321,20 @@ public sealed class ClassificationSkill : IClassificationSkill
             "high" => "High",
             "medium" => "Medium",
             _ => "Low"
+        };
+    }
+
+    private static string? NormalizeCategory(string category)
+    {
+        return category.Trim().Trim('"').ToLowerInvariant() switch
+        {
+            "contract" => "Contract",
+            "policy" => "Policy",
+            "report" => "Report",
+            "resume" => "Resume",
+            "technicaldocument" or "technical document" => "TechnicalDocument",
+            "other" => "Other",
+            _ => null
         };
     }
 
