@@ -24,14 +24,10 @@ public static class DocumentAssistantPrompt
 
     public static IReadOnlyList<PromptVariable> BuildVariables(
         string userQuestion,
-        string? documentId,
+        string documentContext,
         int conversationTurnCount,
         string conversationMemory)
     {
-        var documentContext = string.IsNullOrWhiteSpace(documentId)
-            ? "selected document"
-            : $"document '{documentId}'";
-
         return
         [
             new PromptVariable("document_context", documentContext),

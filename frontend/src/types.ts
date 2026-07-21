@@ -17,6 +17,9 @@ export type Message = {
   id: string
   role: 'user' | 'assistant'
   content: string
+  confidence?: string
+  citations?: string[]
+  suggestedActions?: string[]
 }
 
 export type Citation = {
@@ -139,4 +142,10 @@ export type ChatRequest = {
 
 export type ChatResponse = {
   message: Message
+  structuredMessage: {
+    answer: string
+    confidence: string
+    citations: string[]
+    suggestedActions: string[]
+  }
 }

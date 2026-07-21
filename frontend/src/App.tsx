@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { classifyDocument } from './api/classificationApi'
-import { streamChatMessage } from './api/chatApi'
+import { sendChatMessage } from './api/chatApi'
 import { uploadDocument } from './api/documentApi'
 import { runDocumentReviewWorkflow } from './api/workflowApi'
 import { AssistantPanel } from './components/assistant/AssistantPanel'
@@ -10,6 +10,7 @@ import { useApiStatus } from './hooks/useApiStatus'
 import { useWorkspaceData } from './hooks/useWorkspaceData'
 import type {
   AiProviderSelection,
+  Citation,
   ClassificationSkillResponse,
   DocumentItem,
   DocumentReviewWorkflowResponse,
@@ -36,6 +37,8 @@ function App() {
   const apiStatus = useApiStatus()
   const workspace = useWorkspaceData()
   const [messages, setMessages] = useState<Message[]>([])
+  const [latestAssistantCitations, setLatestAssistantCitations] =
+    useState<Citation[]>([])
   const [uploadedDocuments, setUploadedDocuments] = useState<DocumentItem[]>([])
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'failed'>('idle')
@@ -53,6 +56,7 @@ function App() {
   useEffect(() => {
     if (workspace.data !== null) {
       setMessages(workspace.data.messages)
+      setLatestAssistantCitations(workspace.data.citations)
     }
   }, [workspace.data])
 
@@ -86,7 +90,7 @@ function App() {
     )
   }
 
-  const { citations, documents, toolResult } = workspace.data
+  const { documents, toolResult } = workspace.data
   const visibleDocuments = [...uploadedDocuments, ...documents]
   const selectedDocument =
     visibleDocuments.find((document) => document.id === selectedDocumentId)
@@ -138,25 +142,32 @@ function App() {
     try {
       setMessages([...nextMessages, assistantMessage])
 
-      await streamChatMessage(
-        {
-          message,
-          documentId: selectedDocument.id,
-          history: nextMessages,
-          aiProvider,
-        },
-        (chunk) => {
-          setMessages((currentMessages) =>
-            currentMessages.map((currentMessage) =>
-              currentMessage.id === assistantMessageId
-                ? {
-                    ...currentMessage,
-                    content: `${currentMessage.content}${chunk}`,
-                  }
-                : currentMessage,
-            ),
-          )
-        },
+      const response = await sendChatMessage({
+        message,
+        documentId: selectedDocument.id,
+        history: nextMessages,
+        aiProvider,
+      })
+
+      const structuredMessage = response.structuredMessage
+      setLatestAssistantCitations(
+        structuredMessage.citations.map((citation, index) => ({
+          id: `assistant-citation-${index + 1}`,
+          label: citation,
+        })),
+      )
+      setMessages((currentMessages) =>
+        currentMessages.map((currentMessage) =>
+          currentMessage.id === assistantMessageId
+            ? {
+                ...currentMessage,
+                content: structuredMessage.answer,
+                confidence: structuredMessage.confidence,
+                citations: structuredMessage.citations,
+                suggestedActions: structuredMessage.suggestedActions,
+              }
+            : currentMessage,
+        ),
       )
     } catch {
       setMessages((currentMessages) => {
@@ -230,7 +241,7 @@ function App() {
         uploadState={uploadState}
       />
       <DocumentWorkspace
-        citations={citations}
+        citations={latestAssistantCitations}
         classificationResult={classificationResult}
         classificationState={classificationState}
         document={selectedDocument}

@@ -1,26 +1,35 @@
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.ConversationMemory;
+using EnterpriseAiDocumentAssistant.Api.Services;
 
 namespace EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 
 public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantPromptOrchestrator
 {
+    private const int MaxDocumentSections = 4;
+    private const int MaxSectionLength = 1200;
+
+    private readonly IApplicationDocumentProvider applicationDocumentProvider;
     private readonly IConversationMemoryBuilder conversationMemoryBuilder;
 
-    public DocumentAssistantPromptOrchestrator(IConversationMemoryBuilder conversationMemoryBuilder)
+    public DocumentAssistantPromptOrchestrator(
+        IConversationMemoryBuilder conversationMemoryBuilder,
+        IApplicationDocumentProvider applicationDocumentProvider)
     {
         this.conversationMemoryBuilder = conversationMemoryBuilder;
+        this.applicationDocumentProvider = applicationDocumentProvider;
     }
 
     public OrchestratedPrompt BuildPrompt(ChatRequest request)
     {
         var userQuestion = request.Message.Trim();
         var memory = conversationMemoryBuilder.Build(request.History);
+        var documentContext = BuildDocumentContext(request.DocumentId);
 
-        // Prompt orchestration combines the current question, document target, and recent turns.
+        // Prompt orchestration combines the current question, selected document content, and recent turns.
         var variables = DocumentAssistantPrompt.BuildVariables(
             userQuestion,
-            request.DocumentId,
+            documentContext,
             memory.Turns.Count,
             memory.PromptText);
 
@@ -30,6 +39,34 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
             RenderTemplate(DocumentAssistantPrompt.Template.UserMessageTemplate, variables),
             DocumentAssistantPrompt.Template.OutputRules,
             variables);
+    }
+
+    private string BuildDocumentContext(string? documentId)
+    {
+        if (string.IsNullOrWhiteSpace(documentId))
+        {
+            return "No document is selected.";
+        }
+
+        var document = applicationDocumentProvider.FindById(documentId);
+        if (document is null)
+        {
+            return $"Selected document id: {documentId}. Document content was not found.";
+        }
+
+        var sections = document.Sections
+            .Take(MaxDocumentSections)
+            .Select(section =>
+                $"{section.Label} - {section.Title}: {Truncate(section.Body, MaxSectionLength)}");
+
+        return $"""
+            Selected document id: {document.Id}
+            Title: {document.Title}
+            Type: {document.Type}
+            Status: {document.Status}
+            Content:
+            {string.Join(Environment.NewLine, sections)}
+            """;
     }
 
     private static string RenderTemplate(
@@ -47,6 +84,13 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
         }
 
         return renderedTemplate;
+    }
+
+    private static string Truncate(string value, int maxLength)
+    {
+        return value.Length <= maxLength
+            ? value
+            : value[..maxLength];
     }
 
 }

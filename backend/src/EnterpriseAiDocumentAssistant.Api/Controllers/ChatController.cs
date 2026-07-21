@@ -56,16 +56,13 @@ public sealed class ChatController : ControllerBase
 
         var message = structuredMessage.Value
             ?? throw new InvalidOperationException("Structured message was not created.");
-        var responseContent = string.Concat(
-            aiGateway.BuildResponseChunks(message));
-
         var response = new MessageResponse(
             $"assistant-{Guid.NewGuid():N}",
             "assistant",
-            responseContent);
+            message.Answer);
 
         RecordChatAudit("chat_completed", "api/chat", request, true, stopwatch.ElapsedMilliseconds);
-        return Ok(new ChatResponse(response));
+        return Ok(new ChatResponse(response, message));
     }
 
     [HttpPost("structured")]

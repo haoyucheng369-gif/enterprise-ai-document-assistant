@@ -7,7 +7,8 @@ public sealed record ChatRequest(
     string? AiProvider = null);
 
 public sealed record ChatResponse(
-    MessageResponse Message);
+    MessageResponse Message,
+    StructuredAssistantMessage StructuredMessage);
 
 public sealed record StructuredChatResponse(
     StructuredAssistantMessage Message);
