@@ -4,6 +4,7 @@ using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
+using EnterpriseAiDocumentAssistant.Api.Services;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,19 +19,22 @@ public sealed class ChatController : ControllerBase
     private readonly IStructuredAssistantResponseValidator structuredResponseValidator;
     private readonly IChatGuardrailEvaluator chatGuardrailEvaluator;
     private readonly IAuditLogger auditLogger;
+    private readonly IApplicationDocumentProvider applicationDocumentProvider;
 
     public ChatController(
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
         IAiGateway aiGateway,
         IStructuredAssistantResponseValidator structuredResponseValidator,
         IChatGuardrailEvaluator chatGuardrailEvaluator,
-        IAuditLogger auditLogger)
+        IAuditLogger auditLogger,
+        IApplicationDocumentProvider applicationDocumentProvider)
     {
         this.promptOrchestrator = promptOrchestrator;
         this.aiGateway = aiGateway;
         this.structuredResponseValidator = structuredResponseValidator;
         this.chatGuardrailEvaluator = chatGuardrailEvaluator;
         this.auditLogger = auditLogger;
+        this.applicationDocumentProvider = applicationDocumentProvider;
     }
 
     [HttpPost]
@@ -147,7 +151,35 @@ public sealed class ChatController : ControllerBase
             new ChatModelRequest(prompt, request.AiProvider),
             cancellationToken);
 
-        return ValidateStructuredMessage(modelResponse.Message);
+        return ValidateStructuredMessage(AttachDocumentCitations(request, modelResponse.Message));
+    }
+
+    private StructuredAssistantMessage AttachDocumentCitations(
+        ChatRequest request,
+        StructuredAssistantMessage message)
+    {
+        if (string.IsNullOrWhiteSpace(request.DocumentId))
+        {
+            return message;
+        }
+
+        var document = applicationDocumentProvider.FindById(request.DocumentId);
+        if (document is null)
+        {
+            return message;
+        }
+
+        var citations = document.Sections
+            .Take(4)
+            .Select(section => $"{section.Label} - {section.Title}: {Truncate(section.Body, 120)}")
+            .ToArray();
+
+        return message with
+        {
+            Citations = citations.Length > 0
+                ? citations
+                : [$"Document: {document.Title}"]
+        };
     }
 
     private ActionResult<StructuredAssistantMessage> ValidateStructuredMessage(
@@ -185,5 +217,12 @@ public sealed class ChatController : ControllerBase
                 ["historyCount"] = (request.History?.Count ?? 0).ToString(),
                 ["aiProvider"] = request.AiProvider ?? string.Empty
             }));
+    }
+
+    private static string Truncate(string value, int maxLength)
+    {
+        return value.Length <= maxLength
+            ? value
+            : $"{value[..maxLength]}...";
     }
 }

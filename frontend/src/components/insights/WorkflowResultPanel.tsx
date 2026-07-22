@@ -4,9 +4,14 @@ import type { DocumentReviewWorkflowResponse } from '../../types'
 type WorkflowResultPanelProps = {
   result: DocumentReviewWorkflowResponse | null
   state: 'idle' | 'running' | 'failed'
+  onRunWorkflow: () => Promise<void>
 }
 
-export function WorkflowResultPanel({ result, state }: WorkflowResultPanelProps) {
+export function WorkflowResultPanel({
+  onRunWorkflow,
+  result,
+  state,
+}: WorkflowResultPanelProps) {
   return (
     <section className="rounded-md border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between">
@@ -14,23 +19,33 @@ export function WorkflowResultPanel({ result, state }: WorkflowResultPanelProps)
           <Workflow className="text-indigo-600" size={16} />
           Workflow
         </h3>
-        <span
-          className={`rounded-sm px-2 py-0.5 text-[11px] font-medium ${
-            state === 'failed'
-              ? 'bg-rose-50 text-rose-700'
-              : state === 'running'
-                ? 'bg-amber-50 text-amber-700'
-                : result
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'bg-slate-100 text-slate-500'
-          }`}
-        >
-          {state === 'running'
-            ? 'Running'
-            : state === 'failed'
-              ? 'Failed'
-              : result?.status ?? 'Ready'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`rounded-sm px-2 py-0.5 text-[11px] font-medium ${
+              state === 'failed'
+                ? 'bg-rose-50 text-rose-700'
+                : state === 'running'
+                  ? 'bg-amber-50 text-amber-700'
+                  : result
+                    ? 'bg-emerald-50 text-emerald-700'
+                    : 'bg-slate-100 text-slate-500'
+            }`}
+          >
+            {state === 'running'
+              ? 'Running'
+              : state === 'failed'
+                ? 'Failed'
+                : result?.status ?? 'Ready'}
+          </span>
+          <button
+            className="cursor-pointer rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-800 hover:bg-indigo-100 disabled:cursor-wait disabled:opacity-70"
+            disabled={state === 'running'}
+            onClick={() => void onRunWorkflow()}
+            type="button"
+          >
+            Run
+          </button>
+        </div>
       </div>
 
       {state === 'failed' ? (
@@ -78,7 +93,7 @@ export function WorkflowResultPanel({ result, state }: WorkflowResultPanelProps)
               {result.riskAnalysis.risks.slice(0, 3).map((risk) => (
                 <li className="text-sm leading-6 text-slate-700" key={risk.title}>
                   <span className="font-medium text-slate-900">{risk.title}</span>
-                  <span className="text-slate-500"> · {risk.severity}</span>
+                  <span className="text-slate-500"> / {risk.severity}</span>
                 </li>
               ))}
             </ul>
@@ -97,7 +112,7 @@ export function WorkflowResultPanel({ result, state }: WorkflowResultPanelProps)
             </p>
           </div>
         </div>
-      ) : state === 'idle' ? (
+      ) : result === null && state === 'idle' ? (
         <p className="mt-4 text-sm leading-6 text-slate-500">
           Run the document review workflow to generate a summary, risk analysis,
           and follow-up email draft.

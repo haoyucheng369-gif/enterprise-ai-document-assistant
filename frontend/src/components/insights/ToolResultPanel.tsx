@@ -1,11 +1,18 @@
 import { Activity } from 'lucide-react'
-import type { ToolResult } from '../../types'
+import type { DocumentItem, ToolResult } from '../../types'
 
 type ToolResultPanelProps = {
+  document: DocumentItem
   toolResult: ToolResult
 }
 
-export function ToolResultPanel({ toolResult }: ToolResultPanelProps) {
+export function ToolResultPanel({ document, toolResult }: ToolResultPanelProps) {
+  const chunkCount = document.sections.length
+  const dynamicDescription =
+    chunkCount > 0
+      ? `${document.title} is available with ${chunkCount} parsed chunks for assistant context and tool execution.`
+      : toolResult.description
+
   return (
     <section className="rounded-md border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between">
@@ -21,7 +28,7 @@ export function ToolResultPanel({ toolResult }: ToolResultPanelProps) {
         <span className="block font-semibold text-slate-900">
           {toolResult.name}
         </span>
-        <p className="mt-1">{toolResult.description}</p>
+        <p className="mt-1">{dynamicDescription}</p>
       </div>
     </section>
   )

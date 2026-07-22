@@ -8,22 +8,18 @@ type AiProviderSelectorProps = {
 const providerOptions: Array<{
   value: AiProviderSelection
   label: string
-  description: string
 }> = [
   {
     value: 'Mock',
-    label: 'Local mock',
-    description: 'No API cost',
+    label: 'Mock',
   },
   {
     value: 'OpenAI',
     label: 'OpenAI',
-    description: 'Real model',
   },
   {
     value: 'AzureOpenAI',
-    label: 'Microsoft OpenAI',
-    description: 'Azure provider',
+    label: 'Azure',
   },
 ]
 
@@ -32,18 +28,18 @@ export function AiProviderSelector({
   onSelectProvider,
 }: AiProviderSelectorProps) {
   return (
-    <fieldset className="rounded-md border border-slate-200 bg-slate-50 p-1.5">
+    <fieldset className="min-w-0">
       <legend className="sr-only">AI provider</legend>
-      <div className="grid grid-cols-3 gap-1">
+      <div className="inline-grid grid-cols-3 gap-1 rounded-md border border-slate-200 bg-slate-50 p-1 text-xs">
         {providerOptions.map((option) => {
           const isSelected = option.value === selectedProvider
 
           return (
             <label
-              className={`cursor-pointer rounded-md border px-2 py-1.5 text-xs transition ${
+              className={`cursor-pointer rounded-sm border px-2.5 py-1.5 text-center font-medium transition ${
                 isSelected
                   ? 'border-blue-300 bg-white text-blue-700 shadow-sm'
-                  : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-white'
+                  : 'border-transparent text-slate-500 hover:border-slate-200 hover:bg-white hover:text-slate-700'
               }`}
               key={option.value}
             >
@@ -55,10 +51,7 @@ export function AiProviderSelector({
                 type="radio"
                 value={option.value}
               />
-              <span className="block font-semibold">{option.label}</span>
-              <span className="block text-[11px] text-slate-400">
-                {option.description}
-              </span>
+              {option.label}
             </label>
           )
         })}

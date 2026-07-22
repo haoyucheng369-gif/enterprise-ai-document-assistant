@@ -6,7 +6,6 @@ import { runDocumentReviewWorkflow } from './api/workflowApi'
 import { AssistantPanel } from './components/assistant/AssistantPanel'
 import { DocumentNav } from './components/documents/DocumentNav'
 import { DocumentWorkspace } from './components/documents/DocumentWorkspace'
-import { useApiStatus } from './hooks/useApiStatus'
 import { useWorkspaceData } from './hooks/useWorkspaceData'
 import type {
   AiProviderSelection,
@@ -34,7 +33,6 @@ function getStoredAiProvider(): AiProviderSelection {
 }
 
 function App() {
-  const apiStatus = useApiStatus()
   const workspace = useWorkspaceData()
   const [messages, setMessages] = useState<Message[]>([])
   const [latestAssistantCitations, setLatestAssistantCitations] =
@@ -232,7 +230,7 @@ function App() {
   }
 
   return (
-    <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[288px_minmax(0,1fr)_500px] 2xl:grid-cols-[300px_minmax(0,1fr)_540px]">
+    <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[288px_minmax(420px,1fr)_640px] 2xl:grid-cols-[300px_minmax(440px,1fr)_700px]">
       <DocumentNav
         documents={visibleDocuments}
         onSelectDocument={setSelectedDocumentId}
@@ -252,8 +250,6 @@ function App() {
         workflowState={workflowState}
       />
       <AssistantPanel
-        apiState={apiStatus.state}
-        apiStatus={apiStatus.status}
         aiProvider={aiProvider}
         isSending={isSendingMessage}
         messages={messages}

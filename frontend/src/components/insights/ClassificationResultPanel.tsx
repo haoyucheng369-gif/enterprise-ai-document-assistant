@@ -4,9 +4,11 @@ import type { ClassificationSkillResponse } from '../../types'
 type ClassificationResultPanelProps = {
   result: ClassificationSkillResponse | null
   state: 'idle' | 'running' | 'failed'
+  onClassifyDocument: () => Promise<void>
 }
 
 export function ClassificationResultPanel({
+  onClassifyDocument,
   result,
   state,
 }: ClassificationResultPanelProps) {
@@ -17,23 +19,33 @@ export function ClassificationResultPanel({
           <Tags className="text-blue-600" size={16} />
           Classification
         </h3>
-        <span
-          className={`rounded-sm px-2 py-0.5 text-[11px] font-medium ${
-            state === 'failed'
-              ? 'bg-rose-50 text-rose-700'
-              : state === 'running'
-                ? 'bg-amber-50 text-amber-700'
-                : result
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'bg-slate-100 text-slate-500'
-          }`}
-        >
-          {state === 'running'
-            ? 'Running'
-            : state === 'failed'
-              ? 'Failed'
-              : result?.provider ?? 'Ready'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`rounded-sm px-2 py-0.5 text-[11px] font-medium ${
+              state === 'failed'
+                ? 'bg-rose-50 text-rose-700'
+                : state === 'running'
+                  ? 'bg-amber-50 text-amber-700'
+                  : result
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'bg-slate-100 text-slate-500'
+            }`}
+          >
+            {state === 'running'
+              ? 'Running'
+              : state === 'failed'
+                ? 'Failed'
+                : result?.provider ?? 'Ready'}
+          </span>
+          <button
+            className="cursor-pointer rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-800 hover:bg-blue-100 disabled:cursor-wait disabled:opacity-70"
+            disabled={state === 'running'}
+            onClick={() => void onClassifyDocument()}
+            type="button"
+          >
+            Run
+          </button>
+        </div>
       </div>
 
       {state === 'failed' ? (

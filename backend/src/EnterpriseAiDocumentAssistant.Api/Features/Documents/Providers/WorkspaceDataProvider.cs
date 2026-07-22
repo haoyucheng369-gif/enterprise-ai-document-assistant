@@ -49,15 +49,7 @@ public sealed class WorkspaceDataProvider : IWorkspaceDataProvider
                 new MessageResponse(
                     "m1",
                     "assistant",
-                    "Select a document and ask a question. I can summarize clauses, identify risks, and prepare follow-up actions."),
-                new MessageResponse(
-                    "m2",
-                    "user",
-                    "What should I review first in this agreement?"),
-                new MessageResponse(
-                    "m3",
-                    "assistant",
-                    "Start with renewal terms, liability limits, and service credits. These sections are highlighted in the current document.")
+                    "Select a document and ask a question. I can summarize, classify, review risks, and suggest follow-up actions.")
             ],
             Citations:
             [
