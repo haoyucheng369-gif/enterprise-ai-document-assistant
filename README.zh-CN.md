@@ -69,7 +69,7 @@ sequenceDiagram
 
 | 模块 | 作用 | 第一版范围 |
 |---|---|---|
-| React Workspace | 用户工作区 | 文档列表、文档详情、右侧 Assistant、来源引用、工具结果 |
+| React Workspace | 用户工作区 | 文档列表、文档工作区 tabs、右侧 Assistant、来源引用、工具结果 |
 | ASP.NET Core API | 后端边界 | `/api/chat`、`/api/documents`、`/api/tools`、`/api/workflows` |
 | Prompt and AI Layer | Prompt / AI 控制层 | Prompt Orchestration、Structured Output、Validation、Guardrails、AI Gateway |
 | Tool Gateway and Skills | 受控工具执行 | `SearchDocumentsTool`、`GetDocumentMetadataTool`、`SummarySkill`、`RiskAnalysisSkill`、`EmailDraftSkill` |
@@ -106,13 +106,32 @@ sequenceDiagram
 - [x] Microsoft Graph Integration
 - [x] Real AI Gateway Provider
 - [x] ClassificationSkill
+- [x] React 工作区内的模型 Provider 切换
+- [x] 文档工作区 tabs：Preview、Classification、Workflow、Citations、Tool context
+
+### Build Next
+
 - [ ] StructuredExtractionSkill
-- [ ] Agent Orchestration and A2A Extension
 - [ ] Persistence
+- [ ] MongoDB 或关系型数据库持久化 conversation / document state
 - [ ] Embeddings
 - [ ] Vector Search
 - [ ] RAG Answer with Citations
 - [ ] No-answer Guardrail
+- [ ] 基础文档权限过滤
+
+### Build Lightly
+
+- [ ] Rate limiting
+- [ ] Observability and cost tracking
+- [ ] Prompt versioning
+- [ ] AI 日志敏感数据脱敏
+- [ ] Prompt、Skill、Tool、Workflow 的 harness 检查扩展
+- [ ] Intent classification and routing
+- [ ] Simple Agent Orchestration / A2A handoff
+
+### Understand Later
+
 - [ ] Hybrid Search and Semantic Ranking
 
 ---
@@ -121,14 +140,22 @@ sequenceDiagram
 
 ```text
 StructuredExtractionSkill
-  -> Agent Orchestration and A2A Extension
   -> Persistence
   -> Embeddings
   -> Vector Search
   -> RAG Answer with Citations
   -> No-answer Guardrail
-  -> Hybrid Search and Semantic Ranking
+  -> Basic Document Permission Filtering
+  -> Rate Limiting
+  -> Observability and Cost Tracking
+  -> Prompt Versioning
+  -> Sensitive Data Redaction
+  -> Expanded Harness Checks
+  -> Intent Classification and Routing
+  -> Simple Agent Orchestration / A2A Handoff
 ```
+
+`Build Next` 是主线，需要真正做出来。`Build Lightly` 只做轻量版本，能展示概念和代码边界即可。`Understand Later` 先理解概念，不作为第一版必须实现范围。
 
 ---
 

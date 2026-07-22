@@ -28,10 +28,17 @@ React chat
   -> real model provider
   -> classification skill
   -> extraction skill
-  -> agent handoff extension
   -> persistence
   -> RAG with citations
   -> grounded-answer guardrails
+  -> document permission filtering
+  -> rate limiting
+  -> observability and cost tracking
+  -> prompt versioning
+  -> sensitive data redaction
+  -> expanded harness checks
+  -> intent classification and routing
+  -> simple agent orchestration / A2A handoff
 ```
 
 The implementation order intentionally brings Tool, MCP, Skill, Harness, and real model provider concepts earlier because they are common, concrete, and easier to understand before full RAG. Classification now uses the runtime provider selector so the same capability can run against local mock or a real model path.
@@ -184,7 +191,8 @@ Expected outcome:
 Current V1 status:
 
 - AI Gateway abstraction is in place with `MockAiGateway`
-- Real OpenAI or Azure OpenAI providers remain a later provider implementation step
+- Real OpenAI and Azure OpenAI routing is available through `OpenAiGateway`
+- The React workspace can switch between local mock, OpenAI, and Azure OpenAI
 
 ---
 
@@ -271,7 +279,8 @@ Expected outcome:
 Current V1 progress:
 
 - `OpenAiGateway` can be selected with `AiGateway:Provider=OpenAI` or `AiGateway:Provider=AzureOpenAI`
-- The default provider remains `Mock` so local development works without secrets
+- The provider can also be selected from the React workspace for local comparison
+- The mock provider remains available so local development works without secrets
 
 ---
 
@@ -292,24 +301,7 @@ Expected outcome:
 
 ---
 
-## Phase 12 - Agent Orchestration and A2A
-
-Objective: show a small agent handoff without introducing broad autonomous behavior.
-
-Scope:
-
-- `CoordinatorAgent` selects the document review path
-- `DocumentAgent` prepares summary, risk, classification, and extraction output
-- `EmailAgent` receives structured handoff data and prepares follow-up content
-- Harness check for the agent handoff
-
-Expected outcome:
-
-- The project demonstrates agent orchestration as a controlled application pattern.
-
----
-
-## Phase 13 - Persistence
+## Phase 12 - Persistence
 
 Objective: replace selected in-memory stores with a small persistence boundary before retrieval features depend on stable state.
 
@@ -328,7 +320,7 @@ Expected outcome:
 
 ---
 
-## Phase 14 - Document RAG
+## Phase 13 - Document RAG
 
 Objective: enable source-grounded document question answering after ingestion and workflow concepts are in place.
 
@@ -340,7 +332,6 @@ Scope:
 - RAG-based question answering
 - Source citation support
 - No-answer behavior when retrieval has no reliable context
-- Later hybrid search and semantic ranking hooks
 
 Expected outcome:
 
@@ -350,15 +341,89 @@ Expected outcome:
 
 ---
 
-## Later Hardening
+## Phase 14 - Basic Security and Reliability
 
-These items are important, but they can be added after the main application flow is working:
+Objective: add the small production controls that make the assistant safer to discuss in enterprise interviews.
+
+Scope:
+
+- Basic document permission filtering
+- Rate limiting for chat and model-backed endpoints
+- Timeout and cancellation review
+- Input and output guardrail expansion
+- No-answer behavior when retrieved context is weak
+
+Expected outcome:
+
+- The assistant can explain why a user can or cannot access a document.
+- Expensive or sensitive endpoints have a controlled request boundary.
+- Grounded-answer behavior is explicit instead of relying on the model alone.
+
+---
+
+## Phase 15 - Observability and Cost Tracking
+
+Objective: make AI operations visible and reviewable without adding a full monitoring platform.
+
+Scope:
+
+- Provider, model, token, latency, and cost estimate records
+- Prompt name and prompt version on AI execution records
+- Structured audit records for chat, skills, workflow, tool, and MCP calls
+- Basic dashboard or endpoint for recent AI executions
+- Redaction rules for sensitive prompt or document content
+- Expanded harness checks for prompts, skills, tools, and workflows
+
+Expected outcome:
+
+- AI usage can be inspected and explained.
+- The project demonstrates cost and latency awareness around model calls.
+- Prompt changes can be traced by version without logging full sensitive content.
+
+---
+
+## Phase 16 - Intent Classification and Routing
+
+Objective: route user requests to the right application path before introducing broader agent orchestration.
+
+Scope:
+
+- Classify user intent into known routes such as answer, summarize, classify, extract, risk analysis, email draft, tool lookup, or workflow
+- Start with deterministic rules in `SimpleAgentPlanner`
+- Keep the route output structured and easy to validate
+- Later allow the AI Gateway to classify intent when rules are not enough
+
+Expected outcome:
+
+- The assistant can choose a known skill, tool, or workflow path from a user request.
+- Routing remains controlled instead of open-ended autonomous planning.
+
+---
+
+## Phase 17 - Simple Agent Orchestration / A2A Handoff
+
+Objective: show a small agent-to-agent handoff without introducing broad autonomous behavior.
+
+Scope:
+
+- `CoordinatorAgent` selects the document review path
+- `DocumentAgent` prepares summary, risk, classification, and extraction output
+- `EmailAgent` receives structured handoff data and prepares follow-up content
+- Harness check for the agent handoff
+
+Expected outcome:
+
+- The project demonstrates Agent Orchestration and A2A as a controlled application pattern.
+
+---
+
+## Understand Later
+
+These items are useful to understand, but they are not required for the first project version:
 
 - Authentication and authorization
 - Authorization-aware RAG retrieval
-- Rate limiting
 - Prompt injection mitigation
-- Observability
-- Expanded harnesses for prompts, tools, skills, and workflows
+- Hybrid search and semantic ranking
 - Docker-based deployment
 - CI foundation

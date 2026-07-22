@@ -1,4 +1,4 @@
-import { Activity, FileText, Quote, Tags, Workflow } from 'lucide-react'
+import { FileText, Tags, Workflow } from 'lucide-react'
 import { useState } from 'react'
 import type {
   Citation,
@@ -26,7 +26,7 @@ type DocumentWorkspaceProps = {
   onRunWorkflow: () => Promise<void>
 }
 
-type WorkspaceTab = 'preview' | 'classification' | 'workflow' | 'citations' | 'tools'
+type WorkspaceTab = 'preview' | 'classification' | 'workflow'
 
 const workspaceTabs: {
   id: WorkspaceTab
@@ -36,8 +36,6 @@ const workspaceTabs: {
   { id: 'preview', label: 'Preview', icon: FileText },
   { id: 'classification', label: 'Classification', icon: Tags },
   { id: 'workflow', label: 'Workflow', icon: Workflow },
-  { id: 'citations', label: 'Citations', icon: Quote },
-  { id: 'tools', label: 'Tools', icon: Activity },
 ]
 
 export function DocumentWorkspace({
@@ -88,7 +86,13 @@ export function DocumentWorkspace({
 
         <div className="min-h-0 overflow-y-auto p-4">
           {activeTab === 'preview' ? (
-            <DocumentPreview document={document} />
+            <div className="grid gap-4">
+              <DocumentPreview document={document} />
+              <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)]">
+                <CitationPanel citations={citations} />
+                <ToolResultPanel document={document} toolResult={toolResult} />
+              </div>
+            </div>
           ) : null}
 
           {activeTab === 'classification' ? (
@@ -107,13 +111,6 @@ export function DocumentWorkspace({
             />
           ) : null}
 
-          {activeTab === 'citations' ? (
-            <CitationPanel citations={citations} />
-          ) : null}
-
-          {activeTab === 'tools' ? (
-            <ToolResultPanel document={document} toolResult={toolResult} />
-          ) : null}
         </div>
       </div>
     </section>

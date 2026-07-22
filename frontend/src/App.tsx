@@ -143,7 +143,7 @@ function App() {
       const response = await sendChatMessage({
         message,
         documentId: selectedDocument.id,
-        history: nextMessages,
+        history: messages,
         aiProvider,
       })
 

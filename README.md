@@ -69,7 +69,7 @@ sequenceDiagram
 
 | Module | Purpose | First Scope |
 |---|---|---|
-| React Workspace | User-facing work area | Document list, document detail, right-side Assistant, citations, tool results |
+| React Workspace | User-facing work area | Document list, document workspace tabs, right-side Assistant, citations, tool results |
 | ASP.NET Core API | Backend boundary | `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows` |
 | Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, guardrails, AI Gateway |
 | Tool Gateway and Skills | Controlled actions | `SearchDocumentsTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill` |
@@ -106,13 +106,32 @@ sequenceDiagram
 - [x] Microsoft Graph Integration
 - [x] Real AI Gateway Provider
 - [x] ClassificationSkill
+- [x] Provider selector in the React workspace
+- [x] Document workspace tabs for preview, classification, workflow, citations, and tool context
+
+### Build Next
+
 - [ ] StructuredExtractionSkill
-- [ ] Agent Orchestration and A2A Extension
 - [ ] Persistence
+- [ ] Conversation and document storage with MongoDB or relational storage
 - [ ] Embeddings
 - [ ] Vector Search
 - [ ] RAG Answer with Citations
 - [ ] No-answer Guardrail
+- [ ] Basic document permission filtering
+
+### Build Lightly
+
+- [ ] Rate limiting
+- [ ] Observability and cost tracking
+- [ ] Prompt versioning
+- [ ] Sensitive data redaction for AI logs
+- [ ] Expanded harness checks for prompts, skills, tools, and workflows
+- [ ] Intent classification and routing
+- [ ] Simple Agent Orchestration / A2A handoff
+
+### Understand Later
+
 - [ ] Hybrid Search and Semantic Ranking
 
 ---
@@ -121,14 +140,22 @@ sequenceDiagram
 
 ```text
 StructuredExtractionSkill
-  -> Agent Orchestration and A2A Extension
   -> Persistence
   -> Embeddings
   -> Vector Search
   -> RAG Answer with Citations
   -> No-answer Guardrail
-  -> Hybrid Search and Semantic Ranking
+  -> Basic Document Permission Filtering
+  -> Rate Limiting
+  -> Observability and Cost Tracking
+  -> Prompt Versioning
+  -> Sensitive Data Redaction
+  -> Expanded Harness Checks
+  -> Intent Classification and Routing
+  -> Simple Agent Orchestration / A2A Handoff
 ```
+
+`Build Next` items form the main interview project path. `Build Lightly` items should stay intentionally small: one clear implementation is enough to show the concept. `Understand Later` items are useful to know, but they are not required for the first project version.
 
 ---
 

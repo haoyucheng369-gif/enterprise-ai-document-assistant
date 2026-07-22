@@ -19,7 +19,8 @@ public static class DocumentAssistantPrompt
         [
             "Answer the user question directly.",
             "Mention when document context is missing or limited.",
-            "Prepare the response so citations can be attached in a later RAG step."
+            "Prepare the response so citations can be attached in a later RAG step.",
+            "Suggested actions must be short user-facing follow-up questions or commands, not assistant-perspective statements."
         ]);
 
     public static IReadOnlyList<PromptVariable> BuildVariables(
