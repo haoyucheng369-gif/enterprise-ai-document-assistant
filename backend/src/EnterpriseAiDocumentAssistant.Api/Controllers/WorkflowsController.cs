@@ -18,8 +18,9 @@ public sealed class WorkflowsController : ControllerBase
     [ProducesResponseType<DocumentReviewWorkflowResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public ActionResult<DocumentReviewWorkflowResponse> RunDocumentReview(
-        DocumentReviewWorkflowRequest request)
+    public async Task<ActionResult<DocumentReviewWorkflowResponse>> RunDocumentReview(
+        DocumentReviewWorkflowRequest request,
+        CancellationToken cancellationToken)
     {
         // Keep HTTP validation at the boundary before the workflow executes application steps.
         if (string.IsNullOrWhiteSpace(request.DocumentId))
@@ -28,7 +29,7 @@ public sealed class WorkflowsController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var result = documentReviewWorkflow.Run(request);
+        var result = await documentReviewWorkflow.RunAsync(request, cancellationToken);
         if (result is null)
         {
             return NotFound(new ProblemDetails

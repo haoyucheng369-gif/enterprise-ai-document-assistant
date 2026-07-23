@@ -4,4 +4,8 @@ namespace EnterpriseAiDocumentAssistant.Api.Workflows;
 public interface IDocumentReviewWorkflow
 {
     DocumentReviewWorkflowResponse? Run(DocumentReviewWorkflowRequest request);
+
+    Task<DocumentReviewWorkflowResponse?> RunAsync(
+        DocumentReviewWorkflowRequest request,
+        CancellationToken cancellationToken);
 }

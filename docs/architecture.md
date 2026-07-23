@@ -183,12 +183,17 @@ Prompt orchestration manages repeatable AI behavior instead of scattering prompt
 
 Responsibilities:
 
+- Common enterprise system prompt defaults
 - Prompt templates
+- Task-specific prompt instructions
 - Runtime variables
+- Output rules
 - Structured output schemas
 - AI output validation
 - Guardrails
 - Reusable AI skills
+
+Current code keeps the shared assistant behavior in `EnterpriseAssistantPromptDefaults`, the chat template in `DocumentAssistantPrompt`, and skill-specific AI templates in `DocumentSkillPromptTemplates`.
 
 ### Skills
 
@@ -200,6 +205,8 @@ Current skill:
 - `RiskAnalysisSkill`: extracts risk items through `POST /api/skills/risk-analysis`
 - `EmailDraftSkill`: drafts a follow-up email through `POST /api/skills/email-draft`
 - `ClassificationSkill`: classifies document type, priority, and risk level
+
+Each document skill keeps a deterministic Mock path for local testing and an AI Gateway path for OpenAI or Azure OpenAI execution.
 
 Planned near-term skills:
 

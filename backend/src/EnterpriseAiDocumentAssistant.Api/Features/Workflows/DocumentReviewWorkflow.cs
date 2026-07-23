@@ -25,10 +25,82 @@ public sealed class DocumentReviewWorkflow : IDocumentReviewWorkflow
 
     public DocumentReviewWorkflowResponse? Run(DocumentReviewWorkflowRequest request)
     {
+        return RunDeterministic(request);
+    }
+
+    public async Task<DocumentReviewWorkflowResponse?> RunAsync(
+        DocumentReviewWorkflowRequest request,
+        CancellationToken cancellationToken)
+    {
         var stopwatch = Stopwatch.StartNew();
         var steps = new List<WorkflowStepResult>();
 
-        // The first workflow is deterministic: run known skills in a fixed business sequence.
+        // The workflow coordinates existing skills; each skill decides whether Mock or real AI is used.
+        var summary = await summarySkill.RunAsync(
+            new SummarySkillRequest(request.DocumentId, request.AiProvider),
+            cancellationToken);
+        if (summary is null)
+        {
+            RecordAudit(request.DocumentId, false, stopwatch.ElapsedMilliseconds, "summary_failed");
+            return null;
+        }
+
+        steps.Add(new WorkflowStepResult(
+            "SummarySkill",
+            "Completed",
+            "Document summary was generated."));
+
+        var riskAnalysis = await riskAnalysisSkill.RunAsync(
+            new RiskAnalysisSkillRequest(request.DocumentId, request.AiProvider),
+            cancellationToken);
+        if (riskAnalysis is null)
+        {
+            RecordAudit(request.DocumentId, false, stopwatch.ElapsedMilliseconds, "risk_analysis_failed");
+            return null;
+        }
+
+        steps.Add(new WorkflowStepResult(
+            "RiskAnalysisSkill",
+            "Completed",
+            $"Risk analysis returned {riskAnalysis.Risks.Count} risk item(s)."));
+
+        var emailDraft = await emailDraftSkill.RunAsync(
+            new EmailDraftSkillRequest(
+                request.DocumentId,
+                request.EmailPurpose,
+                request.AiProvider),
+            summary,
+            riskAnalysis,
+            cancellationToken);
+        if (emailDraft is null)
+        {
+            RecordAudit(request.DocumentId, false, stopwatch.ElapsedMilliseconds, "email_draft_failed");
+            return null;
+        }
+
+        steps.Add(new WorkflowStepResult(
+            "EmailDraftSkill",
+            "Completed",
+            "Follow-up email draft was generated."));
+
+        RecordAudit(request.DocumentId, true, stopwatch.ElapsedMilliseconds, "completed");
+
+        return new DocumentReviewWorkflowResponse(
+            $"workflow-{Guid.NewGuid():N}",
+            "Completed",
+            request.DocumentId,
+            steps,
+            summary,
+            riskAnalysis,
+            emailDraft);
+    }
+
+    private DocumentReviewWorkflowResponse? RunDeterministic(DocumentReviewWorkflowRequest request)
+    {
+        // The deterministic workflow mirrors the async provider workflow without any model calls.
+        var stopwatch = Stopwatch.StartNew();
+        var steps = new List<WorkflowStepResult>();
+
         var summary = summarySkill.Run(new SummarySkillRequest(request.DocumentId));
         if (summary is null)
         {

@@ -33,7 +33,9 @@ public sealed class SkillsController : ControllerBase
     [ProducesResponseType<SummarySkillResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public ActionResult<SummarySkillResponse> Summarize(SummarySkillRequest request)
+    public async Task<ActionResult<SummarySkillResponse>> Summarize(
+        SummarySkillRequest request,
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -43,7 +45,7 @@ public sealed class SkillsController : ControllerBase
             return validationResult;
         }
 
-        var result = summarySkill.Run(request);
+        var result = await summarySkill.RunAsync(request, cancellationToken);
 
         if (result is null)
         {
@@ -59,7 +61,9 @@ public sealed class SkillsController : ControllerBase
     [ProducesResponseType<RiskAnalysisSkillResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public ActionResult<RiskAnalysisSkillResponse> AnalyzeRisks(RiskAnalysisSkillRequest request)
+    public async Task<ActionResult<RiskAnalysisSkillResponse>> AnalyzeRisks(
+        RiskAnalysisSkillRequest request,
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -69,7 +73,7 @@ public sealed class SkillsController : ControllerBase
             return validationResult;
         }
 
-        var result = riskAnalysisSkill.Run(request);
+        var result = await riskAnalysisSkill.RunAsync(request, cancellationToken);
 
         if (result is null)
         {
@@ -85,7 +89,9 @@ public sealed class SkillsController : ControllerBase
     [ProducesResponseType<EmailDraftSkillResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public ActionResult<EmailDraftSkillResponse> DraftEmail(EmailDraftSkillRequest request)
+    public async Task<ActionResult<EmailDraftSkillResponse>> DraftEmail(
+        EmailDraftSkillRequest request,
+        CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -95,7 +101,7 @@ public sealed class SkillsController : ControllerBase
             return validationResult;
         }
 
-        var result = emailDraftSkill.Run(request);
+        var result = await emailDraftSkill.RunAsync(request, cancellationToken);
 
         if (result is null)
         {

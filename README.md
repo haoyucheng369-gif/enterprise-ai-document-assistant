@@ -87,6 +87,7 @@ sequenceDiagram
 - [x] Chat endpoint
 - [x] Streaming chat response
 - [x] Prompt orchestration
+- [x] Common enterprise prompt defaults
 - [x] Structured output validation
 - [x] Simple guardrails
 - [x] Tool Gateway
@@ -106,6 +107,7 @@ sequenceDiagram
 - [x] Microsoft Graph Integration
 - [x] Real AI Gateway Provider
 - [x] ClassificationSkill
+- [x] AI-backed Summary, Risk Analysis, and Email Draft skills
 - [x] Provider selector in the React workspace
 - [x] Document workspace tabs for preview, classification, workflow, citations, and tool context
 

@@ -119,6 +119,7 @@ export type ClassificationSkillResponse = {
 export type DocumentReviewWorkflowRequest = {
   documentId: string
   emailPurpose: string
+  aiProvider?: AiProviderSelection
 }
 
 export type DocumentReviewWorkflowResponse = {

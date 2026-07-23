@@ -180,6 +180,7 @@ public sealed class OpenAiGateway : IAiGateway
                             },
                             suggestedActions = new
                             {
+                                description = "Short user-facing follow-up commands such as 'Summarize key points'. Do not use assistant-perspective wording.",
                                 type = "array",
                                 items = new
                                 {

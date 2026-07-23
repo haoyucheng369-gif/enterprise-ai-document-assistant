@@ -1,7 +1,8 @@
 namespace EnterpriseAiDocumentAssistant.Api.Skills;
 
 public sealed record SummarySkillRequest(
-    string DocumentId);
+    string DocumentId,
+    string? AiProvider = null);
 
 public sealed record SummarySkillResponse(
     string DocumentId,

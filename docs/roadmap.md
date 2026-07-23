@@ -85,9 +85,12 @@ Objective: make AI responses easier to control before adding tools or model prov
 
 Scope:
 
+- Common enterprise system prompt defaults
 - Prompt templates
+- Task-specific prompt templates
 - Prompt variables
 - Prompt orchestration
+- Output rules
 - Structured output contract
 - Structured output validation
 - Simple guardrails
@@ -166,6 +169,7 @@ Expected outcome:
 - Common AI behaviors are modular.
 - The assistant can use recent context when the user asks follow-up questions.
 - The assistant can choose a small number of predictable paths without open-ended autonomy.
+- Document skills can execute through either the local Mock path or the AI Gateway provider selected by the caller.
 
 ---
 
@@ -192,6 +196,7 @@ Current V1 status:
 
 - AI Gateway abstraction is in place with `MockAiGateway`
 - Real OpenAI and Azure OpenAI routing is available through `OpenAiGateway`
+- Summary, risk analysis, email draft, classification, workflow, and assistant chat can use the selected AI provider
 - The React workspace can switch between local mock, OpenAI, and Azure OpenAI
 
 ---

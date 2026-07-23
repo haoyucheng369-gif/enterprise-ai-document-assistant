@@ -4,7 +4,8 @@ namespace EnterpriseAiDocumentAssistant.Api.Workflows;
 
 public sealed record DocumentReviewWorkflowRequest(
     string DocumentId,
-    string EmailPurpose);
+    string EmailPurpose,
+    string? AiProvider = null);
 
 public sealed record DocumentReviewWorkflowResponse(
     string WorkflowId,

@@ -60,6 +60,15 @@ export function AssistantPanel({
     await onSendMessage(message)
   }
 
+  async function handleSuggestedAction(action: string) {
+    if (isSending) {
+      return
+    }
+
+    shouldRestoreFocusRef.current = true
+    await onSendMessage(toUserAction(action))
+  }
+
   return (
     <aside
       aria-label="AI Assistant"
@@ -115,18 +124,27 @@ export function AssistantPanel({
                   {message.role === 'assistant' &&
                   message.suggestedActions !== undefined &&
                   message.suggestedActions.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {message.suggestedActions.map((action) => (
-                        <button
-                          className="cursor-pointer rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-left text-xs font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
-                          disabled={isSending}
-                          key={action}
-                          onClick={() => void onSendMessage(action)}
-                          type="button"
-                        >
-                          {action}
-                        </button>
-                      ))}
+                    <div className="mt-3">
+                      <p className="mb-1.5 text-xs text-slate-500">
+                        Suggested next steps
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {message.suggestedActions.map((action) => {
+                          const userAction = toUserAction(action)
+
+                          return (
+                            <button
+                              className="cursor-pointer rounded-md border border-indigo-200 bg-white px-2.5 py-1 text-left text-xs font-medium text-indigo-700 hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
+                              disabled={isSending}
+                              key={action}
+                              onClick={() => void handleSuggestedAction(action)}
+                              type="button"
+                            >
+                              {userAction}
+                            </button>
+                          )
+                        })}
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -162,4 +180,23 @@ export function AssistantPanel({
       </div>
     </aside>
   )
+}
+
+function toUserAction(action: string) {
+  const normalized = action
+    .trim()
+    .replace(/^如果你愿意[，,]\s*/u, '')
+    .replace(/^我可以继续帮你/u, '')
+    .replace(/^我可以帮你/u, '')
+    .replace(/^也可以帮你/u, '')
+    .replace(/^要我帮你/u, '')
+    .replace(/^需要我帮你/u, '')
+    .replace(/^Would you like me to\s+/iu, '')
+    .replace(/^Do you want me to\s+/iu, '')
+    .replace(/^I can\s+/iu, '')
+    .replace(/[。.]$/u, '')
+    .replace(/吗[？?]$/u, '')
+    .trim()
+
+  return normalized.length > 0 ? normalized : action.trim()
 }

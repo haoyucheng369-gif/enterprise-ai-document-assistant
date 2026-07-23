@@ -34,15 +34,15 @@ public sealed class ClassificationSkill : IClassificationSkill
             return null;
         }
 
-        var provider = ResolveProvider(request.AiProvider);
-        if (IsMockProvider(provider))
+        var provider = SkillJsonReader.ResolveProvider(options, request.AiProvider);
+        if (SkillJsonReader.IsMockProvider(provider))
         {
-            // The mock path keeps classification debuggable and cost-free while preserving the real response shape.
+            // Mock keeps classification debuggable and cost-free while preserving the real response shape.
             return BuildDeterministicClassification(document, provider);
         }
 
-        // The real-provider path asks the model for a compact JSON object, then maps it into the skill contract.
-        var prompt = BuildPrompt(document);
+        // Real providers return a compact classification object that is mapped into the skill contract.
+        var prompt = DocumentSkillPromptTemplates.BuildClassificationPrompt(document);
         var modelResponse = await aiGateway.GenerateChatResponseAsync(
             new ChatModelRequest(prompt, provider),
             cancellationToken);
@@ -50,58 +50,6 @@ public sealed class ClassificationSkill : IClassificationSkill
         return TryMapCategoryOnlyAnswer(document, modelResponse.Message.Answer, provider)
             ?? TryParseModelClassification(document, modelResponse.Message.Answer, provider)
             ?? BuildFallbackClassification(document, provider, modelResponse.Message.Answer);
-    }
-
-    private string ResolveProvider(string? requestedProvider)
-    {
-        return string.IsNullOrWhiteSpace(requestedProvider)
-            ? options.Provider
-            : requestedProvider.Trim();
-    }
-
-    private static OrchestratedPrompt BuildPrompt(DocumentItemResponse document)
-    {
-        var documentText = string.Join(
-            Environment.NewLine,
-            document.Sections.Select(section =>
-                $"{section.Label} - {section.Title}: {section.Body}"));
-
-        if (string.IsNullOrWhiteSpace(documentText))
-        {
-            documentText = $"{document.Type} document titled {document.Title}.";
-        }
-
-        var truncatedDocumentText = Truncate(documentText, 6000);
-        var variables = new[]
-        {
-            new PromptVariable("document_title", document.Title),
-            new PromptVariable("document_type", document.Type),
-            new PromptVariable("document_text", truncatedDocumentText)
-        };
-
-        var userMessage = $"""
-            Classify this document.
-
-            Title: {document.Title}
-            Type hint: {document.Type}
-
-            Document text:
-            {truncatedDocumentText}
-            """;
-
-        // Classification prompts force a compact object so application code can validate and store it.
-        return new OrchestratedPrompt(
-            "document-classification",
-            "You classify enterprise documents for a document assistant. Keep the classification practical and conservative.",
-            userMessage,
-            [
-                "Set answer to a single minified JSON object with category, priority, confidence, reason, signals, and sources. Do not return only the category label.",
-                "Allowed category values: Contract, Policy, Report, Resume, TechnicalDocument, Other.",
-                "Allowed priority values: Low, Medium, High.",
-                "Confidence must be a number from 0 to 1.",
-                "Signals and sources must be arrays of short strings."
-            ],
-            variables);
     }
 
     private static ClassificationSkillResponse BuildDeterministicClassification(
@@ -186,12 +134,12 @@ public sealed class ClassificationSkill : IClassificationSkill
             return BuildResponse(
                 document,
                 provider,
-                ReadString(root, "category", "Other"),
-                NormalizePriority(ReadString(root, "priority", "Low")),
-                Clamp(ReadDouble(root, "confidence", 0.5), 0, 1),
-                ReadString(root, "reason", "The model returned a classification without a detailed reason."),
-                ReadStringArray(root, "signals"),
-                ReadStringArray(root, "sources"));
+                SkillJsonReader.ReadString(root, "category", "Other"),
+                NormalizePriority(SkillJsonReader.ReadString(root, "priority", "Low")),
+                Clamp(SkillJsonReader.ReadDouble(root, "confidence", 0.5), 0, 1),
+                SkillJsonReader.ReadString(root, "reason", "The model returned a classification without a detailed reason."),
+                SkillJsonReader.ReadStringArray(root, "signals"),
+                SkillJsonReader.ReadStringArray(root, "sources"));
         }
         catch (JsonException)
         {
@@ -268,50 +216,10 @@ public sealed class ClassificationSkill : IClassificationSkill
             .ToArray();
     }
 
-    private static bool IsMockProvider(string provider)
-    {
-        return string.Equals(provider, "Mock", StringComparison.OrdinalIgnoreCase);
-    }
-
     private static bool ContainsAny(string value, IReadOnlyList<string> signals)
     {
         return signals.Any(signal =>
             value.Contains(signal, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static string ReadString(JsonElement root, string propertyName, string fallback)
-    {
-        return root.TryGetProperty(propertyName, out var property)
-            && property.ValueKind == JsonValueKind.String
-            && !string.IsNullOrWhiteSpace(property.GetString())
-                ? property.GetString()!
-                : fallback;
-    }
-
-    private static double ReadDouble(JsonElement root, string propertyName, double fallback)
-    {
-        return root.TryGetProperty(propertyName, out var property)
-            && property.ValueKind == JsonValueKind.Number
-            && property.TryGetDouble(out var value)
-                ? value
-                : fallback;
-    }
-
-    private static IReadOnlyList<string> ReadStringArray(JsonElement root, string propertyName)
-    {
-        if (!root.TryGetProperty(propertyName, out var property)
-            || property.ValueKind != JsonValueKind.Array)
-        {
-            return [];
-        }
-
-        return property
-            .EnumerateArray()
-            .Where(item => item.ValueKind == JsonValueKind.String)
-            .Select(item => item.GetString())
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Select(value => value!)
-            .ToArray();
     }
 
     private static string NormalizePriority(string priority)
@@ -343,10 +251,4 @@ public sealed class ClassificationSkill : IClassificationSkill
         return Math.Min(maximum, Math.Max(minimum, value));
     }
 
-    private static string Truncate(string value, int maxLength)
-    {
-        return value.Length <= maxLength
-            ? value
-            : value[..maxLength];
-    }
 }

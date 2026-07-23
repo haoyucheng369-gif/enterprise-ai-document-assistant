@@ -203,6 +203,7 @@ function App() {
         documentId: selectedDocument.id,
         emailPurpose:
           'Ask the vendor to clarify renewal, liability, and service credit terms.',
+        aiProvider,
       })
 
       setWorkflowResult(result)
