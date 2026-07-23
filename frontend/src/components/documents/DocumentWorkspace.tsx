@@ -1,10 +1,11 @@
-import { FileText, Tags, Workflow } from 'lucide-react'
+import { FilePenLine, FileText, Tags, Workflow } from 'lucide-react'
 import { useState } from 'react'
 import type {
   Citation,
   ClassificationSkillResponse,
   DocumentItem,
   DocumentReviewWorkflowResponse,
+  ResumeReviewSkillResponse,
   ToolResult,
 } from '../../types'
 import { CitationPanel } from '../insights/CitationPanel'
@@ -12,6 +13,7 @@ import { ClassificationResultPanel } from '../insights/ClassificationResultPanel
 import { DocumentPreview } from './DocumentPreview'
 import { ToolResultPanel } from '../insights/ToolResultPanel'
 import { WorkflowResultPanel } from '../insights/WorkflowResultPanel'
+import { ResumeReviewPanel } from '../insights/ResumeReviewPanel'
 import { WorkspaceHeader } from '../layout/WorkspaceHeader'
 
 type DocumentWorkspaceProps = {
@@ -20,13 +22,16 @@ type DocumentWorkspaceProps = {
   toolResult: ToolResult
   classificationResult: ClassificationSkillResponse | null
   classificationState: 'idle' | 'running' | 'failed'
+  reviewResult: ResumeReviewSkillResponse | null
+  reviewState: 'idle' | 'running' | 'failed'
   workflowResult: DocumentReviewWorkflowResponse | null
   workflowState: 'idle' | 'running' | 'failed'
   onClassifyDocument: () => Promise<void>
+  onGenerateResumeReview: () => Promise<void>
   onRunWorkflow: () => Promise<void>
 }
 
-type WorkspaceTab = 'preview' | 'classification' | 'workflow'
+type WorkspaceTab = 'preview' | 'classification' | 'workflow' | 'review'
 
 const workspaceTabs: {
   id: WorkspaceTab
@@ -36,14 +41,18 @@ const workspaceTabs: {
   { id: 'preview', label: 'Preview', icon: FileText },
   { id: 'classification', label: 'Classification', icon: Tags },
   { id: 'workflow', label: 'Workflow', icon: Workflow },
+  { id: 'review', label: 'Review', icon: FilePenLine },
 ]
 
 export function DocumentWorkspace({
   document,
+  reviewResult,
+  reviewState,
   citations,
   classificationResult,
   classificationState,
   onClassifyDocument,
+  onGenerateResumeReview,
   onRunWorkflow,
   toolResult,
   workflowResult,
@@ -108,6 +117,14 @@ export function DocumentWorkspace({
               onRunWorkflow={onRunWorkflow}
               result={workflowResult}
               state={workflowState}
+            />
+          ) : null}
+
+          {activeTab === 'review' ? (
+            <ResumeReviewPanel
+              onGenerateReview={onGenerateResumeReview}
+              result={reviewResult}
+              state={reviewState}
             />
           ) : null}
 

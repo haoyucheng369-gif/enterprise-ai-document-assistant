@@ -13,6 +13,7 @@ public sealed class SkillsController : ControllerBase
     private readonly IRiskAnalysisSkill riskAnalysisSkill;
     private readonly IEmailDraftSkill emailDraftSkill;
     private readonly IClassificationSkill classificationSkill;
+    private readonly IResumeReviewSkill resumeReviewSkill;
     private readonly IAuditLogger auditLogger;
 
     public SkillsController(
@@ -20,12 +21,14 @@ public sealed class SkillsController : ControllerBase
         IRiskAnalysisSkill riskAnalysisSkill,
         IEmailDraftSkill emailDraftSkill,
         IClassificationSkill classificationSkill,
+        IResumeReviewSkill resumeReviewSkill,
         IAuditLogger auditLogger)
     {
         this.summarySkill = summarySkill;
         this.riskAnalysisSkill = riskAnalysisSkill;
         this.emailDraftSkill = emailDraftSkill;
         this.classificationSkill = classificationSkill;
+        this.resumeReviewSkill = resumeReviewSkill;
         this.auditLogger = auditLogger;
     }
 
@@ -138,6 +141,33 @@ public sealed class SkillsController : ControllerBase
         }
 
         RecordSkillAudit("classification", "skills.classification", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
+        return Ok(result);
+    }
+
+    [HttpPost("resume-review")]
+    [ProducesResponseType<ResumeReviewSkillResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ResumeReviewSkillResponse>> ReviewResume(
+        ResumeReviewSkillRequest request,
+        CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        var validationResult = ValidateDocumentId(request.DocumentId);
+        if (validationResult is not null)
+        {
+            return validationResult;
+        }
+
+        var result = await resumeReviewSkill.RunAsync(request, cancellationToken);
+        if (result is null)
+        {
+            RecordSkillAudit("resume_review", "skills.resume-review", request.DocumentId, false, stopwatch.ElapsedMilliseconds);
+            return DocumentNotFound(request.DocumentId);
+        }
+
+        RecordSkillAudit("resume_review", "skills.resume-review", request.DocumentId, true, stopwatch.ElapsedMilliseconds);
         return Ok(result);
     }
 

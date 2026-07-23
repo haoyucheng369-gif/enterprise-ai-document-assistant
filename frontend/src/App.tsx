@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { classifyDocument } from './api/classificationApi'
 import { sendChatMessage } from './api/chatApi'
 import { uploadDocument } from './api/documentApi'
+import { generateResumeReview } from './api/resumeReviewApi'
 import { runDocumentReviewWorkflow } from './api/workflowApi'
 import { AssistantPanel } from './components/assistant/AssistantPanel'
 import { DocumentNav } from './components/documents/DocumentNav'
@@ -14,6 +15,7 @@ import type {
   DocumentItem,
   DocumentReviewWorkflowResponse,
   Message,
+  ResumeReviewSkillResponse,
 } from './types'
 
 const aiProviderStorageKey = 'enterprise-ai-document-assistant.aiProvider'
@@ -47,6 +49,10 @@ function App() {
     useState<'idle' | 'running' | 'failed'>('idle')
   const [classificationResult, setClassificationResult] =
     useState<ClassificationSkillResponse | null>(null)
+  const [reviewState, setReviewState] =
+    useState<'idle' | 'running' | 'failed'>('idle')
+  const [reviewResult, setReviewResult] =
+    useState<ResumeReviewSkillResponse | null>(null)
   const [isSendingMessage, setIsSendingMessage] = useState(false)
   const [aiProvider, setAiProvider] =
     useState<AiProviderSelection>(getStoredAiProvider)
@@ -66,6 +72,8 @@ function App() {
   useEffect(() => {
     setClassificationResult(null)
     setClassificationState('idle')
+    setReviewResult(null)
+    setReviewState('idle')
   }, [selectedDocumentId])
 
   if (workspace.state === 'loading') {
@@ -230,6 +238,25 @@ function App() {
     }
   }
 
+  async function handleGenerateResumeReview() {
+    setReviewState('running')
+    setReviewResult(null)
+
+    try {
+      const result = await generateResumeReview({
+        documentId: selectedDocument.id,
+        instruction:
+          'Create a practical resume review brief that I can use with the original resume in ChatGPT.',
+        aiProvider,
+      })
+
+      setReviewResult(result)
+      setReviewState('idle')
+    } catch {
+      setReviewState('failed')
+    }
+  }
+
   return (
     <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[288px_minmax(420px,1fr)_640px] 2xl:grid-cols-[300px_minmax(440px,1fr)_700px]">
       <DocumentNav
@@ -245,7 +272,10 @@ function App() {
         classificationState={classificationState}
         document={selectedDocument}
         onClassifyDocument={handleClassifyDocument}
+        onGenerateResumeReview={handleGenerateResumeReview}
         onRunWorkflow={handleRunWorkflow}
+        reviewResult={reviewResult}
+        reviewState={reviewState}
         toolResult={toolResult}
         workflowResult={workflowResult}
         workflowState={workflowState}

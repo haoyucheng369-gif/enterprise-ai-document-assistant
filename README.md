@@ -108,12 +108,13 @@ sequenceDiagram
 - [x] Real AI Gateway Provider
 - [x] ClassificationSkill
 - [x] AI-backed Summary, Risk Analysis, and Email Draft skills
+- [x] ResumeReviewSkill for Markdown resume review brief generation
+- [x] Expanded skill prompt context for longer resume inputs
 - [x] Provider selector in the React workspace
-- [x] Document workspace tabs for preview, classification, workflow, citations, and tool context
+- [x] Document workspace tabs for preview, classification, workflow, review, citations, and tool context
 
 ### Build Next
 
-- [ ] StructuredExtractionSkill
 - [ ] Persistence
 - [ ] Conversation and document storage with MongoDB or relational storage
 - [ ] Embeddings
@@ -141,8 +142,7 @@ sequenceDiagram
 ## Next Implementation Order
 
 ```text
-StructuredExtractionSkill
-  -> Persistence
+Persistence
   -> Embeddings
   -> Vector Search
   -> RAG Answer with Citations

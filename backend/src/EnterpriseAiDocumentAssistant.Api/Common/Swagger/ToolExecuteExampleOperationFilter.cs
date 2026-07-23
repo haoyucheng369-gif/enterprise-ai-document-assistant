@@ -50,7 +50,8 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["documentId"] = new OpenApiString("contract-review")
+                ["documentId"] = new OpenApiString("contract-review"),
+                ["aiProvider"] = new OpenApiString("OpenAI")
             };
 
             return;
@@ -60,7 +61,8 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["documentId"] = new OpenApiString("contract-review")
+                ["documentId"] = new OpenApiString("contract-review"),
+                ["aiProvider"] = new OpenApiString("OpenAI")
             };
 
             return;
@@ -71,7 +73,20 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
             mediaType.Example = new OpenApiObject
             {
                 ["documentId"] = new OpenApiString("contract-review"),
-                ["purpose"] = new OpenApiString("Ask the vendor to clarify renewal, liability, and service credit terms.")
+                ["purpose"] = new OpenApiString("Ask the vendor to clarify renewal, liability, and service credit terms."),
+                ["aiProvider"] = new OpenApiString("OpenAI")
+            };
+
+            return;
+        }
+
+        if (string.Equals(context.ApiDescription.RelativePath, "api/skills/resume-review", StringComparison.OrdinalIgnoreCase))
+        {
+            mediaType.Example = new OpenApiObject
+            {
+                ["documentId"] = new OpenApiString("contract-review"),
+                ["instruction"] = new OpenApiString("Create a practical resume review brief that I can use with the original resume in ChatGPT."),
+                ["aiProvider"] = new OpenApiString("OpenAI")
             };
 
             return;
@@ -119,7 +134,8 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
             mediaType.Example = new OpenApiObject
             {
                 ["documentId"] = new OpenApiString("contract-review"),
-                ["emailPurpose"] = new OpenApiString("Ask the vendor to clarify renewal, liability, and service credit terms.")
+                ["emailPurpose"] = new OpenApiString("Ask the vendor to clarify renewal, liability, and service credit terms."),
+                ["aiProvider"] = new OpenApiString("OpenAI")
             };
 
             return;

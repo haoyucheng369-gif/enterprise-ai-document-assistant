@@ -132,6 +132,22 @@ export type DocumentReviewWorkflowResponse = {
   emailDraft: WorkflowEmailDraft
 }
 
+export type ResumeReviewSkillRequest = {
+  documentId: string
+  instruction: string
+  aiProvider: AiProviderSelection
+}
+
+export type ResumeReviewSkillResponse = {
+  documentId: string
+  title: string
+  format: string
+  content: string
+  basedOn: string[]
+  nextActions: string[]
+  provider: string
+}
+
 export type DataConnectionState = 'loading' | 'loaded' | 'unavailable'
 
 export type ChatRequest = {

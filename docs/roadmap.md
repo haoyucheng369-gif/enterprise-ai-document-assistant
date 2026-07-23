@@ -27,7 +27,7 @@ React chat
   -> light enterprise integration
   -> real model provider
   -> classification skill
-  -> extraction skill
+  -> resume review brief generation
   -> persistence
   -> RAG with citations
   -> grounded-answer guardrails
@@ -52,7 +52,7 @@ V1 is implemented as six modules:
 - React Workspace: document list, document detail, right-side AI Assistant, citation panel, tool result panel
 - ASP.NET Core API: `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows`
 - Prompt and AI Layer: prompt orchestration, conversation memory, structured output, validation, guardrails, AI Gateway
-- Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ClassificationSkill`, `StructuredExtractionSkill`
+- Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ClassificationSkill`, `ResumeReviewSkill`
 - Document RAG: upload, parse text, chunk, embed, vector search, answer with citations
 - Persistence: conversation history, document metadata, workflow records, audit/tool records; MongoDB or relational storage can be selected later
 - MCP, Harness, Workflow, and Agent Orchestration Extension: MCP `search_documents`, prompt/tool harnesses, document summary to risk analysis to email draft workflow, coordinator-to-agent orchestration, optional `DocumentAgent` to `EmailAgent` handoff
@@ -155,7 +155,8 @@ Scope:
 
 - `SummarySkill`
 - `RiskAnalysisSkill`
-- `EmailDraftSkill`
+- `EmailDraftSkill` composed from summary, risk analysis, metadata tool output, and AI generation
+- `ResumeReviewSkill` for Markdown resume review brief generation
 - `POST /api/skills/summary`
 - `POST /api/skills/risk-analysis`
 - `POST /api/skills/email-draft`
@@ -170,6 +171,7 @@ Expected outcome:
 - The assistant can use recent context when the user asks follow-up questions.
 - The assistant can choose a small number of predictable paths without open-ended autonomy.
 - Document skills can execute through either the local Mock path or the AI Gateway provider selected by the caller.
+- Resume review demonstrates content generation as a separate Markdown brief contract instead of forcing long outputs into chat responses.
 
 ---
 

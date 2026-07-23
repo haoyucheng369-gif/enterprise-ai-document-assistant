@@ -108,12 +108,13 @@ sequenceDiagram
 - [x] Real AI Gateway Provider
 - [x] ClassificationSkill
 - [x] AI-backed Summary, Risk Analysis, and Email Draft skills
+- [x] ResumeReviewSkill for Markdown resume review brief generation
+- [x] Expanded skill prompt context for longer resume inputs
 - [x] React 工作区内的模型 Provider 切换
-- [x] 文档工作区 tabs：Preview、Classification、Workflow、Citations、Tool context
+- [x] Document workspace tabs for preview, classification, workflow, review, citations, and tool context
 
 ### Build Next
 
-- [ ] StructuredExtractionSkill
 - [ ] Persistence
 - [ ] MongoDB 或关系型数据库持久化 conversation / document state
 - [ ] Embeddings
@@ -141,8 +142,7 @@ sequenceDiagram
 ## Next Implementation Order
 
 ```text
-StructuredExtractionSkill
-  -> Persistence
+Persistence
   -> Embeddings
   -> Vector Search
   -> RAG Answer with Citations

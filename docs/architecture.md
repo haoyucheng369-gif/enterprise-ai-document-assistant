@@ -203,14 +203,13 @@ Current skill:
 
 - `SummarySkill`: summarizes a selected document through `POST /api/skills/summary`
 - `RiskAnalysisSkill`: extracts risk items through `POST /api/skills/risk-analysis`
-- `EmailDraftSkill`: drafts a follow-up email through `POST /api/skills/email-draft`
+- `EmailDraftSkill`: composes summary, risk analysis, document metadata tool output, and AI Gateway generation through `POST /api/skills/email-draft`
 - `ClassificationSkill`: classifies document type, priority, and risk level
+- `ResumeReviewSkill`: generates a Markdown resume review brief through `POST /api/skills/resume-review`
 
 Each document skill keeps a deterministic Mock path for local testing and an AI Gateway path for OpenAI or Azure OpenAI execution.
 
-Planned near-term skills:
-
-- `StructuredExtractionSkill`: extracts business fields into validated JSON through the AI Gateway
+Planned near-term skills can extend the same prompt/template/output contract pattern for structured extraction or document generation exports.
 
 ### Document Intelligence
 

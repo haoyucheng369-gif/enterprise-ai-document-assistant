@@ -4,6 +4,8 @@ namespace EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 
 public static class DocumentSkillPromptTemplates
 {
+    private const int DocumentTextLimit = 16000;
+
     public static OrchestratedPrompt BuildSummaryPrompt(DocumentItemResponse document)
     {
         var documentText = BuildDocumentText(document);
@@ -121,7 +123,8 @@ public static class DocumentSkillPromptTemplates
         DocumentItemResponse document,
         string purpose,
         string summary,
-        IReadOnlyList<string> risks)
+        IReadOnlyList<string> risks,
+        string metadata)
     {
         var riskText = risks.Count == 0
             ? "No specific risks were identified."
@@ -132,7 +135,8 @@ public static class DocumentSkillPromptTemplates
             new PromptVariable("document_type", document.Type),
             new PromptVariable("purpose", purpose),
             new PromptVariable("summary", summary),
-            new PromptVariable("risks", riskText)
+            new PromptVariable("risks", riskText),
+            new PromptVariable("metadata", metadata)
         };
 
         var userMessage = $"""
@@ -147,6 +151,9 @@ public static class DocumentSkillPromptTemplates
 
             Risk items:
             {riskText}
+
+            Metadata from tool:
+            {metadata}
             """;
 
         // Email draft output stays structured so the UI can show subject, body, sources, and next actions separately.
@@ -167,6 +174,54 @@ public static class DocumentSkillPromptTemplates
             variables);
     }
 
+    public static OrchestratedPrompt BuildResumeReviewPrompt(
+        DocumentItemResponse document,
+        string instruction)
+    {
+        var documentText = BuildDocumentText(document);
+        var normalizedInstruction = string.IsNullOrWhiteSpace(instruction)
+            ? "Create a practical resume review brief."
+            : instruction.Trim();
+        var variables = new[]
+        {
+            new PromptVariable("document_title", document.Title),
+            new PromptVariable("document_type", document.Type),
+            new PromptVariable("instruction", normalizedInstruction),
+            new PromptVariable("document_text", documentText)
+        };
+
+        var userMessage = $"""
+            Create a resume review brief from this resume or professional profile.
+
+            Title: {document.Title}
+            Type hint: {document.Type}
+            Instruction: {normalizedInstruction}
+
+            Source document:
+            {documentText}
+            """;
+
+        // The draft is returned as Markdown so the UI can render it without generating a binary file yet.
+        return new OrchestratedPrompt(
+            "resume-review-v1",
+            EnterpriseAssistantPromptDefaults.BuildSystemMessage(
+                "Review resumes and professional profiles and produce practical Markdown review briefs."),
+            userMessage,
+            EnterpriseAssistantPromptDefaults.CombineOutputRules(
+                EnterpriseAssistantPromptDefaults.OutputRules,
+                [
+                    "Set answer to a single minified JSON object with title, format, content, basedOn, and nextActions.",
+                    "format must be markdown.",
+                    "content must be a complete Markdown resume review brief.",
+                    "Write title, content, and nextActions in Chinese. Keep common technical terms such as .NET, React, Azure, SQL, CI/CD, and API in English when clearer.",
+                    "content must include Strengths, Weaknesses, Missing Keywords, Suggested Positioning, and Rewrite Instructions for ChatGPT sections.",
+                    "Preserve truthful information from the source document and do not invent employers, dates, diplomas, or certifications.",
+                    "basedOn must be an array of short source strings.",
+                    "nextActions must be an array of short user-facing action strings."
+                ]),
+            variables);
+    }
+
     private static string BuildDocumentText(DocumentItemResponse document)
     {
         var documentText = string.Join(
@@ -179,7 +234,7 @@ public static class DocumentSkillPromptTemplates
             documentText = $"{document.Type} document titled {document.Title}.";
         }
 
-        return Truncate(documentText, 6000);
+        return Truncate(documentText, DocumentTextLimit);
     }
 
     private static string Truncate(string value, int maxLength)
