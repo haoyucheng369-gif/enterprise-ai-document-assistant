@@ -56,6 +56,7 @@ public sealed class ClassificationSkill : IClassificationSkill
         DocumentItemResponse document,
         string provider)
     {
+        // Fallback classifier uses transparent keyword signals, useful for debugging route and UI behavior.
         var text = $"{document.Title} {document.Type} {string.Join(' ', document.Sections.Select(section => $"{section.Title} {section.Body}"))}";
 
         if (ContainsAny(text, ["agreement", "liability", "renewal", "service credit", "vendor"]))
@@ -121,6 +122,7 @@ public sealed class ClassificationSkill : IClassificationSkill
         string answer,
         string provider)
     {
+        // Real classification should be JSON so category, priority, confidence, and sources remain machine-readable.
         if (!answer.TrimStart().StartsWith('{'))
         {
             return null;

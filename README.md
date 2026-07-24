@@ -1,8 +1,8 @@
 # Enterprise AI Document Assistant
 
-A production-oriented React + ASP.NET Core application for connecting the core building blocks of modern AI applications: assistant UI, prompt orchestration, AI Gateway, RAG, vector search, Tool Calling, MCP, simple workflow orchestration, and Microsoft Graph integration.
+A production-oriented React + ASP.NET Core application for connecting the core building blocks of modern AI applications: assistant UI, prompt orchestration, AI Gateway, document processing, controlled skills, Tool Gateway, MCP surface, and workflow orchestration.
 
-V1 is intentionally small: one end-to-end document assistant flow, implemented in clear steps.
+V1 is intentionally small: one end-to-end document assistant flow, implemented in clear steps. Retrieval, vector search, persistence, and full enterprise integrations are staged after the core assistant path is understandable.
 
 ---
 
@@ -26,22 +26,19 @@ flowchart LR
         api --> tools[Tool Gateway]
         api --> workflows[Workflow API]
         gateway --> prompts[Prompt Orchestration]
-        gateway --> rag[Document RAG]
-        workflows --> planner[Simple Agent Planner]
+        workflows --> planner[AI Planner + Fallback]
     end
 
-    subgraph ai[AI + Data]
-        rag --> vector[Vector Store]
-        rag --> files[Document Storage]
+    subgraph ai[AI + Extension Points]
         gateway --> models[OpenAI / Azure OpenAI]
-        tools --> msgraph[Microsoft Graph]
-        tools --> mcp[MCP Tools]
+        tools --> mcp[MCP Surface]
+        tools --> msgraph[Microsoft Graph Adapter]
     end
 ```
 
 ---
 
-## V1 Flow
+## Current Core Flow
 
 ```mermaid
 sequenceDiagram
@@ -49,17 +46,15 @@ sequenceDiagram
     participant UI as React Workspace
     participant API as ASP.NET Core API
     participant AI as AI Gateway
-    participant RAG as Document RAG
-    participant Tools as Tool Gateway
+    participant Model as OpenAI / Azure OpenAI / Mock
 
     U->>UI: Ask about a document
     UI->>API: POST /api/chat/stream
-    API->>AI: Build prompt + route request
-    AI->>RAG: Retrieve relevant chunks
-    RAG-->>AI: Context + citations
-    AI->>Tools: Optional controlled tool call
-    Tools-->>AI: Tool result
-    AI-->>API: Answer with citations
+    API->>API: Guardrails + conversation memory
+    API->>AI: Build orchestrated prompt
+    AI->>Model: Generate structured answer
+    Model-->>AI: JSON-shaped response
+    AI-->>API: Validated answer
     API-->>UI: Stream response
 ```
 
@@ -72,50 +67,49 @@ sequenceDiagram
 | React Workspace | User-facing work area | Document list, document workspace tabs, right-side Assistant, citations, tool results |
 | ASP.NET Core API | Backend boundary | `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows` |
 | Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, guardrails, AI Gateway |
-| Tool Gateway and Skills | Controlled actions | `SearchDocumentsTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill` |
-| Document RAG | Source-grounded answers | Upload, parse, chunk, embed, vector search, citations |
+| Tool Gateway and Skills | Controlled actions | `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ResumeReviewSkill` |
+| Document Processing | Source document handling | Upload, parse, chunk, preview, document metadata |
 | Persistence | Application state | Conversation history, document metadata, workflow records, audit/tool records; MongoDB remains optional |
-| MCP / Harness / Workflow / Agent Orchestration | Extension path | MCP for existing tools, prompt/tool harnesses, one workflow, coordinator-to-agent orchestration, optional A2A handoff |
+| MCP / Harness / Workflow / Integration | Extension path | MCP wrapper over existing tools, prompt/tool harnesses, one workflow, Microsoft Graph adapter boundary |
 
 ---
 
 ## Current Status
 
-- [x] React Workspace skeleton
-- [x] ASP.NET Core API skeleton
-- [x] Backend-driven workspace data
-- [x] Chat endpoint
-- [x] Streaming chat response
-- [x] Prompt orchestration
-- [x] Common enterprise prompt defaults
-- [x] Structured output validation
-- [x] Simple guardrails
-- [x] Tool Gateway
-- [x] First tools
-- [x] MCP Server
-- [x] Prompt and Tool Harness
-- [x] SummarySkill
-- [x] RiskAnalysisSkill
-- [x] EmailDraftSkill
-- [x] Conversation Memory
-- [x] Simple Agent Planner
-- [x] Audit Logging
-- [x] AI Gateway
-- [x] Document Upload
-- [x] Text Parsing and Chunking
-- [x] Workflow
-- [x] Microsoft Graph Integration
-- [x] Real AI Gateway Provider
-- [x] ClassificationSkill
-- [x] AI-backed Summary, Risk Analysis, and Email Draft skills
-- [x] ResumeReviewSkill for Markdown resume review brief generation
-- [x] Expanded skill prompt context for longer resume inputs
-- [x] Provider selector in the React workspace
-- [x] Document workspace tabs for preview, classification, workflow, review, citations, and tool context
+### Completed Core
+
+- [x] React workspace with document list, upload zone, document tabs, and right-side Assistant
+- [x] ASP.NET Core controller API with Swagger, contracts, and ProblemDetails
+- [x] Backend-driven workspace data and document upload flow
+- [x] Text parsing, chunking, and document preview
+- [x] Chat endpoint with prompt orchestration, conversation memory, structured output, and simple guardrails
+- [x] AI Gateway with local mock, OpenAI, and Azure OpenAI provider selection
+- [x] Skills: classification, summary, risk analysis, email draft, and resume review
+- [x] Workflow: document summary -> risk analysis -> email draft
+- [x] Tool Gateway with health and document metadata tools
+- [x] MCP controller surface over registered tools
+- [x] In-memory audit logging
+- [x] AI intent routing through Agent Planner with deterministic fallback
+- [x] Docker Compose MongoDB baseline
+
+### Lightweight Boundaries
+
+- [x] Microsoft Graph adapter scaffold with mock email draft output, not OAuth-backed real Graph calls
+- [x] Prompt and tool harness checks for basic regression coverage
+
+### Not Built Yet
+
+- [ ] MongoDB persistence wired into conversation, document, workflow, and audit storage
+- [ ] Embeddings
+- [ ] Vector Search
+- [ ] RAG Answer with Citations
+- [ ] LLM-native function/tool calling loop
+- [ ] Real Microsoft Graph OAuth integration
+- [ ] No-answer Guardrail
+- [ ] Basic document permission filtering
 
 ### Build Next
 
-- [ ] Persistence
 - [ ] Conversation and document storage with MongoDB or relational storage
 - [ ] Embeddings
 - [ ] Vector Search
@@ -130,12 +124,7 @@ sequenceDiagram
 - [ ] Prompt versioning
 - [ ] Sensitive data redaction for AI logs
 - [ ] Expanded harness checks for prompts, skills, tools, and workflows
-- [ ] Intent classification and routing
 - [ ] Simple Agent Orchestration / A2A handoff
-
-### Understand Later
-
-- [ ] Hybrid Search and Semantic Ranking
 
 ---
 
@@ -153,11 +142,17 @@ Persistence
   -> Prompt Versioning
   -> Sensitive Data Redaction
   -> Expanded Harness Checks
-  -> Intent Classification and Routing
   -> Simple Agent Orchestration / A2A Handoff
 ```
 
-`Build Next` items form the main interview project path. `Build Lightly` items should stay intentionally small: one clear implementation is enough to show the concept. `Understand Later` items are useful to know, but they are not required for the first project version.
+`Build Next` items form the main delivery path. `Build Lightly` items stay intentionally small and are implemented only when they strengthen the application architecture.
+
+### Deferred Scope
+
+- Hybrid search and semantic ranking
+- Real Microsoft Graph OAuth integration
+- GraphQL API surface
+- CI and deployment hardening
 
 ---
 
@@ -196,6 +191,21 @@ backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
 ```
 
 Edit that local file with your provider, model, and API key. The local file is ignored by Git.
+
+Local MongoDB can be started from the repository root:
+
+```bash
+docker compose up -d mongodb
+docker compose ps
+```
+
+MongoDB Compass connection string:
+
+```text
+mongodb://localhost:27017
+```
+
+The database uses a Docker named volume, so data survives container restarts. Use `docker compose down -v` only when you intentionally want to remove the local database volume.
 
 ---
 

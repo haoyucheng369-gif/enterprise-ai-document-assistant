@@ -130,12 +130,7 @@ sequenceDiagram
 - [ ] Prompt versioning
 - [ ] AI 日志敏感数据脱敏
 - [ ] Prompt、Skill、Tool、Workflow 的 harness 检查扩展
-- [ ] Intent classification and routing
 - [ ] Simple Agent Orchestration / A2A handoff
-
-### Understand Later
-
-- [ ] Hybrid Search and Semantic Ranking
 
 ---
 
@@ -153,11 +148,17 @@ Persistence
   -> Prompt Versioning
   -> Sensitive Data Redaction
   -> Expanded Harness Checks
-  -> Intent Classification and Routing
   -> Simple Agent Orchestration / A2A Handoff
 ```
 
-`Build Next` 是主线，需要真正做出来。`Build Lightly` 只做轻量版本，能展示概念和代码边界即可。`Understand Later` 先理解概念，不作为第一版必须实现范围。
+`Build Next` is the main delivery path. `Build Lightly` items stay small and are implemented only when they strengthen the application architecture.
+
+### Deferred Scope
+
+- Hybrid search and semantic ranking
+- Real Microsoft Graph OAuth integration
+- GraphQL API surface
+- CI and deployment hardening
 
 ---
 
@@ -196,6 +197,21 @@ backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
 ```
 
 Edit that local file with your provider, model, and API key. The local file is ignored by Git.
+
+Local MongoDB can be started from the repository root:
+
+```bash
+docker compose up -d mongodb
+docker compose ps
+```
+
+MongoDB Compass connection string:
+
+```text
+mongodb://localhost:27017
+```
+
+MongoDB data is stored in a Docker named volume. Use `docker compose down -v` only when you intentionally want to delete the local database volume.
 
 ---
 

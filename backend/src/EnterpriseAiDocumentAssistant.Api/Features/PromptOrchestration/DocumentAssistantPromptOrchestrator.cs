@@ -20,7 +20,7 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
         this.applicationDocumentProvider = applicationDocumentProvider;
     }
 
-    public OrchestratedPrompt BuildPrompt(ChatRequest request)
+    public OrchestratedPrompt BuildAssistantPrompt(ChatRequest request)
     {
         var userQuestion = request.Message.Trim();
         var memory = conversationMemoryBuilder.Build(request.History);

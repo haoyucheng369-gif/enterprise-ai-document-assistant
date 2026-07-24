@@ -38,7 +38,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
         services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
         services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
-        services.AddSingleton<IAgentPlanner, SimpleAgentPlanner>();
+        services.AddSingleton<SimpleAgentPlanner>();
+        services.AddSingleton<AiAgentPlanner>();
+        services.AddSingleton<IAgentPlanner, RoutingAgentPlanner>();
         services.AddSingleton<IDocumentReviewWorkflow, DocumentReviewWorkflow>();
         services.AddSingleton<IMicrosoftGraphGateway, MockMicrosoftGraphGateway>();
         services.AddSingleton<IHarnessRunner, HarnessRunner>();

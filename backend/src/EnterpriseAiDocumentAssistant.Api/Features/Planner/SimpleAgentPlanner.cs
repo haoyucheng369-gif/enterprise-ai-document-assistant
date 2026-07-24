@@ -5,7 +5,6 @@ namespace EnterpriseAiDocumentAssistant.Api.Planner;
 
 public sealed class SimpleAgentPlanner : IAgentPlanner
 {
-    private const string DefaultDocumentId = "contract-review";
     private readonly IAuditLogger auditLogger;
 
     public SimpleAgentPlanner(IAuditLogger auditLogger)
@@ -16,7 +15,7 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
     public AgentPlanResponse Plan(AgentPlanRequest request)
     {
         var stopwatch = Stopwatch.StartNew();
-        var plan = CreatePlan(request);
+        var plan = CreateFallbackPlan(request);
 
         auditLogger.Record(new AuditEventRequest(
             "planner",
@@ -33,70 +32,54 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
         return plan;
     }
 
-    private static AgentPlanResponse CreatePlan(AgentPlanRequest request)
+    public Task<AgentPlanResponse> PlanAsync(
+        AgentPlanRequest request,
+        CancellationToken cancellationToken)
     {
-        var message = request.Message.Trim();
-        var documentId = string.IsNullOrWhiteSpace(request.DocumentId)
-            ? DefaultDocumentId
-            : request.DocumentId.Trim();
-
-        // The first planner uses deterministic rules so routing is easy to inspect and test.
-        if (ContainsAny(message, "email", "mail", "draft", "邮件", "草稿"))
-        {
-            return CreatePlan(
-                "email_draft",
-                "skills.email-draft",
-                documentId,
-                ["Read selected document", "Summarize document", "Analyze risks", "Draft follow-up email"],
-                ["SummarySkill", "RiskAnalysisSkill", "EmailDraftSkill"]);
-        }
-
-        if (ContainsAny(message, "risk", "risks", "liability", "风险", "责任"))
-        {
-            return CreatePlan(
-                "risk_analysis",
-                "skills.risk-analysis",
-                documentId,
-                ["Read selected document", "Identify risk signals", "Return severity and recommendations"],
-                ["RiskAnalysisSkill"]);
-        }
-
-        if (ContainsAny(message, "summary", "summarize", "overview", "总结", "概括"))
-        {
-            return CreatePlan(
-                "summary",
-                "skills.summary",
-                documentId,
-                ["Read selected document", "Extract key points", "Return structured summary"],
-                ["SummarySkill"]);
-        }
-
-        if (ContainsAny(message, "status", "health", "metadata", "元数据", "状态"))
-        {
-            return CreatePlan(
-                "tool_lookup",
-                "tools.execute",
-                documentId,
-                ["Select registered tool", "Validate arguments", "Execute through Tool Gateway"],
-                ["GetHealthStatusTool", "GetDocumentMetadataTool"]);
-        }
-
-        return CreatePlan(
-            "document_question",
-            "chat",
-            documentId,
-            ["Build prompt", "Use conversation memory", "Prepare answer path for later RAG"],
-            ["PromptOrchestration", "ConversationMemory"]);
+        return Task.FromResult(Plan(request));
     }
 
-    private static AgentPlanResponse CreatePlan(
-        string intent,
-        string route,
-        string documentId,
-        IReadOnlyList<string> steps,
-        IReadOnlyList<string> capabilities)
+    private static AgentPlanResponse CreateFallbackPlan(AgentPlanRequest request)
     {
-        return new AgentPlanResponse(intent, route, documentId, steps, capabilities);
+        var message = request.Message.Trim();
+
+        // Deterministic rules provide the fallback route when AI routing is unavailable or invalid.
+        if (ContainsAny(message, "workflow", "review document", "full review", "\u5de5\u4f5c\u6d41", "\u5b8c\u6574\u5206\u6790"))
+        {
+            return AgentPlanCatalog.Create("workflows.document-review", request.DocumentId);
+        }
+
+        if (ContainsAny(message, "resume", "cv", "career", "\u7b80\u5386", "\u5c65\u5386"))
+        {
+            return AgentPlanCatalog.Create("skills.resume-review", request.DocumentId);
+        }
+
+        if (ContainsAny(message, "classify", "classification", "category", "what is this document", "\u5206\u7c7b", "\u662f\u4ec0\u4e48"))
+        {
+            return AgentPlanCatalog.Create("skills.classification", request.DocumentId);
+        }
+
+        if (ContainsAny(message, "email", "mail", "draft", "\u90ae\u4ef6", "\u8349\u7a3f"))
+        {
+            return AgentPlanCatalog.Create("skills.email-draft", request.DocumentId);
+        }
+
+        if (ContainsAny(message, "risk", "risks", "liability", "\u98ce\u9669", "\u8d23\u4efb"))
+        {
+            return AgentPlanCatalog.Create("skills.risk-analysis", request.DocumentId);
+        }
+
+        if (ContainsAny(message, "summary", "summarize", "overview", "\u603b\u7ed3", "\u6982\u62ec"))
+        {
+            return AgentPlanCatalog.Create("skills.summary", request.DocumentId);
+        }
+
+        if (ContainsAny(message, "status", "health", "metadata", "\u72b6\u6001", "\u5143\u6570\u636e"))
+        {
+            return AgentPlanCatalog.Create("tools.execute", request.DocumentId);
+        }
+
+        return AgentPlanCatalog.Create("chat", request.DocumentId);
     }
 
     private static bool ContainsAny(string value, params string[] keywords)

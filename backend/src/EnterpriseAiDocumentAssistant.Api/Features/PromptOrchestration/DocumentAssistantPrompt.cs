@@ -20,7 +20,7 @@ public static class DocumentAssistantPrompt
                 "Mention when document context is missing or limited.",
                 "Prepare the response so citations can be attached in a later RAG step.",
                 "Suggested actions must be short user-facing commands, not assistant-perspective statements.",
-                "Suggested actions must not start with phrases like 'I can', 'Would you like me to', 'Do you want me to', or '要我帮你'.",
+                "Suggested actions must be written as direct user commands, not assistant-offer phrases.",
                 "Good suggested action examples: 'Summarize key points', 'Extract the skill list', 'Review risk items'."
             ]));
 

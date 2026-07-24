@@ -62,6 +62,7 @@ public sealed class SummarySkill : ISummarySkill
 
     private static SummarySkillResponse BuildDeterministicSummary(DocumentItemResponse document)
     {
+        // Fallback summary extracts short highlights from parsed sections when no real model is used.
         if (document.Sections.Count == 0)
         {
             return new SummarySkillResponse(
@@ -72,23 +73,44 @@ public sealed class SummarySkill : ISummarySkill
                 []);
         }
 
-        var sectionTitles = document.Sections.Select(section => section.Title).ToArray();
+        var contentHighlights = document.Sections
+            .Select(section => ExtractHighlight(section.Body))
+            .Where(highlight => !string.IsNullOrWhiteSpace(highlight))
+            .Take(3)
+            .ToArray();
         var keyPoints = document.Sections
-            .Select(section => $"{section.Label}: {section.Title}. {section.Body}")
+            .Select(section => $"{section.Label}: {ExtractHighlight(section.Body)}")
             .ToArray();
 
         return new SummarySkillResponse(
             document.Id,
             document.Title,
-            $"{document.Title} focuses on {string.Join(", ", sectionTitles)}.",
+            contentHighlights.Length == 0
+                ? $"{document.Title} is available, but the extracted text is too limited for a useful summary."
+                : $"{document.Title} includes {string.Join(" ", contentHighlights)}",
             keyPoints,
             document.Sections.Select(section => section.Label).ToArray());
+    }
+
+    private static string ExtractHighlight(string value)
+    {
+        var normalized = string.Join(
+            " ",
+            value.Split(
+                [' ', '\t', '\r', '\n'],
+                StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+
+        const int maxLength = 180;
+        return normalized.Length <= maxLength
+            ? normalized
+            : $"{normalized[..maxLength]}...";
     }
 
     private static SummarySkillResponse? TryParseModelSummary(
         DocumentItemResponse document,
         string answer)
     {
+        // Real providers are expected to place minified JSON in the assistant answer field.
         if (!answer.TrimStart().StartsWith('{'))
         {
             return null;

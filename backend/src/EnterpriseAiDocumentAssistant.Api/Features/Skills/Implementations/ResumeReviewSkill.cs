@@ -41,6 +41,7 @@ public sealed class ResumeReviewSkill : IResumeReviewSkill
             return BuildDeterministicReview(document, provider);
         }
 
+        // Real AI path: prompt template receives parsed resume text and controls the output language.
         var prompt = DocumentSkillPromptTemplates.BuildResumeReviewPrompt(
             document,
             request.Instruction);
@@ -48,7 +49,7 @@ public sealed class ResumeReviewSkill : IResumeReviewSkill
             new ChatModelRequest(prompt, provider),
             cancellationToken);
 
-        // Real model output is parsed into a review contract that the frontend can display as Markdown text.
+        // The model still returns JSON; the Markdown document lives inside the content property.
         return TryParseModelReview(document.Id, provider, modelResponse.Message.Answer)
             ?? BuildDeterministicReview(document, provider);
     }
@@ -60,31 +61,31 @@ public sealed class ResumeReviewSkill : IResumeReviewSkill
         var content = $"""
         # Resume Review Brief
 
-        ## 原始文档
+        ## Source document
 
         {document.Title}
 
-        ## 优点
+        ## Strengths
 
         {string.Join(Environment.NewLine, document.Sections.Take(6).Select(section => $"- **{section.Title}**: {section.Body}"))}
 
-        ## 需要重点检查的问题
+        ## Items to review
 
-        - 使用 OpenAI 或 Azure OpenAI provider 可以基于解析后的简历内容生成更完整的中文评审。
+        - Use OpenAI or Azure OpenAI provider to generate a fuller review from the parsed resume content.
 
-        ## 给 ChatGPT 的改写指令
+        ## Rewrite instructions for ChatGPT
 
-        - 请结合这份 Review Brief 和原始简历一起改写。
-        - 保留真实经历和技术事实，重点优化结构、定位和关键词覆盖。
+        - Combine this review brief with the original resume.
+        - Keep real experience and technical facts, then improve structure, positioning, and keyword coverage.
         """;
 
         return new ResumeReviewSkillResponse(
             document.Id,
-            $"{document.Title} - 简历评审 Brief",
+            $"{document.Title} - Resume Review Brief",
             "markdown",
             content,
             document.Sections.Select(section => section.Label).Take(6).ToArray(),
-            ["使用 OpenAI 生成完整评审", "检查缺失关键词", "结合原始简历一起交给 ChatGPT"],
+            ["Generate full review with OpenAI", "Check missing keywords", "Use with the original resume in ChatGPT"],
             provider);
     }
 
@@ -105,7 +106,7 @@ public sealed class ResumeReviewSkill : IResumeReviewSkill
 
             return new ResumeReviewSkillResponse(
                 documentId,
-                SkillJsonReader.ReadString(root, "title", "简历评审 Brief"),
+                SkillJsonReader.ReadString(root, "title", "Resume Review Brief"),
                 SkillJsonReader.ReadString(root, "format", "markdown"),
                 SkillJsonReader.ReadString(root, "content", string.Empty),
                 SkillJsonReader.ReadStringArray(root, "basedOn"),

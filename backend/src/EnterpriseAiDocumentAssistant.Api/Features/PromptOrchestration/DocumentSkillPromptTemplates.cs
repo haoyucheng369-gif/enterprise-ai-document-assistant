@@ -8,7 +8,7 @@ public static class DocumentSkillPromptTemplates
 
     public static OrchestratedPrompt BuildSummaryPrompt(DocumentItemResponse document)
     {
-        var documentText = BuildDocumentText(document);
+        var documentText = BuildLimitedDocumentTextForPrompt(document);
         var variables = new[]
         {
             new PromptVariable("document_title", document.Title),
@@ -45,7 +45,7 @@ public static class DocumentSkillPromptTemplates
 
     public static OrchestratedPrompt BuildClassificationPrompt(DocumentItemResponse document)
     {
-        var documentText = BuildDocumentText(document);
+        var documentText = BuildLimitedDocumentTextForPrompt(document);
         var variables = new[]
         {
             new PromptVariable("document_title", document.Title),
@@ -83,7 +83,7 @@ public static class DocumentSkillPromptTemplates
 
     public static OrchestratedPrompt BuildRiskAnalysisPrompt(DocumentItemResponse document)
     {
-        var documentText = BuildDocumentText(document);
+        var documentText = BuildLimitedDocumentTextForPrompt(document);
         var variables = new[]
         {
             new PromptVariable("document_title", document.Title),
@@ -178,7 +178,7 @@ public static class DocumentSkillPromptTemplates
         DocumentItemResponse document,
         string instruction)
     {
-        var documentText = BuildDocumentText(document);
+        var documentText = BuildLimitedDocumentTextForPrompt(document);
         var normalizedInstruction = string.IsNullOrWhiteSpace(instruction)
             ? "Create a practical resume review brief."
             : instruction.Trim();
@@ -222,8 +222,9 @@ public static class DocumentSkillPromptTemplates
             variables);
     }
 
-    private static string BuildDocumentText(DocumentItemResponse document)
+    private static string BuildLimitedDocumentTextForPrompt(DocumentItemResponse document)
     {
+        // Skills use parsed document sections as model context, but keep a hard limit to avoid oversized prompts.
         var documentText = string.Join(
             Environment.NewLine,
             document.Sections.Select(section =>

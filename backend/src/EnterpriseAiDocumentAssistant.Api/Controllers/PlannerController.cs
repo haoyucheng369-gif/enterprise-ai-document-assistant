@@ -17,7 +17,9 @@ public sealed class PlannerController : ControllerBase
     [HttpPost("plan")]
     [ProducesResponseType<AgentPlanResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-    public ActionResult<AgentPlanResponse> Plan(AgentPlanRequest request)
+    public async Task<ActionResult<AgentPlanResponse>> Plan(
+        AgentPlanRequest request,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Message))
         {
@@ -25,7 +27,7 @@ public sealed class PlannerController : ControllerBase
             return ValidationProblem(ModelState);
         }
 
-        var plan = agentPlanner.Plan(request);
+        var plan = await agentPlanner.PlanAsync(request, cancellationToken);
 
         return Ok(plan);
     }

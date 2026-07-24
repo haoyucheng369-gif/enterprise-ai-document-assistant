@@ -104,7 +104,7 @@ public sealed class HarnessRunner : IHarnessRunner
 
     private HarnessCheckResult CheckPromptCanBuild()
     {
-        var prompt = promptOrchestrator.BuildPrompt(new ChatRequest(
+        var prompt = promptOrchestrator.BuildAssistantPrompt(new ChatRequest(
             "What should I review first?",
             "contract-review",
             []));
@@ -162,7 +162,7 @@ public sealed class HarnessRunner : IHarnessRunner
 
     private HarnessCheckResult CheckConversationMemoryIsInjected()
     {
-        var prompt = promptOrchestrator.BuildPrompt(new ChatRequest(
+        var prompt = promptOrchestrator.BuildAssistantPrompt(new ChatRequest(
             "What about the second point?",
             "contract-review",
             [
@@ -196,7 +196,7 @@ public sealed class HarnessRunner : IHarnessRunner
 
     private async Task<HarnessCheckResult> CheckAiGatewayReturnsStructuredMessageAsync(CancellationToken cancellationToken)
     {
-        var prompt = promptOrchestrator.BuildPrompt(new ChatRequest(
+        var prompt = promptOrchestrator.BuildAssistantPrompt(new ChatRequest(
             "What should I review first?",
             "contract-review",
             []));

@@ -71,7 +71,7 @@ The first version should prove the whole path with minimal depth:
 - One document ingestion path
 - One vector search path
 - One simple workflow
-- A minimal Microsoft Graph integration
+- A minimal Microsoft Graph adapter boundary
 
 Advanced security, observability, multi-tenant authorization, queue monitoring, and broad admin features are later hardening items.
 
@@ -100,9 +100,8 @@ The first implementation is grouped into six modules:
    - AI Gateway
 
 4. Tool Gateway and Skills
-   - `SearchDocumentsTool`
+   - `GetHealthStatusTool`
    - `GetDocumentMetadataTool`
-   - `CreateEmailDraftTool` or `GetHealthStatusTool`
    - `SummarySkill`
    - `RiskAnalysisSkill`
    - `EmailDraftSkill`
@@ -116,12 +115,12 @@ The first implementation is grouped into six modules:
    - Vector search
    - Answer with citations
 
-6. MCP, Harness, Workflow, and Agent Orchestration Extension
+6. MCP, Harness, Workflow, and Integration Extension
    - MCP Server exposing existing tools first
    - Prompt and tool harnesses
    - Workflow: summarize document, identify risks, generate email draft
-   - Coordinator-to-agent orchestration
-   - Optional A2A path: `DocumentAgent` handoff to `EmailAgent`
+   - Microsoft Graph adapter boundary with mock email draft output
+   - Optional later A2A path: `DocumentAgent` handoff to `EmailAgent`
 
 ### React Frontend
 
@@ -258,7 +257,7 @@ Example tools:
 - Document metadata lookup
 - Health check lookup
 - SQL-backed data lookup
-- A small Microsoft Graph operation
+- A small Microsoft Graph adapter operation
 - MCP-compatible tools
 
 Responsibilities:
@@ -323,9 +322,9 @@ Current endpoint:
 
 - `GET /api/harness`
 
-### Simple Agent Planner
+### Agent Planner
 
-The first planner should remain deterministic and small. It should choose from a few known paths instead of attempting open-ended autonomous planning.
+The planner chooses from a few known paths instead of attempting open-ended autonomous planning. The current implementation uses AI intent routing first, then falls back to deterministic rules when the model is unavailable or returns an invalid route.
 
 Example plans:
 
@@ -385,7 +384,8 @@ Storage responsibilities:
 Current V1 stance:
 
 - In-memory storage keeps the early implementation simple
-- A later persistence step can introduce MongoDB or relational storage behind repository interfaces
+- A Docker Compose MongoDB service provides the local database baseline for the persistence step
+- A later persistence step can wire MongoDB or relational storage behind repository interfaces
 - MongoDB is useful for flexible AI records, but it is not the core RAG mechanism
 
 ---
@@ -405,7 +405,7 @@ Tool Gateway and/or Skill execution
    ↓
 Conversation Memory
    ↓
-Simple Agent Planner
+Agent Planner
    ↓
 AI Gateway and/or RAG retrieval
    ↓

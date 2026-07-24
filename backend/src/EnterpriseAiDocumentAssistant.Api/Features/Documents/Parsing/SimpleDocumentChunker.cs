@@ -32,7 +32,7 @@ public sealed class SimpleDocumentChunker : IDocumentChunker
             var length = Math.Min(MaxChunkLength, normalizedText.Length - index);
             chunks.Add(new DocumentPreviewSection(
                 $"Chunk {chunks.Count + 1}",
-                chunks.Count == 0 ? "Document preview" : "Continued preview",
+                "Extracted text",
                 normalizedText.Substring(index, length).Trim()));
         }
 

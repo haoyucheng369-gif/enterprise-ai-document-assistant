@@ -98,7 +98,7 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
                 request,
                 summary,
                 riskAnalysis,
-                BuildMetadataSummary(metadataResult));
+                DescribeMetadataToolResult(metadataResult));
         }
 
         var purpose = NormalizePurpose(request.Purpose);
@@ -111,7 +111,7 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
             purpose,
             summary.Summary,
             riskLines,
-            BuildMetadataSummary(metadataResult));
+            DescribeMetadataToolResult(metadataResult));
         var modelResponse = await aiGateway.GenerateChatResponseAsync(
             new ChatModelRequest(prompt, provider),
             cancellationToken);
@@ -122,7 +122,7 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
                 request,
                 summary,
                 riskAnalysis,
-                BuildMetadataSummary(metadataResult));
+                DescribeMetadataToolResult(metadataResult));
     }
 
     private static EmailDraftSkillResponse BuildDeterministicDraft(
@@ -185,8 +185,9 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
             cancellationToken);
     }
 
-    private static string BuildMetadataSummary(ToolExecutionResult metadataResult)
+    private static string DescribeMetadataToolResult(ToolExecutionResult metadataResult)
     {
+        // The model receives a concise business-readable tool summary instead of the raw payload.
         if (!metadataResult.Succeeded)
         {
             return $"Metadata tool failed: {metadataResult.Error}";

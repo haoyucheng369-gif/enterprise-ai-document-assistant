@@ -47,15 +47,15 @@ The implementation order intentionally brings Tool, MCP, Skill, Harness, and rea
 
 ## V1 Module Plan
 
-V1 is implemented as six modules:
+V1 is organized around a small core path plus lightweight extension boundaries:
 
 - React Workspace: document list, document detail, right-side AI Assistant, citation panel, tool result panel
 - ASP.NET Core API: `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows`
 - Prompt and AI Layer: prompt orchestration, conversation memory, structured output, validation, guardrails, AI Gateway
 - Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ClassificationSkill`, `ResumeReviewSkill`
-- Document RAG: upload, parse text, chunk, embed, vector search, answer with citations
+- Document Processing first, then RAG: upload, parse text, chunk first; embeddings, vector search, and grounded answers are staged next
 - Persistence: conversation history, document metadata, workflow records, audit/tool records; MongoDB or relational storage can be selected later
-- MCP, Harness, Workflow, and Agent Orchestration Extension: MCP `search_documents`, prompt/tool harnesses, document summary to risk analysis to email draft workflow, coordinator-to-agent orchestration, optional `DocumentAgent` to `EmailAgent` handoff
+- MCP, Harness, Workflow, and Integration Extension: MCP wrapper over registered tools, prompt/tool harnesses, document summary to risk analysis to email draft workflow, Microsoft Graph adapter boundary, optional later agent handoff
 
 ---
 
@@ -229,14 +229,14 @@ Objective: coordinate simple multi-step flows and connect one light enterprise i
 Scope:
 
 - Simple workflow: summarize document, identify risks, generate email draft
-- One Microsoft Graph integration for an Outlook or Calendar scenario
+- One Microsoft Graph adapter boundary for an Outlook-style email draft scenario
 - Optional Agent-to-Agent handoff: `DocumentAgent` to `EmailAgent`
 - Basic workflow state persistence
 
 Current V1 progress:
 
 - `POST /api/workflows/document-review` runs summary, risk analysis, and email draft generation in sequence
-- `POST /api/integrations/graph/email-draft` creates a mock Microsoft Graph email draft
+- `POST /api/integrations/graph/email-draft` creates a mock Microsoft Graph email draft; OAuth-backed Graph calls are not wired yet
 
 Expected outcome:
 
@@ -314,6 +314,7 @@ Objective: replace selected in-memory stores with a small persistence boundary b
 
 Scope:
 
+- Docker Compose MongoDB baseline for local persistence work
 - Conversation history
 - Uploaded document metadata
 - Workflow execution records
@@ -324,6 +325,7 @@ Expected outcome:
 
 - Restarting the API does not erase the core application state.
 - Storage remains replaceable without changing controllers, skills, tools, or workflows.
+- Local MongoDB can be inspected with MongoDB Compass at `mongodb://localhost:27017`.
 
 ---
 
@@ -396,9 +398,15 @@ Objective: route user requests to the right application path before introducing 
 Scope:
 
 - Classify user intent into known routes such as answer, summarize, classify, extract, risk analysis, email draft, tool lookup, or workflow
-- Start with deterministic rules in `SimpleAgentPlanner`
+- Use `AiAgentPlanner` first when a real provider is available
+- Fall back to deterministic rules in `SimpleAgentPlanner`
 - Keep the route output structured and easy to validate
-- Later allow the AI Gateway to classify intent when rules are not enough
+
+Current V1 progress:
+
+- `RoutingAgentPlanner` tries AI-based intent routing first, then falls back to `SimpleAgentPlanner`.
+- `SimpleAgentPlanner` classifies chat requests into known routes such as summary, risk analysis, email draft, classification, resume review, workflow, tool lookup, or normal chat.
+- `ChatController` uses the selected route to execute the matching skill or workflow when the intent is clear.
 
 Expected outcome:
 
@@ -424,13 +432,15 @@ Expected outcome:
 
 ---
 
-## Understand Later
+## Deferred Scope
 
-These items are useful to understand, but they are not required for the first project version:
+These items are outside the first implementation path and should be added only when they support a concrete product workflow:
 
 - Authentication and authorization
 - Authorization-aware RAG retrieval
 - Prompt injection mitigation
+- Real Microsoft Graph OAuth integration
 - Hybrid search and semantic ranking
+- GraphQL API surface
 - Docker-based deployment
 - CI foundation
