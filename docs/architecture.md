@@ -384,8 +384,9 @@ Storage responsibilities:
 Current V1 stance:
 
 - In-memory storage keeps the early implementation simple
-- A Docker Compose MongoDB service provides the local database baseline for the persistence step
-- A later persistence step can wire MongoDB or relational storage behind repository interfaces
+- A Docker Compose MongoDB service provides the local database baseline for persistence work
+- Uploaded document metadata and parsed sections are stored through a MongoDB repository
+- Conversation, workflow, and audit storage can be moved behind repositories later
 - MongoDB is useful for flexible AI records, but it is not the core RAG mechanism
 
 ---

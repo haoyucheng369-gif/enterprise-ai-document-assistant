@@ -90,7 +90,7 @@ sequenceDiagram
 - [x] MCP controller surface over registered tools
 - [x] In-memory audit logging
 - [x] AI intent routing through Agent Planner with deterministic fallback
-- [x] Docker Compose MongoDB baseline
+- [x] MongoDB document persistence for uploaded document metadata and parsed sections
 
 ### Lightweight Boundaries
 
@@ -99,7 +99,7 @@ sequenceDiagram
 
 ### Not Built Yet
 
-- [ ] MongoDB persistence wired into conversation, document, workflow, and audit storage
+- [ ] MongoDB persistence for conversation, workflow, and audit storage
 - [ ] Embeddings
 - [ ] Vector Search
 - [ ] RAG Answer with Citations
@@ -110,7 +110,7 @@ sequenceDiagram
 
 ### Build Next
 
-- [ ] Conversation and document storage with MongoDB or relational storage
+- [ ] Conversation storage with MongoDB or relational storage
 - [ ] Embeddings
 - [ ] Vector Search
 - [ ] RAG Answer with Citations

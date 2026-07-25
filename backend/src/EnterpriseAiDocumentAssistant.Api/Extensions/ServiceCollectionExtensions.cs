@@ -3,6 +3,7 @@ using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.ConversationMemory;
 using EnterpriseAiDocumentAssistant.Api.DocumentParsing;
 using EnterpriseAiDocumentAssistant.Api.DocumentUpload;
+using EnterpriseAiDocumentAssistant.Api.Documents;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Harness;
 using EnterpriseAiDocumentAssistant.Api.Integrations.MicrosoftGraph;
@@ -30,7 +31,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IConversationMemoryBuilder, ConversationMemoryBuilder>();
         services.AddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
         services.AddSingleton<IDocumentChunker, SimpleDocumentChunker>();
-        services.AddSingleton<IDocumentUploadService, InMemoryDocumentUploadService>();
+
+        // Repository hides MongoDB from upload, workspace, skills, and tools.
+        services.AddSingleton<IDocumentRepository, MongoDocumentRepository>();
+        services.AddSingleton<IDocumentUploadService, DocumentUploadService>();
         services.AddSingleton<IApplicationDocumentProvider, ApplicationDocumentProvider>();
         services.AddSingleton<MockAiGateway>();
         services.AddHttpClient<OpenAiGateway>();

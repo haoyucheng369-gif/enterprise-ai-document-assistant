@@ -115,8 +115,9 @@ sequenceDiagram
 
 ### Build Next
 
-- [ ] Persistence
-- [ ] MongoDB 或关系型数据库持久化 conversation / document state
+- [x] Persistence
+- [x] MongoDB 持久化 uploaded document metadata 和 parsed sections
+- [ ] MongoDB 或关系型数据库持久化 conversation / workflow / audit state
 - [ ] Embeddings
 - [ ] Vector Search
 - [ ] RAG Answer with Citations

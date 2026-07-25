@@ -315,15 +315,15 @@ Objective: replace selected in-memory stores with a small persistence boundary b
 Scope:
 
 - Docker Compose MongoDB baseline for local persistence work
+- Uploaded document metadata and parsed sections through a MongoDB repository
 - Conversation history
-- Uploaded document metadata
 - Workflow execution records
 - Audit and tool execution records
 - MongoDB or relational storage behind repository interfaces
 
 Expected outcome:
 
-- Restarting the API does not erase the core application state.
+- Restarting the API does not erase uploaded document metadata and parsed sections.
 - Storage remains replaceable without changing controllers, skills, tools, or workflows.
 - Local MongoDB can be inspected with MongoDB Compass at `mongodb://localhost:27017`.
 
