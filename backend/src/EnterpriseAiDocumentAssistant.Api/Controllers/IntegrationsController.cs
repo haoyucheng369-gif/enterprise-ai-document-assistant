@@ -20,6 +20,7 @@ public sealed class IntegrationsController : ControllerBase
     public ActionResult<MicrosoftGraphEmailDraftResponse> CreateGraphEmailDraft(
         MicrosoftGraphEmailDraftRequest request)
     {
+        // Graph integration endpoint is separated from skills so OAuth/provider code can be swapped in later.
         // Keep Graph-specific validation at the HTTP edge before calling the integration adapter.
         if (string.IsNullOrWhiteSpace(request.DocumentId))
         {

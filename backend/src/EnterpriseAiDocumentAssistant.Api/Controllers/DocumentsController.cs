@@ -22,6 +22,7 @@ public sealed class DocumentsController : ControllerBase
         [FromForm] DocumentUploadForm form,
         CancellationToken cancellationToken)
     {
+        // HTTP upload endpoint delegates validation, parsing, chunking, persistence, and audit to the upload service.
         var result = await documentUploadService.UploadAsync(form.File, cancellationToken);
         if (!result.Succeeded || result.Document is null)
         {
@@ -36,6 +37,7 @@ public sealed class DocumentsController : ControllerBase
     [ProducesResponseType<IReadOnlyList<DocumentUploadResponse>>(StatusCodes.Status200OK)]
     public ActionResult<IReadOnlyList<DocumentUploadResponse>> ListUploads()
     {
+        // Quick backend check endpoint for uploaded documents stored in MongoDB.
         return Ok(documentUploadService.ListRecent());
     }
 }

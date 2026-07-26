@@ -20,6 +20,7 @@ public sealed class GetHealthStatusTool : ITool
         ToolExecutionRequest request,
         CancellationToken cancellationToken)
     {
+        // Health status is intentionally parameterless so it is easy to test Tool Gateway execution.
         var status = apiStatusProvider.GetStatus();
 
         return Task.FromResult(new ToolExecutionResult(

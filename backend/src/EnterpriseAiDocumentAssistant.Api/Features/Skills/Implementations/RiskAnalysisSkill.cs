@@ -40,6 +40,7 @@ public sealed class RiskAnalysisSkill : IRiskAnalysisSkill
         RiskAnalysisSkillRequest request,
         CancellationToken cancellationToken)
     {
+        // Async path mirrors real usage: document context is sent to the selected provider when not using Mock.
         var document = applicationDocumentProvider.FindById(request.DocumentId);
         if (document is null)
         {
@@ -113,6 +114,7 @@ public sealed class RiskAnalysisSkill : IRiskAnalysisSkill
 
     private static IReadOnlyList<RiskItem> ReadRiskItems(JsonElement root)
     {
+        // Convert the model JSON array into the typed risk contract consumed by workflow and UI.
         if (!root.TryGetProperty("risks", out var risksProperty)
             || risksProperty.ValueKind != JsonValueKind.Array)
         {
@@ -132,6 +134,7 @@ public sealed class RiskAnalysisSkill : IRiskAnalysisSkill
 
     private static string NormalizeSeverity(string severity)
     {
+        // Keep severity values stable even if the model returns casing or unexpected labels.
         return severity.ToLowerInvariant() switch
         {
             "high" => "high",
@@ -175,6 +178,7 @@ public sealed class RiskAnalysisSkill : IRiskAnalysisSkill
 
     private static bool ContainsAny(string value, IReadOnlyList<string> signals)
     {
+        // Keyword signals only support the Mock fallback path; real analysis uses the model.
         return signals.Any(signal =>
             value.Contains(signal, StringComparison.OrdinalIgnoreCase));
     }

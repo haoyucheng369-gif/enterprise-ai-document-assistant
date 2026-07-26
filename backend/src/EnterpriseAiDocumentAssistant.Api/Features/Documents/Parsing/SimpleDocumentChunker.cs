@@ -9,6 +9,7 @@ public sealed class SimpleDocumentChunker : IDocumentChunker
         string text,
         IReadOnlyList<string> warnings)
     {
+        // Empty extraction still returns one preview section so the UI can show the failure reason.
         if (string.IsNullOrWhiteSpace(text))
         {
             var warningText = warnings.Count == 0
@@ -27,6 +28,7 @@ public sealed class SimpleDocumentChunker : IDocumentChunker
         var normalizedText = NormalizeWhitespace(text);
         var chunks = new List<DocumentPreviewSection>();
 
+        // Preview chunks are intentionally limited; full RAG indexing will own larger chunking later.
         for (var index = 0; index < normalizedText.Length && chunks.Count < MaxPreviewChunks; index += MaxChunkLength)
         {
             var length = Math.Min(MaxChunkLength, normalizedText.Length - index);
@@ -41,6 +43,7 @@ public sealed class SimpleDocumentChunker : IDocumentChunker
 
     private static string NormalizeWhitespace(string text)
     {
+        // Normalize paragraph spacing and repeated whitespace before creating readable preview chunks.
         return string.Join(
             Environment.NewLine + Environment.NewLine,
             text.Split(

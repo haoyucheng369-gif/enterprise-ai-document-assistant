@@ -28,6 +28,7 @@ public sealed class ResumeReviewSkill : IResumeReviewSkill
         ResumeReviewSkillRequest request,
         CancellationToken cancellationToken)
     {
+        // Resume review is a generation skill: selected document plus instruction becomes a Markdown brief.
         var document = applicationDocumentProvider.FindById(request.DocumentId);
         if (document is null)
         {
@@ -58,6 +59,7 @@ public sealed class ResumeReviewSkill : IResumeReviewSkill
         DocumentItemResponse document,
         string provider)
     {
+        // Mock review proves the draft UI shape without pretending to be a full model-generated review.
         var content = $"""
         # Resume Review Brief
 
@@ -94,6 +96,7 @@ public sealed class ResumeReviewSkill : IResumeReviewSkill
         string provider,
         string answer)
     {
+        // The model returns JSON for structure, while the generated Markdown is stored in the content field.
         if (!answer.TrimStart().StartsWith('{'))
         {
             return null;

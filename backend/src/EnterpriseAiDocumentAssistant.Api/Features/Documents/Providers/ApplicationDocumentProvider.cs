@@ -18,6 +18,7 @@ public sealed class ApplicationDocumentProvider : IApplicationDocumentProvider
 
     public DocumentItemResponse? FindById(string documentId)
     {
+        // Skills, tools, prompt orchestration, and citation logic all use this single document lookup boundary.
         if (string.IsNullOrWhiteSpace(documentId))
         {
             return null;
@@ -34,6 +35,7 @@ public sealed class ApplicationDocumentProvider : IApplicationDocumentProvider
             return workspaceDocument;
         }
 
+        // This fallback keeps direct upload-list reads available even if workspace composition changes later.
         var uploadedDocument = documentUploadService.ListRecent()
             .FirstOrDefault(candidate =>
                 string.Equals(candidate.Id, documentId, StringComparison.OrdinalIgnoreCase));

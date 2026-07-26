@@ -26,6 +26,7 @@ public sealed class ApiStatusProvider : IApiStatusProvider
 
     public StatusResponse GetStatus()
     {
+        // Status includes the currently configured AI provider so frontend/debug tools can verify routing.
         return new StatusResponse(
             ServiceName,
             environment.EnvironmentName,

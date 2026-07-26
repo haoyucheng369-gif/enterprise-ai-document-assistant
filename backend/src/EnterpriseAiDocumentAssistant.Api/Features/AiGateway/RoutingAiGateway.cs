@@ -24,7 +24,8 @@ public sealed class RoutingAiGateway : IAiGateway
         ChatModelRequest request,
         CancellationToken cancellationToken)
     {
-        // Per-request provider routing lets the UI switch between local mock and real providers without restarting the API.
+        // Provider routing is the AI Gateway boundary: callers ask for a chat response,
+        // while this class decides whether that means Mock, OpenAI, or Azure OpenAI.
         var provider = ResolveProvider(request.ProviderOverride);
         var routedRequest = request with { ProviderOverride = provider };
 
@@ -35,6 +36,8 @@ public sealed class RoutingAiGateway : IAiGateway
 
     public IEnumerable<string> BuildResponseChunks(StructuredAssistantMessage message)
     {
+        // Current streaming is a lightweight UI simulation over a complete structured message.
+        // A later native streaming path can replace this without changing chat controllers.
         yield return message.Answer;
         yield return $" Confidence: {message.Confidence}.";
 
@@ -46,6 +49,7 @@ public sealed class RoutingAiGateway : IAiGateway
 
     private string ResolveProvider(string? requestedProvider)
     {
+        // Request-level provider selection wins over appsettings so the frontend radio group can switch providers.
         return string.IsNullOrWhiteSpace(requestedProvider)
             ? options.Provider
             : requestedProvider.Trim();
@@ -53,6 +57,7 @@ public sealed class RoutingAiGateway : IAiGateway
 
     private static bool IsRealProvider(string provider)
     {
+        // Only real providers need HTTP calls and API keys; everything else stays on the local mock path.
         return string.Equals(provider, "OpenAI", StringComparison.OrdinalIgnoreCase)
             || string.Equals(provider, "AzureOpenAI", StringComparison.OrdinalIgnoreCase);
     }

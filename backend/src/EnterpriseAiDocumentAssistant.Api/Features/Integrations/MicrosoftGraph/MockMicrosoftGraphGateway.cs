@@ -19,6 +19,7 @@ public sealed class MockMicrosoftGraphGateway : IMicrosoftGraphGateway
 
     public MicrosoftGraphEmailDraftResponse CreateEmailDraft(MicrosoftGraphEmailDraftRequest request)
     {
+        // This simulates the Microsoft Graph boundary: create a draft and return integration metadata.
         var stopwatch = Stopwatch.StartNew();
         var draftId = $"graph-draft-{Guid.NewGuid():N}";
 
@@ -52,6 +53,7 @@ public sealed class MockMicrosoftGraphGateway : IMicrosoftGraphGateway
 
     private static string BuildPreview(string body)
     {
+        // Integration responses use a preview instead of returning an entire email body in list-style views.
         var normalized = body.Trim();
         return normalized.Length <= 180
             ? normalized

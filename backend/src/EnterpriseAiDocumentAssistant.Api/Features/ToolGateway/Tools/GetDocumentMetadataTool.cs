@@ -27,6 +27,7 @@ public sealed class GetDocumentMetadataTool : ITool
         ToolExecutionRequest request,
         CancellationToken cancellationToken)
     {
+        // Tool arguments arrive as JSON so the same tool can be called from HTTP, workflow, or MCP.
         if (!TryGetDocumentId(request.Arguments, out var documentId))
         {
             return Task.FromResult(new ToolExecutionResult(
@@ -70,6 +71,7 @@ public sealed class GetDocumentMetadataTool : ITool
         IReadOnlyDictionary<string, JsonElement> arguments,
         out string documentId)
     {
+        // Keep argument parsing strict; tools should fail clearly when required inputs are missing.
         documentId = string.Empty;
 
         if (!arguments.TryGetValue("documentId", out var documentIdElement))

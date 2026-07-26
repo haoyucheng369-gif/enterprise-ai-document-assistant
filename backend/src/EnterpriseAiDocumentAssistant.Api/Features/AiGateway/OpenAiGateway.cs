@@ -36,6 +36,7 @@ public sealed class OpenAiGateway : IAiGateway
 
         try
         {
+            // Full real-provider flow: validate settings, build HTTP request, parse JSON, then audit usage.
             var provider = ResolveProvider(request.ProviderOverride);
             EnsureConfigured(provider);
             using var httpRequest = BuildHttpRequest(request, provider);
@@ -83,6 +84,7 @@ public sealed class OpenAiGateway : IAiGateway
 
     private void EnsureConfigured(string provider)
     {
+        // Fail early with configuration errors instead of sending broken HTTP requests to the provider.
         if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
             throw new InvalidOperationException(
@@ -97,6 +99,7 @@ public sealed class OpenAiGateway : IAiGateway
 
     private HttpRequestMessage BuildHttpRequest(ChatModelRequest request, string provider)
     {
+        // OpenAI and Azure OpenAI use different URLs and auth headers, but share the same prompt payload shape.
         var endpoint = options.Endpoint.TrimEnd('/');
         var isAzureOpenAi = string.Equals(provider, "AzureOpenAI", StringComparison.OrdinalIgnoreCase);
         var requestUri = isAzureOpenAi
@@ -126,6 +129,7 @@ public sealed class OpenAiGateway : IAiGateway
 
     private object BuildChatCompletionPayload(ChatModelRequest request, bool includeModel)
     {
+        // Skills can add their own output rules; the gateway wraps them inside one stable JSON schema.
         var outputRules = request.Prompt.OutputRules.Count == 0
             ? string.Empty
             : $"{Environment.NewLine}Output rules:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", request.Prompt.OutputRules)}";
@@ -203,6 +207,7 @@ public sealed class OpenAiGateway : IAiGateway
 
     private ChatModelResponse ParseResponse(string provider, string responseJson, long latencyMs)
     {
+        // Provider JSON is converted into the internal response contract used by controllers and skills.
         using var document = JsonDocument.Parse(responseJson);
         var root = document.RootElement;
 
@@ -245,6 +250,7 @@ public sealed class OpenAiGateway : IAiGateway
         int? inputTokenEstimate,
         int? outputTokenEstimate)
     {
+        // Audit records latency and token counts without storing prompt text or model output.
         var metadata = new Dictionary<string, string>
         {
             ["model"] = options.ChatModel
@@ -271,6 +277,7 @@ public sealed class OpenAiGateway : IAiGateway
 
     private string ResolveProvider(string? requestedProvider)
     {
+        // Default provider comes from configuration; per-request overrides come from the UI/API caller.
         return string.IsNullOrWhiteSpace(requestedProvider)
             ? options.Provider
             : requestedProvider.Trim();

@@ -18,6 +18,7 @@ public sealed class HarnessController : ControllerBase
     [ProducesResponseType<HarnessReport>(StatusCodes.Status200OK)]
     public async Task<ActionResult<HarnessReport>> Run(CancellationToken cancellationToken)
     {
+        // Harness is a lightweight regression check for prompts, tools, skills, workflows, and audit.
         return Ok(await harnessRunner.RunAsync(cancellationToken));
     }
 }

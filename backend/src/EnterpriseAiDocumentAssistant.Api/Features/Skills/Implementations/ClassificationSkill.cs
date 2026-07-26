@@ -28,6 +28,7 @@ public sealed class ClassificationSkill : IClassificationSkill
         ClassificationSkillRequest request,
         CancellationToken cancellationToken)
     {
+        // Classification is a focused AI skill, not the planner. It classifies the selected document itself.
         var document = applicationDocumentProvider.FindById(request.DocumentId);
         if (document is null)
         {
@@ -176,6 +177,7 @@ public sealed class ClassificationSkill : IClassificationSkill
         string provider,
         string modelAnswer)
     {
+        // Fallback keeps the API successful while making the unparseable model output visible.
         return BuildResponse(
             document,
             provider,
@@ -198,6 +200,7 @@ public sealed class ClassificationSkill : IClassificationSkill
         IReadOnlyList<string> signals,
         IReadOnlyList<string>? sources = null)
     {
+        // Central response factory keeps Mock, real JSON, and fallback outputs consistent.
         return new ClassificationSkillResponse(
             document.Id,
             document.Title,
@@ -236,6 +239,7 @@ public sealed class ClassificationSkill : IClassificationSkill
 
     private static string? NormalizeCategory(string category)
     {
+        // Only known category labels are accepted; everything else falls through to JSON/fallback handling.
         return category.Trim().Trim('"').ToLowerInvariant() switch
         {
             "contract" => "Contract",

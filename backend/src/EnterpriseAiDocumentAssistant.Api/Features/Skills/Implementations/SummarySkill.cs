@@ -37,6 +37,7 @@ public sealed class SummarySkill : ISummarySkill
         SummarySkillRequest request,
         CancellationToken cancellationToken)
     {
+        // Async path is the production-shaped path: resolve document, choose provider, then call Mock or AI.
         var document = applicationDocumentProvider.FindById(request.DocumentId);
         if (document is null)
         {
@@ -94,6 +95,7 @@ public sealed class SummarySkill : ISummarySkill
 
     private static string ExtractHighlight(string value)
     {
+        // Deterministic summaries use normalized section snippets instead of model-generated prose.
         var normalized = string.Join(
             " ",
             value.Split(

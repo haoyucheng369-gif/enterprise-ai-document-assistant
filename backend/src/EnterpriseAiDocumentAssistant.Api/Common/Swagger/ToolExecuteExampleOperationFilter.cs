@@ -8,6 +8,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
+        // Swagger examples keep manual API testing fast while the backend still exposes normal JSON contracts.
         if (!string.Equals(context.ApiDescription.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
         {
             return;

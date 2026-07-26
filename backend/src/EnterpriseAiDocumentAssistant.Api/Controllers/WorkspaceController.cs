@@ -19,6 +19,7 @@ public sealed class WorkspaceController : ControllerBase
     [ProducesResponseType<WorkspaceResponse>(StatusCodes.Status200OK)]
     public ActionResult<WorkspaceResponse> Get()
     {
+        // Frontend bootstraps the whole workspace from this single read model.
         return Ok(workspaceDataProvider.GetWorkspace());
     }
 }

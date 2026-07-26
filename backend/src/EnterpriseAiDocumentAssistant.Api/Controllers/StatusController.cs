@@ -19,6 +19,7 @@ public sealed class StatusController : ControllerBase
     [ProducesResponseType<StatusResponse>(StatusCodes.Status200OK)]
     public ActionResult<StatusResponse> Get()
     {
+        // Small status endpoint used by health-style tools and frontend diagnostics.
         return Ok(apiStatusProvider.GetStatus());
     }
 }

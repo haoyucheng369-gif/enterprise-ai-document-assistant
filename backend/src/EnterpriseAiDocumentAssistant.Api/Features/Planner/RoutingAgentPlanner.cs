@@ -21,6 +21,7 @@ public sealed class RoutingAgentPlanner : IAgentPlanner
 
     public AgentPlanResponse Plan(AgentPlanRequest request)
     {
+        // Synchronous callers use deterministic routing only; async callers can use AI routing first.
         return fallbackPlanner.Plan(request);
     }
 
@@ -51,6 +52,7 @@ public sealed class RoutingAgentPlanner : IAgentPlanner
 
     private void RecordFallback(AgentPlanRequest request, string reason)
     {
+        // A failed AI plan is observable, but it is not fatal because deterministic routing continues.
         auditLogger.Record(new AuditEventRequest(
             "planner",
             "ai_plan_fallback",
@@ -66,6 +68,7 @@ public sealed class RoutingAgentPlanner : IAgentPlanner
 
     private void Record(string action, AgentPlanResponse plan, bool succeeded)
     {
+        // Route decisions are audited so later debugging can explain why a skill or workflow ran.
         auditLogger.Record(new AuditEventRequest(
             "planner",
             action,

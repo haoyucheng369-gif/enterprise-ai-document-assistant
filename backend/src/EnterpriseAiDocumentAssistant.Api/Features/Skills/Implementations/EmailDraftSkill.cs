@@ -55,6 +55,7 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
         EmailDraftSkillRequest request,
         CancellationToken cancellationToken)
     {
+        // First async overload owns the full composition: run summary and risk analysis before drafting.
         var document = applicationDocumentProvider.FindById(request.DocumentId);
         if (document is null)
         {
@@ -83,6 +84,7 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
         RiskAnalysisSkillResponse riskAnalysis,
         CancellationToken cancellationToken)
     {
+        // Second async overload lets workflows reuse existing summary/risk results without recomputing them.
         var document = applicationDocumentProvider.FindById(request.DocumentId);
         if (document is null)
         {
@@ -212,6 +214,7 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
         string documentId,
         string answer)
     {
+        // Convert model JSON into the email draft contract; invalid JSON falls back to deterministic draft.
         if (!answer.TrimStart().StartsWith('{'))
         {
             return null;
@@ -237,6 +240,7 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
 
     private static string NormalizePurpose(string purpose)
     {
+        // Purpose is optional from the frontend, but the prompt needs a concrete drafting objective.
         return string.IsNullOrWhiteSpace(purpose)
             ? "Clarify the highlighted contract items."
             : purpose.Trim();

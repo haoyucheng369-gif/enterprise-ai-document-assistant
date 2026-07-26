@@ -20,6 +20,7 @@ public sealed class ToolExecutor : IToolExecutor
         ToolExecutionRequest request,
         CancellationToken cancellationToken)
     {
+        // Tool execution is a two-step flow: validate the requested name, then resolve the tool from registry.
         var stopwatch = Stopwatch.StartNew();
 
         if (string.IsNullOrWhiteSpace(request.ToolName))
@@ -55,6 +56,7 @@ public sealed class ToolExecutor : IToolExecutor
         Stopwatch stopwatch,
         CancellationToken cancellationToken)
     {
+        // Concrete tools own business logic; ToolExecutor adds common audit and error boundaries.
         var result = await tool.ExecuteAsync(request, cancellationToken);
         RecordAudit(request.ToolName, result, stopwatch.ElapsedMilliseconds);
 
@@ -63,6 +65,7 @@ public sealed class ToolExecutor : IToolExecutor
 
     private void RecordAudit(string toolName, ToolExecutionResult result, long durationMs)
     {
+        // Every tool call is recorded with success/error status so internal and MCP calls are traceable.
         auditLogger.Record(new AuditEventRequest(
             "tool",
             "tool_executed",

@@ -2,6 +2,7 @@ namespace EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 
 public static class DocumentAssistantPrompt
 {
+    // The base assistant prompt is shared by normal chat. Skills use their own task-specific templates.
     public static readonly PromptTemplate Template = new(
         "document-assistant-v1",
         EnterpriseAssistantPromptDefaults.BuildSystemMessage(
@@ -30,6 +31,7 @@ public static class DocumentAssistantPrompt
         int conversationTurnCount,
         string conversationMemory)
     {
+        // These variables are the allowed dynamic inputs for the document assistant prompt.
         return
         [
             new PromptVariable("document_context", documentContext),

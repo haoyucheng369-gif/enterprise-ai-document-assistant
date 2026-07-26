@@ -8,6 +8,7 @@ public static class DocumentSkillPromptTemplates
 
     public static OrchestratedPrompt BuildSummaryPrompt(DocumentItemResponse document)
     {
+        // Summary is a narrow skill prompt: one document in, structured summary JSON out.
         var documentText = BuildLimitedDocumentTextForPrompt(document);
         var variables = new[]
         {
@@ -45,6 +46,7 @@ public static class DocumentSkillPromptTemplates
 
     public static OrchestratedPrompt BuildClassificationPrompt(DocumentItemResponse document)
     {
+        // Classification turns document text into a stable category contract instead of free-form prose.
         var documentText = BuildLimitedDocumentTextForPrompt(document);
         var variables = new[]
         {
@@ -83,6 +85,7 @@ public static class DocumentSkillPromptTemplates
 
     public static OrchestratedPrompt BuildRiskAnalysisPrompt(DocumentItemResponse document)
     {
+        // Risk analysis asks for structured risk items that workflows can compose with other skills.
         var documentText = BuildLimitedDocumentTextForPrompt(document);
         var variables = new[]
         {
@@ -126,6 +129,7 @@ public static class DocumentSkillPromptTemplates
         IReadOnlyList<string> risks,
         string metadata)
     {
+        // Email draft composes previous skill outputs and one tool result before calling the model.
         var riskText = risks.Count == 0
             ? "No specific risks were identified."
             : string.Join(Environment.NewLine, risks.Select(risk => $"- {risk}"));
@@ -178,6 +182,7 @@ public static class DocumentSkillPromptTemplates
         DocumentItemResponse document,
         string instruction)
     {
+        // Resume review produces Markdown inside JSON so the UI can show a generated draft panel.
         var documentText = BuildLimitedDocumentTextForPrompt(document);
         var normalizedInstruction = string.IsNullOrWhiteSpace(instruction)
             ? "Create a practical resume review brief."
@@ -213,7 +218,7 @@ public static class DocumentSkillPromptTemplates
                     "Set answer to a single minified JSON object with title, format, content, basedOn, and nextActions.",
                     "format must be markdown.",
                     "content must be a complete Markdown resume review brief.",
-                    "Write title, content, and nextActions in Chinese. Keep common technical terms such as .NET, React, Azure, SQL, CI/CD, and API in English when clearer.",
+                    "Write title, content, and nextActions in the language requested by the instruction. If no language is specified, match the instruction language. Keep common technical terms such as .NET, React, Azure, SQL, CI/CD, and API in English when clearer.",
                     "content must include Strengths, Weaknesses, Missing Keywords, Suggested Positioning, and Rewrite Instructions for ChatGPT sections.",
                     "Preserve truthful information from the source document and do not invent employers, dates, diplomas, or certifications.",
                     "basedOn must be an array of short source strings.",

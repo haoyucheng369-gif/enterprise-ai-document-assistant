@@ -21,6 +21,7 @@ public sealed class PlannerController : ControllerBase
         AgentPlanRequest request,
         CancellationToken cancellationToken)
     {
+        // Planner endpoint exposes routing decisions without executing the selected skill.
         if (string.IsNullOrWhiteSpace(request.Message))
         {
             ModelState.AddModelError(nameof(request.Message), "Message is required.");

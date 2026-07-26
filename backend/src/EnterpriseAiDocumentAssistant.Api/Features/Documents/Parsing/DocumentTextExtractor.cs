@@ -12,6 +12,7 @@ public sealed class DocumentTextExtractor : IDocumentTextExtractor
         string extension,
         CancellationToken cancellationToken)
     {
+        // Copy once into memory so the same stream can be passed to TXT, PDF, or DOCX extractors.
         await using var stream = new MemoryStream();
         await file.CopyToAsync(stream, cancellationToken);
         stream.Position = 0;
@@ -29,6 +30,7 @@ public sealed class DocumentTextExtractor : IDocumentTextExtractor
         Stream stream,
         CancellationToken cancellationToken)
     {
+        // Plain text files keep their original content; chunking happens in a later component.
         using var reader = new StreamReader(
             stream,
             Encoding.UTF8,
@@ -41,6 +43,7 @@ public sealed class DocumentTextExtractor : IDocumentTextExtractor
 
     private static DocumentTextExtractionResult ExtractPdfText(Stream stream)
     {
+        // PdfPig extracts text from text-based PDFs; scanned image PDFs will return warnings instead.
         var warnings = new List<string>();
         var builder = new StringBuilder();
 
@@ -65,6 +68,7 @@ public sealed class DocumentTextExtractor : IDocumentTextExtractor
 
     private static DocumentTextExtractionResult ExtractDocxText(Stream stream)
     {
+        // OpenXML reads DOCX paragraphs without requiring Microsoft Word to be installed.
         using var document = WordprocessingDocument.Open(stream, false);
         var body = document.MainDocumentPart?.Document?.Body;
         if (body is null)

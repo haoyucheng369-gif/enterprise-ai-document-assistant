@@ -18,6 +18,7 @@ public sealed class AuditController : ControllerBase
     [ProducesResponseType<IReadOnlyList<AuditEvent>>(StatusCodes.Status200OK)]
     public ActionResult<IReadOnlyList<AuditEvent>> ListEvents([FromQuery] int limit = 50)
     {
+        // Swagger/debug endpoint for recent in-memory audit events.
         return Ok(auditLogger.ListRecent(limit));
     }
 }

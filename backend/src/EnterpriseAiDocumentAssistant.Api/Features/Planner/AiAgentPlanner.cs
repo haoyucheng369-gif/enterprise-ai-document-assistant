@@ -36,6 +36,7 @@ public sealed class AiAgentPlanner
 
     private static OrchestratedPrompt BuildRouteSelectionPrompt(AgentPlanRequest request)
     {
+        // The model sees the user's message plus the allowed backend routes, but it does not execute anything.
         var routes = string.Join(Environment.NewLine, AgentPlanCatalog.Routes.Select(route => $"- {route}"));
         const string exampleAnswer = """{"intent":"summary","route":"skills.summary","reason":"The user asks for a document summary."}""";
         var variables = new[]
@@ -77,6 +78,7 @@ public sealed class AiAgentPlanner
 
     private static AgentRouteDecision? TryParseDecision(string answer)
     {
+        // Invalid or non-JSON model decisions are treated as no decision so fallback routing can run.
         try
         {
             return JsonSerializer.Deserialize<AgentRouteDecision>(answer, JsonOptions);

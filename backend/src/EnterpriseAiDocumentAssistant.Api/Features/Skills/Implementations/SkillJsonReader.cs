@@ -15,6 +15,7 @@ internal static class SkillJsonReader
 
     public static bool IsMockProvider(string provider)
     {
+        // A single Mock check prevents every skill from duplicating provider string comparisons.
         return string.Equals(provider, "Mock", StringComparison.OrdinalIgnoreCase);
     }
 
@@ -30,6 +31,7 @@ internal static class SkillJsonReader
 
     public static double ReadDouble(JsonElement root, string propertyName, double fallback)
     {
+        // Numeric fields such as confidence are optional and fall back when the model omits them.
         return root.TryGetProperty(propertyName, out var property)
             && property.ValueKind == JsonValueKind.Number
             && property.TryGetDouble(out var value)
@@ -39,6 +41,7 @@ internal static class SkillJsonReader
 
     public static IReadOnlyList<string> ReadStringArray(JsonElement root, string propertyName)
     {
+        // Arrays from model output are filtered to strings so downstream code never handles mixed JSON types.
         if (!root.TryGetProperty(propertyName, out var property)
             || property.ValueKind != JsonValueKind.Array)
         {

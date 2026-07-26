@@ -9,6 +9,7 @@ public sealed class ConversationMemoryBuilder : IConversationMemoryBuilder
 
     public ConversationMemoryContext Build(IReadOnlyList<MessageResponse>? history)
     {
+        // Conversation memory is request-scoped input from the frontend, not server-side persistence yet.
         if (history is null || history.Count == 0)
         {
             return new ConversationMemoryContext([], "No prior conversation context.");
@@ -37,6 +38,7 @@ public sealed class ConversationMemoryBuilder : IConversationMemoryBuilder
 
     private static string NormalizeRole(string role)
     {
+        // Only user and assistant roles are sent back into the model prompt.
         return role.Trim().ToLowerInvariant() switch
         {
             "assistant" => "assistant",
@@ -47,6 +49,7 @@ public sealed class ConversationMemoryBuilder : IConversationMemoryBuilder
 
     private static string Truncate(string content)
     {
+        // Each turn is shortened so recent memory does not dominate the prompt.
         return content.Length <= MaxContentLength
             ? content
             : string.Concat(content.AsSpan(0, MaxContentLength), "...");

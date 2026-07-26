@@ -22,6 +22,8 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
 
     public OrchestratedPrompt BuildAssistantPrompt(ChatRequest request)
     {
+        // This is the main prompt orchestration entry for normal assistant chat.
+        // It gathers input, memory, and document context before the AI Gateway sees anything.
         var userQuestion = request.Message.Trim();
         var memory = conversationMemoryBuilder.Build(request.History);
         var documentContext = BuildDocumentContext(request.DocumentId);
@@ -43,6 +45,7 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
 
     private string BuildDocumentContext(string? documentId)
     {
+        // Document context is intentionally plain text here; RAG will later replace this with retrieved chunks.
         if (string.IsNullOrWhiteSpace(documentId))
         {
             return "No document is selected.";
@@ -59,6 +62,7 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
             .Select(section =>
                 $"{section.Label} - {section.Title}: {Truncate(section.Body, MaxSectionLength)}");
 
+        // Limit the amount of document content that goes into the prompt to control token usage.
         return $"""
             Selected document id: {document.Id}
             Title: {document.Title}
@@ -73,6 +77,7 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
         string template,
         IReadOnlyList<PromptVariable> variables)
     {
+        // Prompt variables are rendered just before the gateway call so templates stay reusable.
         var renderedTemplate = template;
 
         foreach (var variable in variables)

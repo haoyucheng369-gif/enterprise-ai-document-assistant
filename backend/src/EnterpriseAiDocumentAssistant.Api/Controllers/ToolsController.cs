@@ -22,6 +22,7 @@ public sealed class ToolsController : ControllerBase
     [ProducesResponseType<ToolListResponse>(StatusCodes.Status200OK)]
     public ActionResult<ToolListResponse> List()
     {
+        // Tool discovery endpoint: callers can see tool names, descriptions, and required arguments.
         return Ok(new ToolListResponse(toolRegistry.ListDefinitions()));
     }
 
@@ -33,6 +34,7 @@ public sealed class ToolsController : ControllerBase
         ToolExecutionRequest request,
         CancellationToken cancellationToken)
     {
+        // Tool execution endpoint: one stable HTTP route can invoke any registered internal tool by name.
         if (string.IsNullOrWhiteSpace(request.ToolName))
         {
             ModelState.AddModelError(nameof(request.ToolName), "ToolName is required.");

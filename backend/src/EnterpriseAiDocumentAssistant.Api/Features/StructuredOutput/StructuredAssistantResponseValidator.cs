@@ -10,6 +10,7 @@ public sealed class StructuredAssistantResponseValidator : IStructuredAssistantR
 
     public StructuredOutputValidationResult Validate(StructuredAssistantMessage message)
     {
+        // This is the output-side contract check before a model response is returned to the frontend.
         var errors = new List<string>();
 
         if (string.IsNullOrWhiteSpace(message.Answer))
@@ -24,11 +25,13 @@ public sealed class StructuredAssistantResponseValidator : IStructuredAssistantR
 
         if (message.Citations is null)
         {
+            // Empty citations are allowed, but the property itself must be present for stable UI rendering.
             errors.Add("Citations must be an array.");
         }
 
         if (message.SuggestedActions is null)
         {
+            // Suggested actions are optional in meaning, but kept as an array in the API contract.
             errors.Add("SuggestedActions must be an array.");
         }
 

@@ -23,6 +23,7 @@ public sealed class McpController : ControllerBase
     [ProducesResponseType<McpToolListResponse>(StatusCodes.Status200OK)]
     public ActionResult<McpToolListResponse> ListTools()
     {
+        // MCP clients call list first to discover tool names, descriptions, and required arguments.
         var tools = toolRegistry
             .ListDefinitions()
             .Select(McpToolMapper.ToMcpDescriptor)
@@ -39,6 +40,7 @@ public sealed class McpController : ControllerBase
         McpToolCallRequest request,
         CancellationToken cancellationToken)
     {
+        // MCP call executes the same internal tools used by the app, then maps the result to MCP format.
         if (string.IsNullOrWhiteSpace(request.Name))
         {
             ModelState.AddModelError(nameof(request.Name), "Name is required.");

@@ -14,6 +14,7 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
 
     public AgentPlanResponse Plan(AgentPlanRequest request)
     {
+        // Keyword routing is the deterministic backup for local runs and invalid AI planner output.
         var stopwatch = Stopwatch.StartNew();
         var plan = CreateFallbackPlan(request);
 
@@ -41,6 +42,7 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
 
     private static AgentPlanResponse CreateFallbackPlan(AgentPlanRequest request)
     {
+        // Route order matters: more specific capabilities should be checked before general chat.
         var message = request.Message.Trim();
 
         // Deterministic rules provide the fallback route when AI routing is unavailable or invalid.

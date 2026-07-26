@@ -9,6 +9,7 @@ public static class McpToolMapper
 
     public static McpToolDescriptor ToMcpDescriptor(ToolDefinition definition)
     {
+        // MCP list exposes the same internal tool definition as a client-readable input schema.
         var properties = definition.Parameters.ToDictionary(
             parameter => parameter.Key,
             parameter => new McpInputSchemaProperty(
@@ -29,6 +30,7 @@ public static class McpToolMapper
 
     public static McpToolCallResponse ToMcpResponse(ToolExecutionResult result)
     {
+        // MCP call wraps the internal tool result into the content/data shape external clients expect.
         var text = result.Succeeded
             ? JsonSerializer.Serialize(result.Data, SerializerOptions)
             : result.Error ?? "Tool execution failed.";

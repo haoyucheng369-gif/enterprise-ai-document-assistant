@@ -29,6 +29,8 @@ public sealed class ChatGuardrailEvaluator : IChatGuardrailEvaluator
 
     public GuardrailEvaluation Evaluate(ChatRequest request)
     {
+        // This first guardrail is intentionally simple: block obvious unsafe requests before model execution.
+        // It is not a full security system; authorization and RAG filtering must be added later.
         var message = request.Message.Trim();
 
         if (ContainsAny(message, PromptInjectionSignals))
@@ -66,6 +68,7 @@ public sealed class ChatGuardrailEvaluator : IChatGuardrailEvaluator
 
     private static bool ContainsAny(string value, IReadOnlyList<string> signals)
     {
+        // Current guardrails are deterministic keyword checks so behavior is easy to debug.
         return signals.Any(signal =>
             value.Contains(signal, StringComparison.OrdinalIgnoreCase));
     }

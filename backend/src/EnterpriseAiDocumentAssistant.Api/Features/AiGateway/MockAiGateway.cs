@@ -18,6 +18,7 @@ public sealed class MockAiGateway : IAiGateway
         ChatModelRequest request,
         CancellationToken cancellationToken)
     {
+        // Mock gateway implements the same contract as real providers so callers do not branch on provider type.
         var stopwatch = Stopwatch.StartNew();
         var message = BuildMockStructuredResponse(request.Prompt);
         var provider = string.IsNullOrWhiteSpace(request.ProviderOverride)
@@ -50,6 +51,7 @@ public sealed class MockAiGateway : IAiGateway
 
     public IEnumerable<string> BuildResponseChunks(StructuredAssistantMessage message)
     {
+        // Mock streaming uses simple chunks; real provider token streaming can replace this later.
         yield return message.Answer;
         yield return $" Confidence: {message.Confidence}.";
 
@@ -61,6 +63,7 @@ public sealed class MockAiGateway : IAiGateway
 
     private static StructuredAssistantMessage BuildMockStructuredResponse(OrchestratedPrompt prompt)
     {
+        // Mock response echoes prompt variables to make orchestration visible while debugging.
         var documentContext = GetVariable(prompt, "document_context");
         var userQuestion = GetVariable(prompt, "user_question");
 
@@ -77,6 +80,7 @@ public sealed class MockAiGateway : IAiGateway
 
     private static string GetVariable(OrchestratedPrompt prompt, string name)
     {
+        // Mock provider depends on the same prompt variables that real providers receive.
         return prompt.Variables
             .First(variable => string.Equals(variable.Name, name, StringComparison.Ordinal))
             .Value;
@@ -84,6 +88,7 @@ public sealed class MockAiGateway : IAiGateway
 
     private static int EstimateTokens(string value)
     {
+        // Lightweight estimate used for local observability before provider usage data exists.
         return Math.Max(1, (int)Math.Ceiling(value.Length / 4.0));
     }
 }

@@ -68,6 +68,7 @@ public sealed class ChatController : ControllerBase
         ChatRequest request,
         CancellationToken cancellationToken)
     {
+        // Main chat endpoint used by the React assistant panel.
         var stopwatch = Stopwatch.StartNew();
 
         if (string.IsNullOrWhiteSpace(request.Message))
@@ -100,6 +101,7 @@ public sealed class ChatController : ControllerBase
         ChatRequest request,
         CancellationToken cancellationToken)
     {
+        // Structured endpoint exposes only the validated assistant payload for Swagger/debugging.
         var stopwatch = Stopwatch.StartNew();
 
         if (string.IsNullOrWhiteSpace(request.Message))
@@ -127,6 +129,7 @@ public sealed class ChatController : ControllerBase
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Stream(ChatRequest request, CancellationToken cancellationToken)
     {
+        // Streaming endpoint currently streams validated text chunks after the structured response is ready.
         var stopwatch = Stopwatch.StartNew();
 
         if (string.IsNullOrWhiteSpace(request.Message))
@@ -224,6 +227,7 @@ public sealed class ChatController : ControllerBase
 
     private static StructuredAssistantMessage? ConvertSummaryToAssistantMessage(SummarySkillResponse? response)
     {
+        // Skill-specific contracts are converted back to the generic assistant message shape for chat UI reuse.
         return response is null
             ? null
             : new StructuredAssistantMessage(
@@ -235,6 +239,7 @@ public sealed class ChatController : ControllerBase
 
     private static StructuredAssistantMessage? ConvertRiskAnalysisToAssistantMessage(RiskAnalysisSkillResponse? response)
     {
+        // Risk items become a compact assistant answer while preserving sources as citations.
         if (response is null)
         {
             return null;
@@ -254,6 +259,7 @@ public sealed class ChatController : ControllerBase
 
     private static StructuredAssistantMessage? ConvertEmailDraftToAssistantMessage(EmailDraftSkillResponse? response)
     {
+        // Email draft keeps subject/body together because the assistant panel is text-first.
         return response is null
             ? null
             : new StructuredAssistantMessage(
@@ -265,6 +271,7 @@ public sealed class ChatController : ControllerBase
 
     private static StructuredAssistantMessage? ConvertClassificationToAssistantMessage(ClassificationSkillResponse? response)
     {
+        // Classification remains readable in chat, while the dedicated tab keeps richer classification fields.
         return response is null
             ? null
             : new StructuredAssistantMessage(
@@ -276,6 +283,7 @@ public sealed class ChatController : ControllerBase
 
     private static StructuredAssistantMessage? ConvertResumeReviewToAssistantMessage(ResumeReviewSkillResponse? response)
     {
+        // Resume review content is Markdown; frontend can show it as a generated draft.
         return response is null
             ? null
             : new StructuredAssistantMessage(
@@ -287,6 +295,7 @@ public sealed class ChatController : ControllerBase
 
     private static StructuredAssistantMessage? ConvertWorkflowToAssistantMessage(DocumentReviewWorkflowResponse? response)
     {
+        // Workflow output combines several skill results into one chat-friendly summary.
         if (response is null)
         {
             return null;

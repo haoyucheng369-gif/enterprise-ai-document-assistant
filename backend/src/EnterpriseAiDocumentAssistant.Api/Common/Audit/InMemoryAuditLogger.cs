@@ -35,6 +35,7 @@ public sealed class InMemoryAuditLogger : IAuditLogger
 
     public IReadOnlyList<AuditEvent> ListRecent(int limit = 50)
     {
+        // Return newest events first so Swagger and UI diagnostics show the latest action at the top.
         var boundedLimit = Math.Clamp(limit, 1, MaxEvents);
 
         return events

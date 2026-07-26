@@ -40,6 +40,7 @@ public sealed class SkillsController : ControllerBase
         SummarySkillRequest request,
         CancellationToken cancellationToken)
     {
+        // Each skill endpoint is a direct way to test one reusable AI capability from Swagger.
         var stopwatch = Stopwatch.StartNew();
 
         var validationResult = ValidateDocumentId(request.DocumentId);
@@ -68,6 +69,7 @@ public sealed class SkillsController : ControllerBase
         RiskAnalysisSkillRequest request,
         CancellationToken cancellationToken)
     {
+        // Risk analysis is exposed independently and also reused by workflow/email composition.
         var stopwatch = Stopwatch.StartNew();
 
         var validationResult = ValidateDocumentId(request.DocumentId);
@@ -96,6 +98,7 @@ public sealed class SkillsController : ControllerBase
         EmailDraftSkillRequest request,
         CancellationToken cancellationToken)
     {
+        // Email draft composes summary, risk analysis, metadata tool output, and optional model generation.
         var stopwatch = Stopwatch.StartNew();
 
         var validationResult = ValidateDocumentId(request.DocumentId);
@@ -124,6 +127,7 @@ public sealed class SkillsController : ControllerBase
         ClassificationSkillRequest request,
         CancellationToken cancellationToken)
     {
+        // Classification returns a stable category contract for UI, routing, and workflow decisions.
         var stopwatch = Stopwatch.StartNew();
 
         var validationResult = ValidateDocumentId(request.DocumentId);
@@ -152,6 +156,7 @@ public sealed class SkillsController : ControllerBase
         ResumeReviewSkillRequest request,
         CancellationToken cancellationToken)
     {
+        // Resume review is the document-draft style skill used to generate Markdown content.
         var stopwatch = Stopwatch.StartNew();
 
         var validationResult = ValidateDocumentId(request.DocumentId);
@@ -173,6 +178,7 @@ public sealed class SkillsController : ControllerBase
 
     private ActionResult? ValidateDocumentId(string documentId)
     {
+        // Keep repeated request validation centralized for all skill endpoints.
         if (!string.IsNullOrWhiteSpace(documentId))
         {
             return null;
@@ -184,6 +190,7 @@ public sealed class SkillsController : ControllerBase
 
     private NotFoundObjectResult DocumentNotFound(string documentId)
     {
+        // Use ProblemDetails for predictable API errors instead of ad-hoc strings.
         return NotFound(new ProblemDetails
         {
             Status = StatusCodes.Status404NotFound,
@@ -199,6 +206,7 @@ public sealed class SkillsController : ControllerBase
         bool succeeded,
         long durationMs)
     {
+        // All direct skill calls are recorded in the same audit stream as tools, planner, and workflows.
         auditLogger.Record(new AuditEventRequest(
             "skill",
             action,
