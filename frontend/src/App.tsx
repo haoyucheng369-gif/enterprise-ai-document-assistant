@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { classifyDocument } from './api/classificationApi'
 import { sendChatMessage } from './api/chatApi'
-import { uploadDocument } from './api/documentApi'
+import { deleteDocument, uploadDocument } from './api/documentApi'
 import { generateResumeReview } from './api/resumeReviewApi'
 import { runDocumentReviewWorkflow } from './api/workflowApi'
 import { AssistantPanel } from './components/assistant/AssistantPanel'
@@ -40,8 +40,10 @@ function App() {
   const [latestAssistantCitations, setLatestAssistantCitations] =
     useState<Citation[]>([])
   const [uploadedDocuments, setUploadedDocuments] = useState<DocumentItem[]>([])
+  const [deletedDocumentIds, setDeletedDocumentIds] = useState<string[]>([])
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'failed'>('idle')
+  const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null)
   const [workflowState, setWorkflowState] = useState<'idle' | 'running' | 'failed'>('idle')
   const [workflowResult, setWorkflowResult] =
     useState<DocumentReviewWorkflowResponse | null>(null)
@@ -97,7 +99,10 @@ function App() {
   }
 
   const { documents, toolResult } = workspace.data
-  const visibleDocuments = [...uploadedDocuments, ...documents]
+  const deletedDocumentIdSet = new Set(deletedDocumentIds)
+  const visibleDocuments = [...uploadedDocuments, ...documents].filter(
+    (document) => !deletedDocumentIdSet.has(document.id),
+  )
   const selectedDocument =
     visibleDocuments.find((document) => document.id === selectedDocumentId)
     ?? visibleDocuments[0]
@@ -127,7 +132,45 @@ function App() {
     }
   }
 
+  async function handleDeleteDocument(documentId: string) {
+    setDeletingDocumentId(documentId)
+
+    try {
+      await deleteDocument(documentId)
+
+      // Keep the current React workspace in sync without forcing a full workspace reload.
+      const remainingDocuments = visibleDocuments.filter(
+        (document) => document.id !== documentId,
+      )
+
+      setUploadedDocuments((currentDocuments) =>
+        currentDocuments.filter((document) => document.id !== documentId),
+      )
+      setDeletedDocumentIds((currentIds) =>
+        currentIds.includes(documentId) ? currentIds : [...currentIds, documentId],
+      )
+
+      if (selectedDocument?.id === documentId) {
+        setSelectedDocumentId(remainingDocuments[0]?.id ?? null)
+      }
+    } finally {
+      setDeletingDocumentId(null)
+    }
+  }
+
   async function handleSendMessage(message: string) {
+    if (selectedDocument === undefined) {
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        {
+          id: `assistant-missing-document-${crypto.randomUUID()}`,
+          role: 'assistant',
+          content: 'Upload or select a document before asking the assistant.',
+        },
+      ])
+      return
+    }
+
     const userMessage: Message = {
       id: `user-${crypto.randomUUID()}`,
       role: 'user',
@@ -203,6 +246,10 @@ function App() {
   }
 
   async function handleRunWorkflow() {
+    if (selectedDocument === undefined) {
+      return
+    }
+
     setWorkflowState('running')
     setWorkflowResult(null)
 
@@ -222,6 +269,10 @@ function App() {
   }
 
   async function handleClassifyDocument() {
+    if (selectedDocument === undefined) {
+      return
+    }
+
     setClassificationState('running')
     setClassificationResult(null)
 
@@ -239,6 +290,10 @@ function App() {
   }
 
   async function handleGenerateResumeReview() {
+    if (selectedDocument === undefined) {
+      return
+    }
+
     setReviewState('running')
     setReviewResult(null)
 
@@ -260,26 +315,36 @@ function App() {
   return (
     <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[288px_minmax(420px,1fr)_640px] 2xl:grid-cols-[300px_minmax(440px,1fr)_700px]">
       <DocumentNav
+        deletingDocumentId={deletingDocumentId}
         documents={visibleDocuments}
+        onDeleteDocument={handleDeleteDocument}
         onSelectDocument={setSelectedDocumentId}
         onUploadDocument={handleUploadDocument}
-        selectedDocumentId={selectedDocument.id}
+        selectedDocumentId={selectedDocument?.id ?? ''}
         uploadState={uploadState}
       />
-      <DocumentWorkspace
-        citations={latestAssistantCitations}
-        classificationResult={classificationResult}
-        classificationState={classificationState}
-        document={selectedDocument}
-        onClassifyDocument={handleClassifyDocument}
-        onGenerateResumeReview={handleGenerateResumeReview}
-        onRunWorkflow={handleRunWorkflow}
-        reviewResult={reviewResult}
-        reviewState={reviewState}
-        toolResult={toolResult}
-        workflowResult={workflowResult}
-        workflowState={workflowState}
-      />
+      {selectedDocument === undefined ? (
+        <section className="flex min-h-0 flex-col border-r border-slate-200 bg-slate-50 px-4 py-4">
+          <div className="flex min-h-0 flex-1 items-center justify-center rounded-md border border-dashed border-slate-300 bg-white text-sm text-slate-500">
+            Upload a document to start preview, classification, workflow, and assistant actions.
+          </div>
+        </section>
+      ) : (
+        <DocumentWorkspace
+          citations={latestAssistantCitations}
+          classificationResult={classificationResult}
+          classificationState={classificationState}
+          document={selectedDocument}
+          onClassifyDocument={handleClassifyDocument}
+          onGenerateResumeReview={handleGenerateResumeReview}
+          onRunWorkflow={handleRunWorkflow}
+          reviewResult={reviewResult}
+          reviewState={reviewState}
+          toolResult={toolResult}
+          workflowResult={workflowResult}
+          workflowState={workflowState}
+        />
+      )}
       <AssistantPanel
         aiProvider={aiProvider}
         isSending={isSendingMessage}

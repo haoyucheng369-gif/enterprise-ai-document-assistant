@@ -2,8 +2,6 @@ namespace EnterpriseAiDocumentAssistant.Api.Planner;
 
 internal static class AgentPlanCatalog
 {
-    private const string DefaultDocumentId = "contract-review";
-
     public static readonly IReadOnlyList<string> Routes =
     [
         "chat",
@@ -24,7 +22,7 @@ internal static class AgentPlanCatalog
     public static AgentPlanResponse Create(string route, string? documentId)
     {
         var normalizedDocumentId = string.IsNullOrWhiteSpace(documentId)
-            ? DefaultDocumentId
+            ? string.Empty
             : documentId.Trim();
 
         return route.Trim().ToLowerInvariant() switch

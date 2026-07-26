@@ -40,4 +40,26 @@ public sealed class DocumentsController : ControllerBase
         // Quick backend check endpoint for uploaded documents stored in MongoDB.
         return Ok(documentUploadService.ListRecent());
     }
+
+    [HttpDelete("{documentId}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        string documentId,
+        CancellationToken cancellationToken)
+    {
+        // Delete endpoint keeps document removal behind the same service that owns upload persistence and audit.
+        var deleted = await documentUploadService.DeleteAsync(documentId, cancellationToken);
+        if (!deleted)
+        {
+            return NotFound(new ProblemDetails
+            {
+                Title = "Document not found.",
+                Detail = $"No uploaded document exists with id '{documentId}'.",
+                Status = StatusCodes.Status404NotFound
+            });
+        }
+
+        return NoContent();
+    }
 }

@@ -99,6 +99,25 @@ public sealed class DocumentUploadService : IDocumentUploadService
         return documentRepository.ListRecent(20);
     }
 
+    public async Task<bool> DeleteAsync(string documentId, CancellationToken cancellationToken)
+    {
+        // Delete currently removes parsed metadata/chunks from MongoDB; raw file and vector cleanup can attach here later.
+        var deleted = await documentRepository.DeleteAsync(documentId, cancellationToken);
+
+        auditLogger.Record(new AuditEventRequest(
+            "document",
+            "document_deleted",
+            $"api/documents/{documentId}",
+            deleted,
+            0,
+            new Dictionary<string, string>
+            {
+                ["documentId"] = documentId
+            }));
+
+        return deleted;
+    }
+
     private static DocumentUploadResult Failed(string error)
     {
         return new DocumentUploadResult(false, null, error);

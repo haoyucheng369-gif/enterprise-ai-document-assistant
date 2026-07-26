@@ -24,7 +24,7 @@ public sealed class ApplicationDocumentProvider : IApplicationDocumentProvider
             return null;
         }
 
-        // Seed documents and uploaded documents share one read model for skills, tools, and workflows.
+        // Skills, tools, and workflows read uploaded documents through the shared workspace read model.
         var workspaceDocument = workspaceDataProvider.GetWorkspace()
             .Documents
             .FirstOrDefault(candidate =>

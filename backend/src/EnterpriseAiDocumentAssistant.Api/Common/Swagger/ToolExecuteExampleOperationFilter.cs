@@ -23,11 +23,8 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["toolName"] = new OpenApiString("get_document_metadata"),
-                ["arguments"] = new OpenApiObject
-                {
-                    ["documentId"] = new OpenApiString("contract-review")
-                }
+                ["toolName"] = new OpenApiString("get_health_status"),
+                ["arguments"] = new OpenApiObject()
             };
 
             return;
@@ -37,11 +34,8 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["name"] = new OpenApiString("get_document_metadata"),
-                ["arguments"] = new OpenApiObject
-                {
-                    ["documentId"] = new OpenApiString("contract-review")
-                }
+                ["name"] = new OpenApiString("get_health_status"),
+                ["arguments"] = new OpenApiObject()
             };
 
             return;
@@ -51,7 +45,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["documentId"] = new OpenApiString("contract-review"),
+                ["documentId"] = new OpenApiString("upload-document-id"),
                 ["aiProvider"] = new OpenApiString("OpenAI")
             };
 
@@ -62,7 +56,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["documentId"] = new OpenApiString("contract-review"),
+                ["documentId"] = new OpenApiString("upload-document-id"),
                 ["aiProvider"] = new OpenApiString("OpenAI")
             };
 
@@ -73,7 +67,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["documentId"] = new OpenApiString("contract-review"),
+                ["documentId"] = new OpenApiString("upload-document-id"),
                 ["purpose"] = new OpenApiString("Ask the vendor to clarify renewal, liability, and service credit terms."),
                 ["aiProvider"] = new OpenApiString("OpenAI")
             };
@@ -85,7 +79,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["documentId"] = new OpenApiString("contract-review"),
+                ["documentId"] = new OpenApiString("upload-document-id"),
                 ["instruction"] = new OpenApiString("Create a practical resume review brief that I can use with the original resume in ChatGPT."),
                 ["aiProvider"] = new OpenApiString("OpenAI")
             };
@@ -97,7 +91,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["documentId"] = new OpenApiString("contract-review"),
+                ["documentId"] = new OpenApiString("upload-document-id"),
                 ["aiProvider"] = new OpenApiString("OpenAI")
             };
 
@@ -109,7 +103,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
             mediaType.Example = new OpenApiObject
             {
                 ["message"] = new OpenApiString("Analyze liability risk in this document."),
-                ["documentId"] = new OpenApiString("contract-review")
+                ["documentId"] = new OpenApiString("upload-document-id")
             };
 
             return;
@@ -122,7 +116,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
             mediaType.Example = new OpenApiObject
             {
                 ["message"] = new OpenApiString("What should I review first in this agreement?"),
-                ["documentId"] = new OpenApiString("contract-review"),
+                ["documentId"] = new OpenApiString("upload-document-id"),
                 ["history"] = new OpenApiArray(),
                 ["aiProvider"] = new OpenApiString("OpenAI")
             };
@@ -134,7 +128,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["documentId"] = new OpenApiString("contract-review"),
+                ["documentId"] = new OpenApiString("upload-document-id"),
                 ["emailPurpose"] = new OpenApiString("Ask the vendor to clarify renewal, liability, and service credit terms."),
                 ["aiProvider"] = new OpenApiString("OpenAI")
             };
@@ -146,7 +140,7 @@ public sealed class ToolExecuteExampleOperationFilter : IOperationFilter
         {
             mediaType.Example = new OpenApiObject
             {
-                ["documentId"] = new OpenApiString("contract-review"),
+                ["documentId"] = new OpenApiString("upload-document-id"),
                 ["to"] = new OpenApiString("vendor@example.com"),
                 ["subject"] = new OpenApiString("Questions about Vendor Service Agreement"),
                 ["body"] = new OpenApiString("Please clarify renewal, liability, and service credit terms before approval.")

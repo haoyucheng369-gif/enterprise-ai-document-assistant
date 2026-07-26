@@ -2,7 +2,8 @@ namespace EnterpriseAiDocumentAssistant.Api.Skills;
 
 public sealed record RiskAnalysisSkillRequest(
     string DocumentId,
-    string? AiProvider = null);
+    string? AiProvider = null,
+    string? Instruction = null);
 
 public sealed record RiskAnalysisSkillResponse(
     string DocumentId,

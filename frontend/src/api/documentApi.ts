@@ -18,3 +18,15 @@ export async function uploadDocument(file: File): Promise<DocumentUploadResponse
 
   return response.json() as Promise<DocumentUploadResponse>
 }
+
+export async function deleteDocument(documentId: string): Promise<void> {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? defaultApiBaseUrl
+
+  const response = await fetch(`${apiBaseUrl}/api/documents/${documentId}`, {
+    method: 'DELETE',
+  })
+
+  if (!response.ok) {
+    throw new Error(`Document delete failed with ${response.status}`)
+  }
+}

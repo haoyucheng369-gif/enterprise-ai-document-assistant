@@ -91,22 +91,32 @@ public static class DocumentSkillPromptTemplates
             variables);
     }
 
-    public static OrchestratedPrompt BuildRiskAnalysisPrompt(DocumentItemResponse document)
+    public static OrchestratedPrompt BuildRiskAnalysisPrompt(
+        DocumentItemResponse document,
+        string? instruction = null)
     {
         // Risk analysis asks for structured risk items that workflows can compose with other skills.
         var documentText = BuildLimitedDocumentTextForPrompt(document);
+        var normalizedInstruction = string.IsNullOrWhiteSpace(instruction)
+            ? "Review this document for practical business risks."
+            : instruction.Trim();
+        var targetLanguage = DetectTargetLanguage(normalizedInstruction);
         var variables = new[]
         {
             new PromptVariable("document_title", document.Title),
             new PromptVariable("document_type", document.Type),
+            new PromptVariable("instruction", normalizedInstruction),
+            new PromptVariable("target_language", targetLanguage),
             new PromptVariable("document_text", documentText)
         };
 
         var userMessage = $"""
-            Review this document for practical business risks.
+            Review this document for practical business risks according to the original user instruction.
 
             Title: {document.Title}
             Type hint: {document.Type}
+            Original user instruction: {normalizedInstruction}
+            Target output language: {targetLanguage}
 
             Document text:
             {documentText}
@@ -125,6 +135,8 @@ public static class DocumentSkillPromptTemplates
                     "risks must be an array of objects with title, severity, source, and recommendation.",
                     "Allowed severity values: low, medium, high.",
                     "missingInformation must be an array of short strings.",
+                    "Write risk title, recommendation, and missingInformation in the target output language, even when the source document uses another language.",
+                    "If target output language is Simplified Chinese, risk title, recommendation, and missingInformation must contain Chinese text.",
                     "Return an empty risks array when no grounded risk is visible."
                 ]),
             variables);
@@ -256,5 +268,13 @@ public static class DocumentSkillPromptTemplates
         return value.Length <= maxLength
             ? value
             : value[..maxLength];
+    }
+
+    private static string DetectTargetLanguage(string instruction)
+    {
+        // The skill prompt needs an explicit language label because document text may use a different language.
+        return instruction.Any(character => character is >= '\u4e00' and <= '\u9fff')
+            ? "Simplified Chinese"
+            : "English";
     }
 }

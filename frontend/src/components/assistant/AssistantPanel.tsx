@@ -126,7 +126,9 @@ export function AssistantPanel({
                   message.suggestedActions.length > 0 ? (
                     <div className="mt-3">
                       <p className="mb-1.5 text-xs text-slate-500">
-                        Suggested next steps
+                        {usesChinese(message.suggestedActions)
+                          ? '\u5efa\u8bae\u4e0b\u4e00\u6b65'
+                          : 'Suggested next steps'}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {message.suggestedActions.map((action) => {
@@ -183,20 +185,29 @@ export function AssistantPanel({
 }
 
 function toUserAction(action: string) {
+  // Suggested actions should read like user commands after clicking, not assistant offers.
   const normalized = action
     .trim()
-    .replace(/^如果你愿意[，,]\s*/u, '')
-    .replace(/^我可以继续帮你/u, '')
-    .replace(/^我可以帮你/u, '')
-    .replace(/^也可以帮你/u, '')
-    .replace(/^要我帮你/u, '')
-    .replace(/^需要我帮你/u, '')
+    .replace(/^\u5982\u679c\u4f60\u613f\u610f[,\uff0c]?\s*/u, '')
+    .replace(/^\u6211\u53ef\u4ee5\u7ee7\u7eed\u5e2e\u4f60/u, '')
+    .replace(/^\u6211\u53ef\u4ee5\u5e2e\u4f60/u, '')
+    .replace(/^\u4e5f\u53ef\u4ee5\u5e2e\u4f60/u, '')
+    .replace(/^\u8981\u6211\u5e2e\u4f60/u, '')
+    .replace(/^\u9700\u8981\u6211\u5e2e\u4f60/u, '')
     .replace(/^Would you like me to\s+/iu, '')
     .replace(/^Do you want me to\s+/iu, '')
     .replace(/^I can\s+/iu, '')
-    .replace(/[。.]$/u, '')
-    .replace(/吗[？?]$/u, '')
+    .replace(/[\u3002?\uff1f]$/u, '')
+    .replace(/\u5417[?\uff1f]?$/u, '')
     .trim()
 
   return normalized.length > 0 ? normalized : action.trim()
+}
+
+function usesChinese(actions: string[]) {
+  return actions.some((action) =>
+    Array.from(action).some((character) =>
+      character >= '\u4e00' && character <= '\u9fff',
+    ),
+  )
 }

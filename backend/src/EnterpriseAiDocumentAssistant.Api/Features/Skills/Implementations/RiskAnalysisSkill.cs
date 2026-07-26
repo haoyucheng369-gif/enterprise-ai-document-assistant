@@ -54,7 +54,7 @@ public sealed class RiskAnalysisSkill : IRiskAnalysisSkill
             return BuildDeterministicRiskAnalysis(document);
         }
 
-        var prompt = DocumentSkillPromptTemplates.BuildRiskAnalysisPrompt(document);
+        var prompt = DocumentSkillPromptTemplates.BuildRiskAnalysisPrompt(document, request.Instruction);
         var modelResponse = await aiGateway.GenerateChatResponseAsync(
             new ChatModelRequest(prompt, provider),
             cancellationToken);

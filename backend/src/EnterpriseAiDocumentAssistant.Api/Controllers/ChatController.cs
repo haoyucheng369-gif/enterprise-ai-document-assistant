@@ -226,8 +226,8 @@ public sealed class ChatController : ControllerBase
                 new SummarySkillRequest(plan.DocumentId, request.AiProvider, request.Message),
                 cancellationToken), request),
             "skills.risk-analysis" => ConvertRiskAnalysisToAssistantMessage(await riskAnalysisSkill.RunAsync(
-                new RiskAnalysisSkillRequest(plan.DocumentId, request.AiProvider),
-                cancellationToken)),
+                new RiskAnalysisSkillRequest(plan.DocumentId, request.AiProvider, request.Message),
+                cancellationToken), request),
             "skills.email-draft" => ConvertEmailDraftToAssistantMessage(await emailDraftSkill.RunAsync(
                 new EmailDraftSkillRequest(plan.DocumentId, "Prepare a concise follow-up email draft.", request.AiProvider),
                 cancellationToken)),
@@ -258,7 +258,9 @@ public sealed class ChatController : ControllerBase
                 BuildSummarySuggestedActions(request));
     }
 
-    private static StructuredAssistantMessage? ConvertRiskAnalysisToAssistantMessage(RiskAnalysisSkillResponse? response)
+    private static StructuredAssistantMessage? ConvertRiskAnalysisToAssistantMessage(
+        RiskAnalysisSkillResponse? response,
+        ChatRequest request)
     {
         // Risk items become a compact assistant answer while preserving sources as citations.
         if (response is null)
@@ -267,15 +269,15 @@ public sealed class ChatController : ControllerBase
         }
 
         var answer = response.Risks.Count == 0
-            ? "No major risk items were identified from the selected document."
+            ? BuildNoRisksMessage(request)
             : string.Join(Environment.NewLine, response.Risks.Select(risk =>
-                $"- {risk.Title} ({risk.Severity}): {risk.Recommendation}"));
+                $"- {risk.Title} ({FormatSeverity(risk.Severity, request)}): {risk.Recommendation}"));
 
         return new StructuredAssistantMessage(
             answer,
             "high",
             response.Risks.Select(risk => risk.Source).ToArray(),
-            ["Summarize key points", "Generate follow-up email", "Run full workflow"]);
+            BuildRiskSuggestedActions(request));
     }
 
     private static StructuredAssistantMessage? ConvertEmailDraftToAssistantMessage(EmailDraftSkillResponse? response)
@@ -458,6 +460,46 @@ public sealed class ChatController : ControllerBase
                 "Generate follow-up email",
                 "Review resume positioning"
             ];
+    }
+
+    private static IReadOnlyList<string> BuildRiskSuggestedActions(ChatRequest request)
+    {
+        // Risk-analysis chat routes use app-generated suggestions, so they must also follow the user's language.
+        return PrefersChinese(request)
+            ?
+            [
+                "\u603b\u7ed3\u5173\u952e\u70b9",
+                "\u751f\u6210\u540e\u7eed\u90ae\u4ef6",
+                "\u6267\u884c\u5b8c\u6574\u6d41\u7a0b"
+            ]
+            :
+            [
+                "Summarize key points",
+                "Generate follow-up email",
+                "Run full workflow"
+            ];
+    }
+
+    private static string BuildNoRisksMessage(ChatRequest request)
+    {
+        return PrefersChinese(request)
+            ? "\u4ece\u5f53\u524d\u6587\u6863\u4e0a\u4e0b\u6587\u4e2d\u6ca1\u6709\u8bc6\u522b\u51fa\u660e\u663e\u98ce\u9669\u9879\u3002"
+            : "No major risk items were identified from the selected document.";
+    }
+
+    private static string FormatSeverity(string severity, ChatRequest request)
+    {
+        if (!PrefersChinese(request))
+        {
+            return severity;
+        }
+
+        return severity.ToLowerInvariant() switch
+        {
+            "high" => "\u9ad8",
+            "low" => "\u4f4e",
+            _ => "\u4e2d"
+        };
     }
 
     private static bool PrefersChinese(ChatRequest request)

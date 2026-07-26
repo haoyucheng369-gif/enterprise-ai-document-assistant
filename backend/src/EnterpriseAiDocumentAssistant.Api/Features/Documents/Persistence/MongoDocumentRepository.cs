@@ -35,6 +35,23 @@ public sealed class MongoDocumentRepository : IDocumentRepository
             cancellationToken);
     }
 
+    public async Task<bool> DeleteAsync(
+        string documentId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(documentId))
+        {
+            return false;
+        }
+
+        // Delete the persisted document read model; future vector/chunk collections should delete by the same document id.
+        var result = await documents.DeleteOneAsync(
+            item => item.Id == documentId,
+            cancellationToken);
+
+        return result.DeletedCount > 0;
+    }
+
     public DocumentUploadResponse? FindById(string documentId)
     {
         if (string.IsNullOrWhiteSpace(documentId))
@@ -52,7 +69,7 @@ public sealed class MongoDocumentRepository : IDocumentRepository
 
     public IReadOnlyList<DocumentUploadResponse> ListRecent(int limit)
     {
-        // Workspace uses this query to show uploaded documents before the seeded sample documents.
+        // Workspace uses this query to show the latest persisted uploads.
         return documents
             .Find(FilterDefinition<MongoDocumentRecord>.Empty)
             .SortByDescending(item => item.UploadedAtUtc)
