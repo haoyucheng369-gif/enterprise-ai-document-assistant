@@ -2,11 +2,11 @@ using EnterpriseAiDocumentAssistant.Api.Contracts;
 
 namespace EnterpriseAiDocumentAssistant.Api.Guardrails;
 
-public interface IChatGuardrailEvaluator
+public interface ISafetyClassifier
 {
-    GuardrailEvaluation Evaluate(ChatRequest request);
+    SafetyClassification Classify(ChatRequest request);
 
-    Task<GuardrailEvaluation> EvaluateAsync(
+    Task<SafetyClassification> ClassifyAsync(
         ChatRequest request,
         CancellationToken cancellationToken);
 }

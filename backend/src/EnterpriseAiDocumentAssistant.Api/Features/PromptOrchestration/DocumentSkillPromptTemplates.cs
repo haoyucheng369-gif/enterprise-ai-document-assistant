@@ -6,22 +6,29 @@ public static class DocumentSkillPromptTemplates
 {
     private const int DocumentTextLimit = 16000;
 
-    public static OrchestratedPrompt BuildSummaryPrompt(DocumentItemResponse document)
+    public static OrchestratedPrompt BuildSummaryPrompt(
+        DocumentItemResponse document,
+        string? instruction = null)
     {
         // Summary is a narrow skill prompt: one document in, structured summary JSON out.
         var documentText = BuildLimitedDocumentTextForPrompt(document);
+        var normalizedInstruction = string.IsNullOrWhiteSpace(instruction)
+            ? "Summarize this document for a business user."
+            : instruction.Trim();
         var variables = new[]
         {
             new PromptVariable("document_title", document.Title),
             new PromptVariable("document_type", document.Type),
+            new PromptVariable("instruction", normalizedInstruction),
             new PromptVariable("document_text", documentText)
         };
 
         var userMessage = $"""
-            Summarize this document for a business user.
+            Summarize this document according to the original user instruction.
 
             Title: {document.Title}
             Type hint: {document.Type}
+            Original user instruction: {normalizedInstruction}
 
             Document text:
             {documentText}
@@ -37,6 +44,7 @@ public static class DocumentSkillPromptTemplates
                 EnterpriseAssistantPromptDefaults.OutputRules,
                 [
                     "Set answer to a single minified JSON object with summary, keyPoints, and sources.",
+                    "Write summary and keyPoints in the language requested by the original user instruction. If no language is specified, match the instruction language.",
                     "summary must be one concise paragraph.",
                     "keyPoints must be an array of 3 to 6 short strings.",
                     "sources must be an array of section labels or document references from the provided context."

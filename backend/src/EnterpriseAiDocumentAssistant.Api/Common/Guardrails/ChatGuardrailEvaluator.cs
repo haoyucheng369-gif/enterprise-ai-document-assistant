@@ -4,36 +4,33 @@ namespace EnterpriseAiDocumentAssistant.Api.Guardrails;
 
 public sealed class ChatGuardrailEvaluator : IChatGuardrailEvaluator
 {
-    private static readonly string[] PromptInjectionSignals =
-    [
-        "ignore previous instructions",
-        "ignore all previous instructions",
-        "ignore the system prompt",
-        "forget your instructions",
-        "override your instructions",
-        "reveal your system prompt",
-        "show me your hidden prompt"
-    ];
+    private readonly ISafetyClassifier safetyClassifier;
 
-    private static readonly string[] UnauthorizedDataSignals =
-    [
-        "confidential",
-        "secret",
-        "salary",
-        "payroll",
-        "private key",
-        "access token",
-        "all internal files",
-        "documents i do not have access to"
-    ];
+    public ChatGuardrailEvaluator(ISafetyClassifier safetyClassifier)
+    {
+        this.safetyClassifier = safetyClassifier;
+    }
 
     public GuardrailEvaluation Evaluate(ChatRequest request)
     {
-        // This first guardrail is intentionally simple: block obvious unsafe requests before model execution.
+        // This first guardrail is intentionally simple: classify obvious unsafe requests before model execution.
         // It is not a full security system; authorization and RAG filtering must be added later.
-        var message = request.Message.Trim();
+        var classification = safetyClassifier.Classify(request);
+        return BuildEvaluation(classification);
+    }
 
-        if (ContainsAny(message, PromptInjectionSignals))
+    public async Task<GuardrailEvaluation> EvaluateAsync(
+        ChatRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Async evaluation can include an AI-backed safety classifier when a real provider is selected.
+        var classification = await safetyClassifier.ClassifyAsync(request, cancellationToken);
+        return BuildEvaluation(classification);
+    }
+
+    private static GuardrailEvaluation BuildEvaluation(SafetyClassification classification)
+    {
+        if (classification.IsBlocked && classification.RiskType == "prompt_injection")
         {
             return GuardrailEvaluation.Blocked(
                 "PromptInjectionAttempt",
@@ -45,10 +42,11 @@ public sealed class ChatGuardrailEvaluator : IChatGuardrailEvaluator
                         "Ask a document-specific question.",
                         "Use approved tools for document metadata or health status.",
                         "Avoid requests that try to override system instructions."
-                    ]));
+                    ]),
+                classification);
         }
 
-        if (ContainsAny(message, UnauthorizedDataSignals))
+        if (classification.IsBlocked && classification.RiskType == "unauthorized_data")
         {
             return GuardrailEvaluation.Blocked(
                 "UnauthorizedDataRequest",
@@ -60,16 +58,10 @@ public sealed class ChatGuardrailEvaluator : IChatGuardrailEvaluator
                         "Ask about the selected document.",
                         "Use authorized document metadata or search tools when available.",
                         "Request access through the appropriate business process if more data is needed."
-                    ]));
+                    ]),
+                classification);
         }
 
-        return GuardrailEvaluation.Allowed;
-    }
-
-    private static bool ContainsAny(string value, IReadOnlyList<string> signals)
-    {
-        // Current guardrails are deterministic keyword checks so behavior is easy to debug.
-        return signals.Any(signal =>
-            value.Contains(signal, StringComparison.OrdinalIgnoreCase));
+        return GuardrailEvaluation.Allowed(classification);
     }
 }

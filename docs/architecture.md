@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Enterprise AI Document Assistant is structured as a focused React + ASP.NET Core application for connecting the core concepts of modern AI software: assistant UX, prompt orchestration, structured output, AI Gateway, document intelligence, RAG, Tool Calling, MCP, simple Agent Planner, and workflow orchestration.
+Enterprise AI Document Assistant is structured as a focused React + ASP.NET Core application for connecting the core concepts of modern AI software: assistant UX, prompt orchestration, structured output, safety classification, AI Gateway, document intelligence, RAG, Tool Calling, MCP, simple Agent Planner, and workflow orchestration.
 
 The architecture keeps the first version small. It supports enterprise-style patterns, but the initial implementation should be one narrow end-to-end assistant flow rather than a broad platform.
 
@@ -59,7 +59,7 @@ The first version should prove the whole path with minimal depth:
 - One assistant UI
 - One conversation API
 - One or two prompt templates
-- Structured output, response validation, and lightweight guardrails
+- Structured output, response validation, safety classification, and lightweight guardrails
 - Basic conversation memory
 - A small Tool Gateway
 - One or two simple tools
@@ -96,6 +96,7 @@ The first implementation is grouped into six modules:
    - Prompt orchestration
    - Structured output
    - Validation
+   - Safety classifier with rule-based and optional AI-backed routing
    - Simple guardrails
    - AI Gateway
 
@@ -189,6 +190,7 @@ Responsibilities:
 - Output rules
 - Structured output schemas
 - AI output validation
+- Safety classification before planner or model execution, with deterministic fallback when model classification is unavailable
 - Guardrails
 - Reusable AI skills
 
@@ -452,6 +454,7 @@ Current endpoint:
 Tracked categories:
 
 - `chat`
+- `safety`
 - `planner`
 - `tool`
 - `skill`
@@ -493,7 +496,7 @@ This allows the assistant to use enterprise capabilities without coupling prompt
 - RAG answers must include traceable citations.
 - Prompt templates should be versionable and testable.
 - Structured outputs should be validated before they are used by the UI or workflows.
-- Guardrails should be simple rules at first, such as requiring citations for document answers.
+- Guardrails should start with structured safety classification, simple rules, and deterministic fallback, then evolve toward stronger policies.
 - MCP can be introduced once at least one backend tool exists.
 - The Agent Planner should choose from known paths instead of performing open-ended autonomous planning.
 - Persistence should be replaceable where possible.

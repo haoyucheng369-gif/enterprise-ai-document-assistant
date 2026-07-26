@@ -50,7 +50,7 @@ sequenceDiagram
 
     U->>UI: Ask about a document
     UI->>API: POST /api/chat/stream
-    API->>API: Guardrails + conversation memory
+    API->>API: Safety classifier + guardrails + conversation memory
     API->>AI: Build orchestrated prompt
     AI->>Model: Generate structured answer
     Model-->>AI: JSON-shaped response
@@ -66,7 +66,7 @@ sequenceDiagram
 |---|---|---|
 | React Workspace | User-facing work area | Document list, document workspace tabs, right-side Assistant, citations, tool results |
 | ASP.NET Core API | Backend boundary | `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows` |
-| Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, guardrails, AI Gateway |
+| Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, safety classifier, guardrails, AI Gateway |
 | Tool Gateway and Skills | Controlled actions | `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ResumeReviewSkill` |
 | Document Processing | Source document handling | Upload, parse, chunk, preview, document metadata |
 | Persistence | Application state | Conversation history, document metadata, workflow records, audit/tool records; MongoDB remains optional |
@@ -82,7 +82,7 @@ sequenceDiagram
 - [x] ASP.NET Core controller API with Swagger, contracts, and ProblemDetails
 - [x] Backend-driven workspace data and document upload flow
 - [x] Text parsing, chunking, and document preview
-- [x] Chat endpoint with prompt orchestration, conversation memory, structured output, and simple guardrails
+- [x] Chat endpoint with prompt orchestration, conversation memory, structured output, safety classifier, and guardrails
 - [x] AI Gateway with local mock, OpenAI, and Azure OpenAI provider selection
 - [x] Skills: classification, summary, risk analysis, email draft, and resume review
 - [x] Workflow: document summary -> risk analysis -> email draft
@@ -91,6 +91,7 @@ sequenceDiagram
 - [x] In-memory audit logging
 - [x] AI intent routing through Agent Planner with deterministic fallback
 - [x] MongoDB document persistence for uploaded document metadata and parsed sections
+- [x] Input Guardrails with rule-based safety classification, optional AI-backed safety classification, and deterministic fallback
 
 ### Lightweight Boundaries
 

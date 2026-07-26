@@ -13,7 +13,7 @@ React chat
   -> ASP.NET Core API
   -> Prompt orchestration
   -> Structured output validation
-  -> Simple guardrails
+  -> Safety classifier and guardrails
   -> Tool Gateway
   -> First tools
   -> MCP Server
@@ -51,7 +51,7 @@ V1 is organized around a small core path plus lightweight extension boundaries:
 
 - React Workspace: document list, document detail, right-side AI Assistant, citation panel, tool result panel
 - ASP.NET Core API: `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows`
-- Prompt and AI Layer: prompt orchestration, conversation memory, structured output, validation, guardrails, AI Gateway
+- Prompt and AI Layer: prompt orchestration, conversation memory, structured output, validation, safety classifier, guardrails, AI Gateway
 - Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ClassificationSkill`, `ResumeReviewSkill`
 - Document Processing first, then RAG: upload, parse text, chunk first; embeddings, vector search, and grounded answers are staged next
 - Persistence: conversation history, document metadata, workflow records, audit/tool records; MongoDB or relational storage can be selected later
@@ -93,6 +93,7 @@ Scope:
 - Output rules
 - Structured output contract
 - Structured output validation
+- Rule-based safety classifier with optional AI-backed safety classification
 - Simple guardrails
 - Basic conversation memory
 
@@ -101,6 +102,7 @@ Expected outcome:
 - Prompt behavior is reusable and testable.
 - Assistant responses have a predictable shape.
 - Unsafe or unsupported requests can be handled consistently.
+- Safety decisions are represented as structured `safe`, `blocked`, or `needs_review` classifications, with deterministic fallback when the AI classifier is unavailable.
 
 ---
 
@@ -264,6 +266,7 @@ Current V1 progress:
 - `POST /api/skills/classification` returns category, priority, confidence, reason, signals, and sources
 - The React workspace can run classification for the selected document with the active AI provider
 - Harness checks validate the classification contract through the mock path
+- Chat safety classification is handled separately by `RoutingSafetyClassifier` before planner or model execution; it blocks clear rule matches first, then can use the selected real provider for AI-backed classification
 
 ---
 
@@ -360,6 +363,7 @@ Scope:
 - Rate limiting for chat and model-backed endpoints
 - Timeout and cancellation review
 - Input and output guardrail expansion
+- Optional dedicated safety API provider
 - No-answer behavior when retrieved context is weak
 
 Expected outcome:
@@ -439,6 +443,7 @@ These items are outside the first implementation path and should be added only w
 - Authentication and authorization
 - Authorization-aware RAG retrieval
 - Prompt injection mitigation
+- Advanced prompt injection mitigation
 - Real Microsoft Graph OAuth integration
 - Hybrid search and semantic ranking
 - GraphQL API surface

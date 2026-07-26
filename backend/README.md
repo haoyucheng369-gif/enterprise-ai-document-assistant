@@ -13,7 +13,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Streaming chat endpoint with runtime provider selection
 - Prompt orchestration service for template variables and response rules
 - Structured assistant response contract and validation
-- Simple chat guardrails for prompt-injection and unauthorized-data requests
+- Input Guardrails with rule-based safety classification, optional AI-backed safety classification, and deterministic fallback
 - Tool Gateway skeleton with tool listing and execution endpoints
 - `get_health_status` tool backed by the API status provider
 - `get_document_metadata` tool backed by workspace document data

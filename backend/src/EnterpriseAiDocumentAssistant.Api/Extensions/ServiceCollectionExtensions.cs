@@ -41,6 +41,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAiGateway, RoutingAiGateway>();
         services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
         services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
+        services.AddSingleton<RuleBasedSafetyClassifier>();
+        services.AddSingleton<AiSafetyClassifier>();
+        services.AddSingleton<ISafetyClassifier, RoutingSafetyClassifier>();
         services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
         services.AddSingleton<SimpleAgentPlanner>();
         services.AddSingleton<AiAgentPlanner>();

@@ -68,21 +68,26 @@ public sealed class ChatController : ControllerBase
         ChatRequest request,
         CancellationToken cancellationToken)
     {
-        // Main chat endpoint used by the React assistant panel.
+        // Chat Step 1: HTTP entry point used by the React assistant panel.
+        // This method owns request validation, delegates the AI flow, then wraps the final message for the UI.
         var stopwatch = Stopwatch.StartNew();
 
+        // Chat Step 2: reject invalid HTTP input before any guardrail, planner, or model call happens.
         if (string.IsNullOrWhiteSpace(request.Message))
         {
             ModelState.AddModelError(nameof(request.Message), "Message is required.");
             return ValidationProblem(ModelState);
         }
 
+        // Chat Step 3: run the complete assistant flow and receive one validated structured message.
         var structuredMessage = await BuildValidatedStructuredMessageAsync(request, cancellationToken);
         if (structuredMessage.Result is not null)
         {
+            // Chat Step 3b: blocked guardrails or validation failures return early as HTTP results.
             return structuredMessage.Result;
         }
 
+        // Chat Step 4: convert the structured assistant payload into the chat message shape used by the frontend.
         var message = structuredMessage.Value
             ?? throw new InvalidOperationException("Structured message was not created.");
         var response = new MessageResponse(
@@ -90,6 +95,7 @@ public sealed class ChatController : ControllerBase
             "assistant",
             message.Answer);
 
+        // Chat Step 5: record the successful chat call and return the response to React.
         RecordChatAudit("chat_completed", "api/chat", request, true, stopwatch.ElapsedMilliseconds);
         return Ok(new ChatResponse(response, message));
     }
@@ -166,31 +172,44 @@ public sealed class ChatController : ControllerBase
         ChatRequest request,
         CancellationToken cancellationToken)
     {
-        var guardrailEvaluation = chatGuardrailEvaluator.Evaluate(request);
+        // Flow Step 1: Input Guardrails classify the user request before planner, skills, or model execution.
+        var guardrailEvaluation = await chatGuardrailEvaluator.EvaluateAsync(request, cancellationToken);
+        if (guardrailEvaluation.Classification.NeedsReview)
+        {
+            // Flow Step 1a: needs_review is allowed in V1, but it is still recorded for audit/debugging.
+            RecordSafetyAudit(request, guardrailEvaluation.Classification);
+        }
+
         if (guardrailEvaluation.IsBlocked)
         {
+            // Flow Step 1b: blocked input returns a controlled assistant message and skips planner/model calls.
+            RecordSafetyAudit(request, guardrailEvaluation.Classification);
             return ValidateStructuredMessage(guardrailEvaluation.Response
                 ?? throw new InvalidOperationException("Guardrail response was not created."));
         }
 
-        // Planner decides whether this free-form chat message should stay as chat or be routed to a known capability.
+        // Flow Step 2: Planner decides whether this free-form chat message should route to a known capability.
         var plan = await agentPlanner.PlanAsync(
             new AgentPlanRequest(request.Message, request.DocumentId, request.AiProvider),
             cancellationToken);
 
-        // If the route maps to a skill/workflow, execute it now and adapt its result back to the chat response shape.
+        // Flow Step 3: If the route maps to a skill/workflow, execute it and adapt the result back to chat.
         var plannedMessage = await TryExecutePlannedRouteAsync(request, plan, cancellationToken);
         if (plannedMessage is not null)
         {
+            // Flow Step 3b: skill/workflow output still goes through citations and output validation.
             return ValidateStructuredMessage(AttachDocumentCitations(request, plannedMessage));
         }
 
-        // No specialized route was selected, so the request continues through the normal assistant prompt.
+        // Flow Step 4: No specialized route was selected, so build the normal assistant prompt.
         var prompt = promptOrchestrator.BuildAssistantPrompt(request);
+
+        // Flow Step 5: AI Gateway calls Mock/OpenAI/Azure OpenAI using the selected provider.
         var modelResponse = await aiGateway.GenerateChatResponseAsync(
             new ChatModelRequest(prompt, request.AiProvider),
             cancellationToken);
 
+        // Flow Step 6: Attach current document citations, validate the structured output, then return upward.
         return ValidateStructuredMessage(AttachDocumentCitations(request, modelResponse.Message));
     }
 
@@ -199,13 +218,13 @@ public sealed class ChatController : ControllerBase
         AgentPlanResponse plan,
         CancellationToken cancellationToken)
     {
-        // This switch is where planner output becomes real application behavior.
-        // Each route calls one skill/workflow, then the result is normalized for the Assistant UI.
+        // Route Step 1: This switch is where planner output becomes real application behavior.
+        // Route Step 2: Each route calls one skill/workflow, then the result is normalized for the Assistant UI.
         return plan.Route switch
         {
             "skills.summary" => ConvertSummaryToAssistantMessage(await summarySkill.RunAsync(
-                new SummarySkillRequest(plan.DocumentId, request.AiProvider),
-                cancellationToken)),
+                new SummarySkillRequest(plan.DocumentId, request.AiProvider, request.Message),
+                cancellationToken), request),
             "skills.risk-analysis" => ConvertRiskAnalysisToAssistantMessage(await riskAnalysisSkill.RunAsync(
                 new RiskAnalysisSkillRequest(plan.DocumentId, request.AiProvider),
                 cancellationToken)),
@@ -225,7 +244,9 @@ public sealed class ChatController : ControllerBase
         };
     }
 
-    private static StructuredAssistantMessage? ConvertSummaryToAssistantMessage(SummarySkillResponse? response)
+    private static StructuredAssistantMessage? ConvertSummaryToAssistantMessage(
+        SummarySkillResponse? response,
+        ChatRequest request)
     {
         // Skill-specific contracts are converted back to the generic assistant message shape for chat UI reuse.
         return response is null
@@ -234,7 +255,7 @@ public sealed class ChatController : ControllerBase
                 response.Summary,
                 "high",
                 response.Sources,
-                ["Analyze risks", "Generate follow-up email", "Review resume positioning"]);
+                BuildSummarySuggestedActions(request));
     }
 
     private static StructuredAssistantMessage? ConvertRiskAnalysisToAssistantMessage(RiskAnalysisSkillResponse? response)
@@ -393,10 +414,54 @@ public sealed class ChatController : ControllerBase
             }));
     }
 
+    private void RecordSafetyAudit(
+        ChatRequest request,
+        SafetyClassification classification)
+    {
+        // Safety classifier decisions are audited separately from normal chat completion.
+        auditLogger.Record(new AuditEventRequest(
+            "safety",
+            classification.Decision,
+            "api/chat",
+            !classification.IsBlocked,
+            0,
+            new Dictionary<string, string>
+            {
+                ["documentId"] = request.DocumentId ?? string.Empty,
+                ["riskType"] = classification.RiskType,
+                ["confidence"] = classification.Confidence.ToString("0.00"),
+                ["signals"] = string.Join(",", classification.Signals)
+            }));
+    }
+
     private static string Truncate(string value, int maxLength)
     {
         return value.Length <= maxLength
             ? value
             : $"{value[..maxLength]}...";
+    }
+
+    private static IReadOnlyList<string> BuildSummarySuggestedActions(ChatRequest request)
+    {
+        // Suggested actions are generated by the application when a skill result is adapted to chat.
+        // Keep them in the user's language so clicking a suggestion feels like a user command.
+        return PrefersChinese(request)
+            ?
+            [
+                "\u5206\u6790\u98ce\u9669",
+                "\u751f\u6210\u540e\u7eed\u90ae\u4ef6",
+                "\u68c0\u67e5\u7b80\u5386\u5b9a\u4f4d"
+            ]
+            :
+            [
+                "Analyze risks",
+                "Generate follow-up email",
+                "Review resume positioning"
+            ];
+    }
+
+    private static bool PrefersChinese(ChatRequest request)
+    {
+        return request.Message.Any(character => character is >= '\u4e00' and <= '\u9fff');
     }
 }

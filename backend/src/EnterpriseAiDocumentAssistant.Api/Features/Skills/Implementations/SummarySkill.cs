@@ -51,7 +51,7 @@ public sealed class SummarySkill : ISummarySkill
             return BuildDeterministicSummary(document);
         }
 
-        var prompt = DocumentSkillPromptTemplates.BuildSummaryPrompt(document);
+        var prompt = DocumentSkillPromptTemplates.BuildSummaryPrompt(document, request.Instruction);
         var modelResponse = await aiGateway.GenerateChatResponseAsync(
             new ChatModelRequest(prompt, provider),
             cancellationToken);
