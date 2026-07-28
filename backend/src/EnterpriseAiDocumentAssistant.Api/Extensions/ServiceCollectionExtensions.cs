@@ -1,5 +1,6 @@
 using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.AiGateway;
+using EnterpriseAiDocumentAssistant.Api.Chat;
 using EnterpriseAiDocumentAssistant.Api.ConversationMemory;
 using EnterpriseAiDocumentAssistant.Api.DocumentParsing;
 using EnterpriseAiDocumentAssistant.Api.DocumentUpload;
@@ -40,6 +41,8 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<OpenAiGateway>();
         services.AddSingleton<IAiGateway, RoutingAiGateway>();
         services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
+        services.AddSingleton<IAssistantMessageAdapter, AssistantMessageAdapter>();
+        services.AddSingleton<IChatOrchestrationService, ChatOrchestrationService>();
         services.AddSingleton<IStructuredAssistantResponseValidator, StructuredAssistantResponseValidator>();
         services.AddSingleton<RuleBasedSafetyClassifier>();
         services.AddSingleton<AiSafetyClassifier>();
