@@ -127,7 +127,7 @@ export function AssistantPanel({
                     <div className="mt-3">
                       <p className="mb-1.5 text-xs text-slate-500">
                         {usesChinese(message.suggestedActions)
-                          ? '\u5efa\u8bae\u4e0b\u4e00\u6b65'
+                          ? '建议下一步'
                           : 'Suggested next steps'}
                       </p>
                       <div className="flex flex-wrap gap-2">

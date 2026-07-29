@@ -29,7 +29,7 @@ React chat
   -> classification skill
   -> resume review brief generation
   -> persistence
-  -> RAG with citations
+  -> RAG with embeddings, vector search, and citations
   -> grounded-answer guardrails
   -> document permission filtering
   -> rate limiting
@@ -53,7 +53,7 @@ V1 is organized around a small core path plus lightweight extension boundaries:
 - ASP.NET Core API: `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows`
 - Prompt and AI Layer: prompt orchestration, conversation memory, structured output, validation, safety classifier, guardrails, AI Gateway
 - Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ClassificationSkill`, `ResumeReviewSkill`
-- Document Processing first, then RAG: upload, parse text, chunk first; embeddings, vector search, and grounded answers are staged next
+- Document Processing and RAG: upload, parse text, chunk, embed, retrieve relevant chunks, and answer with citations
 - Persistence: conversation history, document metadata, workflow records, audit/tool records; MongoDB or relational storage can be selected later
 - MCP, Harness, Workflow, and Integration Extension: MCP wrapper over registered tools, prompt/tool harnesses, document summary to risk analysis to email draft workflow, Microsoft Graph adapter boundary, optional later agent handoff
 
@@ -351,6 +351,14 @@ Expected outcome:
 - Answers are grounded in retrieved document sections.
 - The UI can show sources for generated answers.
 
+Current V1 progress:
+
+- `IEmbeddingGateway` generates local deterministic embeddings for Mock and real embeddings for OpenAI/Azure OpenAI.
+- `IVectorStore` is implemented first as `InMemoryVectorStore`, with a Qdrant replacement path left behind the same interface.
+- `RagService` indexes uploaded document chunks, lazily rebuilds missing provider-specific indexes, retrieves top chunks, and returns citations from the matched chunks.
+- Normal assistant chat uses retrieved RAG context before calling the selected chat model.
+- Weak retrieval results are rejected by a configurable similarity threshold and return a controlled no-answer response.
+
 ---
 
 ## Phase 14 - Basic Security and Reliability
@@ -364,7 +372,6 @@ Scope:
 - Timeout and cancellation review
 - Input and output guardrail expansion
 - Optional dedicated safety API provider
-- No-answer behavior when retrieved context is weak
 
 Expected outcome:
 
@@ -409,7 +416,7 @@ Scope:
 Current V1 progress:
 
 - `RoutingAgentPlanner` tries AI-based intent routing first, then falls back to `SimpleAgentPlanner`.
-- `SimpleAgentPlanner` classifies chat requests into known routes such as summary, risk analysis, email draft, classification, resume review, workflow, tool lookup, or normal chat.
+- `SimpleAgentPlanner` routes explicit application actions to known skills and defaults document facts, comparisons, and calculations to RAG chat.
 - `ChatController` uses the selected route to execute the matching skill or workflow when the intent is clear.
 
 Expected outcome:

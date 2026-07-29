@@ -2,7 +2,7 @@
 
 A production-oriented React + ASP.NET Core application for connecting the core building blocks of modern AI applications: assistant UI, prompt orchestration, AI Gateway, document processing, controlled skills, Tool Gateway, MCP surface, and workflow orchestration.
 
-V1 is intentionally small: one end-to-end document assistant flow, implemented in clear steps. Retrieval, vector search, persistence, and full enterprise integrations are staged after the core assistant path is understandable.
+V1 is intentionally small: one end-to-end document assistant flow, implemented in clear steps. Retrieval now starts with an in-memory vector store so the RAG path stays understandable before a later Qdrant or Azure AI Search upgrade.
 
 ---
 
@@ -26,6 +26,9 @@ flowchart LR
         api --> tools[Tool Gateway]
         api --> workflows[Workflow API]
         gateway --> prompts[Prompt Orchestration]
+        api --> rag[RAG Retrieval]
+        rag --> embeddings[Embedding Gateway]
+        rag --> vectors[In-memory Vector Store]
         workflows --> planner[AI Planner + Fallback]
     end
 
@@ -68,7 +71,7 @@ sequenceDiagram
 | ASP.NET Core API | Backend boundary | `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows` |
 | Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, safety classifier, guardrails, AI Gateway |
 | Tool Gateway and Skills | Controlled actions | `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ResumeReviewSkill` |
-| Document Processing | Source document handling | Upload, parse, chunk, preview, document metadata |
+| Document Processing and RAG | Source-grounded answers | Upload, parse, chunk, embedding, in-memory vector search, citations |
 | Persistence | Application state | Conversation history, document metadata, workflow records, audit/tool records; MongoDB remains optional |
 | MCP / Harness / Workflow / Integration | Extension path | MCP wrapper over existing tools, prompt/tool harnesses, one workflow, Microsoft Graph adapter boundary |
 
@@ -92,6 +95,8 @@ sequenceDiagram
 - [x] AI intent routing through Agent Planner with deterministic fallback
 - [x] MongoDB document persistence for uploaded document metadata and parsed sections
 - [x] Input Guardrails with rule-based safety classification, optional AI-backed safety classification, and deterministic fallback
+- [x] RAG baseline with embedding gateway, in-memory vector store, semantic retrieval, and retrieved chunk citations
+- [x] RAG no-answer threshold with controlled insufficient-evidence responses
 
 ### Lightweight Boundaries
 
@@ -101,21 +106,15 @@ sequenceDiagram
 ### Not Built Yet
 
 - [ ] MongoDB persistence for conversation, workflow, and audit storage
-- [ ] Embeddings
-- [ ] Vector Search
-- [ ] RAG Answer with Citations
 - [ ] LLM-native function/tool calling loop
 - [ ] Real Microsoft Graph OAuth integration
-- [ ] No-answer Guardrail
 - [ ] Basic document permission filtering
 
 ### Build Next
 
 - [ ] Conversation storage with MongoDB or relational storage
-- [ ] Embeddings
-- [ ] Vector Search
-- [ ] RAG Answer with Citations
-- [ ] No-answer Guardrail
+- [ ] Citation display review
+- [ ] Optional Qdrant vector store implementation behind `IVectorStore`
 - [ ] Basic document permission filtering
 
 ### Build Lightly
@@ -133,10 +132,8 @@ sequenceDiagram
 
 ```text
 Persistence
-  -> Embeddings
-  -> Vector Search
-  -> RAG Answer with Citations
-  -> No-answer Guardrail
+  -> Citation Display Review
+  -> Optional Qdrant Vector Store
   -> Basic Document Permission Filtering
   -> Rate Limiting
   -> Observability and Cost Tracking

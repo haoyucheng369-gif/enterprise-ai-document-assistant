@@ -8,6 +8,8 @@ public sealed class AiGatewayOptions
 
     public string ChatModel { get; init; } = "mock-document-assistant";
 
+    public string EmbeddingModel { get; init; } = "text-embedding-3-small";
+
     public string ApiKey { get; init; } = string.Empty;
 
     public string Endpoint { get; init; } = "https://api.openai.com";

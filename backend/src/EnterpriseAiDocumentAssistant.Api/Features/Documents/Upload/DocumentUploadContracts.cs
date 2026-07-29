@@ -14,6 +14,8 @@ public sealed record DocumentUploadResponse(
 public sealed class DocumentUploadForm
 {
     public IFormFile? File { get; init; }
+
+    public string? AiProvider { get; init; }
 }
 
 public sealed record DocumentUploadResult(

@@ -4,6 +4,7 @@ using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Planner;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
+using EnterpriseAiDocumentAssistant.Api.Rag;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 
 namespace EnterpriseAiDocumentAssistant.Api.Chat;
@@ -16,7 +17,8 @@ public sealed class ChatOrchestrationService : IChatOrchestrationService
     private readonly IChatGuardrailEvaluator chatGuardrailEvaluator;
     private readonly IAuditLogger auditLogger;
     private readonly IAgentPlanner agentPlanner;
-    private readonly IAssistantMessageAdapter assistantMessageAdapter;
+    private readonly IPlannedCapabilityExecutor plannedCapabilityExecutor;
+    private readonly IRagService ragService;
 
     public ChatOrchestrationService(
         IDocumentAssistantPromptOrchestrator promptOrchestrator,
@@ -25,7 +27,8 @@ public sealed class ChatOrchestrationService : IChatOrchestrationService
         IChatGuardrailEvaluator chatGuardrailEvaluator,
         IAuditLogger auditLogger,
         IAgentPlanner agentPlanner,
-        IAssistantMessageAdapter assistantMessageAdapter)
+        IPlannedCapabilityExecutor plannedCapabilityExecutor,
+        IRagService ragService)
     {
         this.promptOrchestrator = promptOrchestrator;
         this.aiGateway = aiGateway;
@@ -33,14 +36,36 @@ public sealed class ChatOrchestrationService : IChatOrchestrationService
         this.chatGuardrailEvaluator = chatGuardrailEvaluator;
         this.auditLogger = auditLogger;
         this.agentPlanner = agentPlanner;
-        this.assistantMessageAdapter = assistantMessageAdapter;
+        this.plannedCapabilityExecutor = plannedCapabilityExecutor;
+        this.ragService = ragService;
     }
 
     public async Task<ChatOrchestrationResult> BuildValidatedMessageAsync(
         ChatRequest request,
         CancellationToken cancellationToken)
     {
-        // Step 1: input guardrails run before planner, skills, tools, or model execution.
+        // Main chat flow: guardrails -> explicit skill/workflow route -> default RAG answer -> output validation.
+        var guardrailResult = await TryBuildGuardrailResponseAsync(request, cancellationToken);
+        if (guardrailResult is not null)
+        {
+            return guardrailResult;
+        }
+
+        var plannedMessage = await TryBuildPlannedCapabilityMessageAsync(request, cancellationToken);
+        if (plannedMessage is not null)
+        {
+            return Validate(plannedCapabilityExecutor.AttachDocumentCitations(request, plannedMessage));
+        }
+
+        var documentAnswer = await GenerateDocumentAnswerAsync(request, cancellationToken);
+        return Validate(documentAnswer);
+    }
+
+    private async Task<ChatOrchestrationResult?> TryBuildGuardrailResponseAsync(
+        ChatRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Block unsafe input before routing, retrieval, or provider calls.
         var guardrailEvaluation = await chatGuardrailEvaluator.EvaluateAsync(request, cancellationToken);
         if (guardrailEvaluation.Classification.NeedsReview)
         {
@@ -54,34 +79,78 @@ public sealed class ChatOrchestrationService : IChatOrchestrationService
                 ?? throw new InvalidOperationException("Guardrail response was not created."));
         }
 
-        // Step 2: planner decides whether the request should use a specialized capability.
+        return null;
+    }
+
+    private async Task<StructuredAssistantMessage?> TryBuildPlannedCapabilityMessageAsync(
+        ChatRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Only explicit application actions return a skill/workflow response; normal questions return null.
         var plan = await agentPlanner.PlanAsync(
             new AgentPlanRequest(request.Message, request.DocumentId, request.AiProvider),
             cancellationToken);
 
-        // Step 3: planned skill/workflow results are normalized back to the common assistant contract.
-        var plannedMessage = await assistantMessageAdapter.TryBuildFromPlanAsync(
+        return await plannedCapabilityExecutor.ExecutePlanAsync(
             request,
             plan,
             cancellationToken);
-        if (plannedMessage is not null)
+    }
+
+    private async Task<StructuredAssistantMessage> GenerateDocumentAnswerAsync(
+        ChatRequest request,
+        CancellationToken cancellationToken)
+    {
+        // RAG returns plain-text evidence ready to become prompt context.
+        var retrieval = await ragService.RetrieveAsync(request, cancellationToken);
+
+        if (retrieval.Status == RagRetrievalStatus.InsufficientEvidence)
         {
-            return Validate(assistantMessageAdapter.AttachDocumentCitations(request, plannedMessage));
+            return BuildInsufficientEvidenceMessage(request);
         }
 
-        // Step 4: normal chat path builds a prompt and calls the selected model provider through AI Gateway.
-        var prompt = promptOrchestrator.BuildAssistantPrompt(request);
+        // Retrieved source text is inserted into the prompt; embedding vectors never reach the chat model.
+        var prompt = retrieval.HasEvidence
+            ? promptOrchestrator.BuildAssistantPrompt(request, retrieval.PromptContext)
+            : promptOrchestrator.BuildAssistantPrompt(request);
+
         var modelResponse = await aiGateway.GenerateChatResponseAsync(
             new ChatModelRequest(prompt, request.AiProvider),
             cancellationToken);
 
-        // Step 5: attach source context and validate the structured assistant response before returning to HTTP.
-        return Validate(assistantMessageAdapter.AttachDocumentCitations(request, modelResponse.Message));
+        return retrieval.HasEvidence
+            ? modelResponse.Message with { Citations = retrieval.Citations }
+            : plannedCapabilityExecutor.AttachDocumentCitations(request, modelResponse.Message);
+    }
+
+    private static StructuredAssistantMessage BuildInsufficientEvidenceMessage(ChatRequest request)
+    {
+        var prefersChinese = EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message);
+
+        return prefersChinese
+            ? new StructuredAssistantMessage(
+                "当前文档中没有检索到与这个问题足够相关的内容，因此我无法基于文档给出可靠答案。",
+                "low",
+                [],
+                [
+                    "换一种更具体的问法",
+                    "检查是否选择了正确的文档",
+                    "查看文档预览"
+                ])
+            : new StructuredAssistantMessage(
+                "The current document does not contain sufficiently relevant evidence for this question, so I cannot provide a reliable document-grounded answer.",
+                "low",
+                [],
+                [
+                    "Ask a more specific question",
+                    "Check that the correct document is selected",
+                    "Review the document preview"
+                ]);
     }
 
     private ChatOrchestrationResult Validate(StructuredAssistantMessage structuredMessage)
     {
-        // Output validation keeps controller code free from JSON contract details.
+        // Enforce the stable response contract before returning to the controller.
         var validationResult = structuredResponseValidator.Validate(structuredMessage);
 
         return validationResult.IsValid

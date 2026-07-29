@@ -231,7 +231,7 @@ Current endpoint:
 - `POST /api/documents/upload`
 - `GET /api/documents/uploads`
 
-Current implementation extracts lightweight preview text for `.txt`, `.md`, `.pdf`, and `.docx`, then returns preview chunks. Embeddings and retrieval remain separate steps.
+Current implementation extracts lightweight preview text for `.txt`, `.md`, `.pdf`, and `.docx`, stores parsed sections in MongoDB, and indexes chunks for the first RAG path.
 
 ### RAG
 
@@ -248,6 +248,18 @@ Responsibilities:
 - Grounded answer generation
 - No-answer behavior when reliable context is missing
 - Later hybrid search and semantic ranking hooks
+
+Current implementation:
+
+- `IEmbeddingGateway` converts document chunks and user questions into vectors.
+- `RoutingEmbeddingGateway` uses deterministic local vectors for Mock and real OpenAI/Azure OpenAI embedding calls when a real provider is selected.
+- `IVectorStore` keeps vector search replaceable.
+- `InMemoryVectorStore` implements first-version cosine similarity search.
+- `RagService` indexes uploaded chunks, lazily rebuilds missing provider-specific indexes, retrieves top chunks, and returns citations from the matched chunks.
+
+Later replacement path:
+
+- Replace `InMemoryVectorStore` with `QdrantVectorStore`, MongoDB Atlas Vector Search, or Azure AI Search without changing chat orchestration.
 
 ### Tool Gateway
 
@@ -326,7 +338,7 @@ Current endpoint:
 
 ### Agent Planner
 
-The planner chooses from a few known paths instead of attempting open-ended autonomous planning. The current implementation uses AI intent routing first, then falls back to deterministic rules when the model is unavailable or returns an invalid route.
+The planner chooses from a few known paths instead of attempting open-ended autonomous planning. The current implementation uses AI intent routing first, then falls back to deterministic rules when the model is unavailable or returns an invalid route. RAG chat is the default; specialized skills require an explicit complete action such as summarizing the entire document or producing a resume review.
 
 Example plans:
 

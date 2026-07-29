@@ -1,6 +1,7 @@
 using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.DocumentParsing;
 using EnterpriseAiDocumentAssistant.Api.Documents;
+using EnterpriseAiDocumentAssistant.Api.Rag;
 using EnterpriseAiDocumentAssistant.Api.Services;
 
 namespace EnterpriseAiDocumentAssistant.Api.DocumentUpload;
@@ -20,6 +21,7 @@ public sealed class DocumentUploadService : IDocumentUploadService
     private readonly IDocumentChunker documentChunker;
     private readonly IDocumentRepository documentRepository;
     private readonly IDocumentTextExtractor documentTextExtractor;
+    private readonly IRagService ragService;
     private readonly ISystemClock systemClock;
 
     public DocumentUploadService(
@@ -27,17 +29,20 @@ public sealed class DocumentUploadService : IDocumentUploadService
         IDocumentChunker documentChunker,
         IDocumentRepository documentRepository,
         IDocumentTextExtractor documentTextExtractor,
+        IRagService ragService,
         ISystemClock systemClock)
     {
         this.auditLogger = auditLogger;
         this.documentChunker = documentChunker;
         this.documentRepository = documentRepository;
         this.documentTextExtractor = documentTextExtractor;
+        this.ragService = ragService;
         this.systemClock = systemClock;
     }
 
     public async Task<DocumentUploadResult> UploadAsync(
         IFormFile? file,
+        string? aiProvider,
         CancellationToken cancellationToken)
     {
         // Step 1: validate the HTTP file before parsing or storing anything.
@@ -76,7 +81,10 @@ public sealed class DocumentUploadService : IDocumentUploadService
         // Step 3: persist the parsed document so workspace and skills can read it after API restart.
         await documentRepository.SaveAsync(document, cancellationToken);
 
-        // Step 4: record an audit event for observability; this is separate from document persistence.
+        // Step 4: build a best-effort vector index. MongoDB remains the source of truth if indexing fails.
+        await TryIndexDocumentForRagAsync(document, aiProvider, cancellationToken);
+
+        // Step 5: record an audit event for observability; this is separate from document persistence.
         auditLogger.Record(new AuditEventRequest(
             "document",
             "document_uploaded",
@@ -101,8 +109,9 @@ public sealed class DocumentUploadService : IDocumentUploadService
 
     public async Task<bool> DeleteAsync(string documentId, CancellationToken cancellationToken)
     {
-        // Delete currently removes parsed metadata/chunks from MongoDB; raw file and vector cleanup can attach here later.
+        // Delete removes parsed metadata/chunks from MongoDB and clears provider-specific in-memory vectors.
         var deleted = await documentRepository.DeleteAsync(documentId, cancellationToken);
+        await ragService.DeleteDocumentAsync(documentId, cancellationToken);
 
         auditLogger.Record(new AuditEventRequest(
             "document",
@@ -121,5 +130,37 @@ public sealed class DocumentUploadService : IDocumentUploadService
     private static DocumentUploadResult Failed(string error)
     {
         return new DocumentUploadResult(false, null, error);
+    }
+
+    private async Task TryIndexDocumentForRagAsync(
+        DocumentUploadResponse document,
+        string? aiProvider,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Upload Index Step: vector index is derived state, so failure should not reject the saved document.
+            await ragService.IndexDocumentAsync(document, aiProvider, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            // If this fails, RAG retrieval can rebuild vectors lazily from MongoDB document sections later.
+            auditLogger.Record(new AuditEventRequest(
+                "rag",
+                "document_index_failed",
+                "api/documents/upload",
+                false,
+                0,
+                new Dictionary<string, string>
+                {
+                    ["documentId"] = document.Id,
+                    ["aiProvider"] = aiProvider ?? string.Empty,
+                    ["errorType"] = exception.GetType().Name
+                }));
+        }
     }
 }

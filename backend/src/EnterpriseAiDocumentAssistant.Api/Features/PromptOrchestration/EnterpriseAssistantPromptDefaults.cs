@@ -36,4 +36,10 @@ public static class EnterpriseAssistantPromptDefaults
             .SelectMany(rules => rules)
             .ToArray();
     }
+
+    public static bool PrefersChinese(string value)
+    {
+        // Keep response-language decisions consistent across chat, skills, and fallback messages.
+        return value.Any(character => character is >= '\u4e00' and <= '\u9fff');
+    }
 }

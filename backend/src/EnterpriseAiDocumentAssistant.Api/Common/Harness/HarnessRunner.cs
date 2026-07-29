@@ -16,6 +16,8 @@ namespace EnterpriseAiDocumentAssistant.Api.Harness;
 
 public sealed class HarnessRunner : IHarnessRunner
 {
+    private const string HarnessDocumentTitle = "harness-contract";
+
     private readonly IDocumentAssistantPromptOrchestrator promptOrchestrator;
     private readonly IStructuredAssistantResponseValidator structuredOutputValidator;
     private readonly ISafetyClassifier safetyClassifier;
@@ -95,6 +97,8 @@ public sealed class HarnessRunner : IHarnessRunner
         checks.Add(CheckDocumentReviewWorkflowSucceeds(documentId));
         checks.Add(CheckMicrosoftGraphEmailDraftSucceeds(documentId));
         checks.Add(CheckAgentPlannerSelectsRiskAnalysis(documentId));
+        checks.Add(CheckAgentPlannerDefaultsFactQuestionToRag(documentId));
+        checks.Add(CheckAgentPlannerSelectsExplicitSummary(documentId));
         checks.Add(await CheckDocumentMetadataToolSucceedsAsync(documentId, cancellationToken));
         checks.Add(await CheckUnknownToolFailsAsync(cancellationToken));
         checks.Add(CheckAuditLoggerCapturesEvents());
@@ -112,7 +116,10 @@ public sealed class HarnessRunner : IHarnessRunner
     private async Task<string> EnsureHarnessDocumentIdAsync(CancellationToken cancellationToken)
     {
         // Harness should use the same persisted document path as the app instead of relying on seed data.
-        var existingDocument = documentUploadService.ListRecent().FirstOrDefault();
+        var existingDocument = documentUploadService
+            .ListRecent()
+            .FirstOrDefault(document =>
+                string.Equals(document.Title, HarnessDocumentTitle, StringComparison.OrdinalIgnoreCase));
         if (existingDocument is not null)
         {
             return existingDocument.Id;
@@ -121,7 +128,7 @@ public sealed class HarnessRunner : IHarnessRunner
         await using var stream = new MemoryStream(
             "Harness contract for renewal terms, liability cap, service credits, and follow-up review."u8.ToArray());
         var file = new FormFile(stream, 0, stream.Length, "file", "harness-contract.txt");
-        var upload = await documentUploadService.UploadAsync(file, cancellationToken);
+        var upload = await documentUploadService.UploadAsync(file, "Mock", cancellationToken);
 
         return upload.Document?.Id ?? string.Empty;
     }
@@ -357,8 +364,9 @@ public sealed class HarnessRunner : IHarnessRunner
 
     private HarnessCheckResult CheckAgentPlannerSelectsRiskAnalysis(string documentId)
     {
+        // Explicit whole-document risk analysis selects the focused skill instead of default RAG chat.
         var plan = agentPlanner.Plan(new AgentPlanRequest(
-            "Analyze liability risk in this document.",
+            "Analyze the risks in this document.",
             documentId));
 
         var passed = plan.Intent == "risk_analysis"
@@ -371,17 +379,55 @@ public sealed class HarnessRunner : IHarnessRunner
             passed ? "Planner selected the expected skill route." : "Planner selected an unexpected route.");
     }
 
+    private HarnessCheckResult CheckAgentPlannerDefaultsFactQuestionToRag(string documentId)
+    {
+        // Focused questions about document facts must reach the normal chat route and RAG retrieval.
+        var plan = agentPlanner.Plan(new AgentPlanRequest(
+            "Across the two positions, how many years did the candidate work?",
+            documentId));
+
+        var passed = plan.Intent == "document_question"
+            && plan.Route == "chat";
+
+        return Result(
+            "agent planner defaults document fact questions to RAG",
+            passed,
+            passed ? "Planner selected the default RAG chat route." : "Planner incorrectly selected a specialized route.");
+    }
+
+    private HarnessCheckResult CheckAgentPlannerSelectsExplicitSummary(string documentId)
+    {
+        // Explicit whole-document operations still select their focused skill.
+        var plan = agentPlanner.Plan(new AgentPlanRequest(
+            "Summarize the entire document.",
+            documentId));
+
+        var passed = plan.Intent == "summary"
+            && plan.Route == "skills.summary";
+
+        return Result(
+            "agent planner selects summary only for an explicit full summary",
+            passed,
+            passed ? "Planner selected SummarySkill for the complete summary request." : "Planner did not select SummarySkill.");
+    }
+
     private async Task<HarnessCheckResult> CheckDocumentUploadAcceptsSupportedFileAsync(CancellationToken cancellationToken)
     {
         await using var stream = new MemoryStream("sample content"u8.ToArray());
         var file = new FormFile(stream, 0, stream.Length, "file", "sample-contract.txt");
-        var result = await documentUploadService.UploadAsync(file, cancellationToken);
+        var result = await documentUploadService.UploadAsync(file, "Mock", cancellationToken);
 
         var passed = result.Succeeded
             && result.Document is not null
             && result.Document.Status == "Parsed"
             && result.Document.Type == "TXT"
             && result.Document.Sections.Count > 0;
+
+        // Keep repeated harness runs isolated from normal workspace data and later harness checks.
+        if (result.Document is not null)
+        {
+            await documentUploadService.DeleteAsync(result.Document.Id, cancellationToken);
+        }
 
         return Result(
             "document upload accepts supported file",

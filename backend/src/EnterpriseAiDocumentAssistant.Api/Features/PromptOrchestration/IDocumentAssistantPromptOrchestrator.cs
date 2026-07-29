@@ -4,5 +4,7 @@ namespace EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 
 public interface IDocumentAssistantPromptOrchestrator
 {
-    OrchestratedPrompt BuildAssistantPrompt(ChatRequest request);
+    OrchestratedPrompt BuildAssistantPrompt(
+        ChatRequest request,
+        string? retrievedContext = null);
 }

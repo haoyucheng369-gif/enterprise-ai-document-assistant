@@ -111,7 +111,8 @@ function App() {
     setUploadState('uploading')
 
     try {
-      const uploadedDocument = await uploadDocument(file)
+      // Upload follows the same global provider as chat, skills, workflow, and RAG retrieval.
+      const uploadedDocument = await uploadDocument(file, aiProvider)
       const documentItem: DocumentItem = {
         id: uploadedDocument.id,
         title: uploadedDocument.title,

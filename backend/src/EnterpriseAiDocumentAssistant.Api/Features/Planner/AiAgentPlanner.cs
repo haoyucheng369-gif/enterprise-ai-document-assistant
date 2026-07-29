@@ -38,7 +38,10 @@ public sealed class AiAgentPlanner
     {
         // The model sees the user's message plus the allowed backend routes, but it does not execute anything.
         var routes = string.Join(Environment.NewLine, AgentPlanCatalog.Routes.Select(route => $"- {route}"));
-        const string exampleAnswer = """{"intent":"summary","route":"skills.summary","reason":"The user asks for a document summary."}""";
+        const string factQuestionExample =
+            """{"intent":"document_question","route":"chat","reason":"The user asks for a fact that should be retrieved from the selected document."}""";
+        const string summaryExample =
+            """{"intent":"summary","route":"skills.summary","reason":"The user explicitly asks for a summary of the entire document."}""";
         var variables = new[]
         {
             new PromptVariable("user_message", request.Message),
@@ -61,9 +64,24 @@ public sealed class AiAgentPlanner
             Allowed routes:
             {routes}
 
+            Routing policy:
+            - chat is the default route for document questions and must use RAG.
+            - Use chat for facts, dates, durations, comparisons, calculations, explanations, and questions about one part of a document.
+            - Merely mentioning a resume, CV, risk, email, category, or summary does not justify a specialized route.
+            - Select a skill only when the user explicitly asks the application to perform that complete specialized action.
+            - skills.summary means summarizing the entire document, not answering a focused question.
+            - skills.resume-review means producing a complete resume assessment, not answering a fact about a candidate.
+            - Use workflows.document-review only when the user explicitly requests the complete multi-step workflow.
+            - When uncertain between chat and a skill, choose chat.
+
             Return the chosen route as compact JSON in the answer field only.
-            Example answer:
-            {exampleAnswer}
+            Fact-question example:
+            User: Across the two positions, how many years did the candidate work?
+            Answer: {factQuestionExample}
+
+            Full-summary example:
+            User: Summarize the entire selected document.
+            Answer: {summaryExample}
             """,
             EnterpriseAssistantPromptDefaults.CombineOutputRules(
                 EnterpriseAssistantPromptDefaults.OutputRules,
@@ -71,7 +89,7 @@ public sealed class AiAgentPlanner
                     "The answer field must contain compact JSON only.",
                     "The JSON must include intent, route, and reason.",
                     "The route must be one of the allowed routes.",
-                    "Use chat when no specialized route is clearly required."
+                    "Use chat unless the user clearly requests a complete specialized action."
                 ]),
             variables);
     }

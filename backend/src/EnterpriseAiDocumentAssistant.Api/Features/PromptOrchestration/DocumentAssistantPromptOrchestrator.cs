@@ -20,15 +20,15 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
         this.applicationDocumentProvider = applicationDocumentProvider;
     }
 
-    public OrchestratedPrompt BuildAssistantPrompt(ChatRequest request)
+    public OrchestratedPrompt BuildAssistantPrompt(
+        ChatRequest request,
+        string? retrievedContext = null)
     {
-        // This is the main prompt orchestration entry for normal assistant chat.
-        // It gathers input, memory, and document context before the AI Gateway sees anything.
+        // Compose the final model prompt from the question, memory, and RAG evidence when available.
         var userQuestion = request.Message.Trim();
         var memory = conversationMemoryBuilder.Build(request.History);
-        var documentContext = BuildDocumentContext(request.DocumentId);
+        var documentContext = retrievedContext ?? BuildFallbackDocumentContext(request.DocumentId);
 
-        // Prompt orchestration combines the current question, selected document content, and recent turns.
         var variables = DocumentAssistantPrompt.BuildVariables(
             userQuestion,
             documentContext,
@@ -43,9 +43,9 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
             variables);
     }
 
-    private string BuildDocumentContext(string? documentId)
+    private string BuildFallbackDocumentContext(string? documentId)
     {
-        // Document context is intentionally plain text here; RAG will later replace this with retrieved chunks.
+        // This limited context is used only when no RAG evidence is available.
         if (string.IsNullOrWhiteSpace(documentId))
         {
             return "No document is selected.";
@@ -62,7 +62,6 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
             .Select(section =>
                 $"{section.Label} - {section.Title}: {Truncate(section.Body, MaxSectionLength)}");
 
-        // Limit the amount of document content that goes into the prompt to control token usage.
         return $"""
             Selected document id: {document.Id}
             Title: {document.Title}
@@ -77,7 +76,6 @@ public sealed class DocumentAssistantPromptOrchestrator : IDocumentAssistantProm
         string template,
         IReadOnlyList<PromptVariable> variables)
     {
-        // Prompt variables are rendered just before the gateway call so templates stay reusable.
         var renderedTemplate = template;
 
         foreach (var variable in variables)

@@ -273,7 +273,7 @@ public static class DocumentSkillPromptTemplates
     private static string DetectTargetLanguage(string instruction)
     {
         // The skill prompt needs an explicit language label because document text may use a different language.
-        return instruction.Any(character => character is >= '\u4e00' and <= '\u9fff')
+        return EnterpriseAssistantPromptDefaults.PrefersChinese(instruction)
             ? "Simplified Chinese"
             : "English";
     }

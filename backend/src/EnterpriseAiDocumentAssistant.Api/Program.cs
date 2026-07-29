@@ -17,6 +17,8 @@ builder.Services.Configure<FrontendOptions>(
     builder.Configuration.GetSection(FrontendOptions.SectionName));
 builder.Services.Configure<AiGatewayOptions>(
     builder.Configuration.GetSection(AiGatewayOptions.SectionName));
+builder.Services.Configure<RagOptions>(
+    builder.Configuration.GetSection(RagOptions.SectionName));
 builder.Services.Configure<MongoDbOptions>(
     builder.Configuration.GetSection(MongoDbOptions.SectionName));
 

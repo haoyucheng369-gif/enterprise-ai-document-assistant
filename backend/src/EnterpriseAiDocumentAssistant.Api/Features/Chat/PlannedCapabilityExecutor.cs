@@ -1,12 +1,15 @@
+using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Planner;
+using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Services;
 using EnterpriseAiDocumentAssistant.Api.Skills;
+using EnterpriseAiDocumentAssistant.Api.ToolGateway;
 using EnterpriseAiDocumentAssistant.Api.Workflows;
 
 namespace EnterpriseAiDocumentAssistant.Api.Chat;
 
-public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
+public sealed class PlannedCapabilityExecutor : IPlannedCapabilityExecutor
 {
     private readonly IApplicationDocumentProvider applicationDocumentProvider;
     private readonly ISummarySkill summarySkill;
@@ -14,15 +17,17 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
     private readonly IEmailDraftSkill emailDraftSkill;
     private readonly IClassificationSkill classificationSkill;
     private readonly IResumeReviewSkill resumeReviewSkill;
+    private readonly IToolExecutor toolExecutor;
     private readonly IDocumentReviewWorkflow documentReviewWorkflow;
 
-    public AssistantMessageAdapter(
+    public PlannedCapabilityExecutor(
         IApplicationDocumentProvider applicationDocumentProvider,
         ISummarySkill summarySkill,
         IRiskAnalysisSkill riskAnalysisSkill,
         IEmailDraftSkill emailDraftSkill,
         IClassificationSkill classificationSkill,
         IResumeReviewSkill resumeReviewSkill,
+        IToolExecutor toolExecutor,
         IDocumentReviewWorkflow documentReviewWorkflow)
     {
         this.applicationDocumentProvider = applicationDocumentProvider;
@@ -31,15 +36,16 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
         this.emailDraftSkill = emailDraftSkill;
         this.classificationSkill = classificationSkill;
         this.resumeReviewSkill = resumeReviewSkill;
+        this.toolExecutor = toolExecutor;
         this.documentReviewWorkflow = documentReviewWorkflow;
     }
 
-    public async Task<StructuredAssistantMessage?> TryBuildFromPlanAsync(
+    public async Task<StructuredAssistantMessage?> ExecutePlanAsync(
         ChatRequest request,
         AgentPlanResponse plan,
         CancellationToken cancellationToken)
     {
-        // Planner routes become executable application capabilities here; chat orchestration stays route-agnostic.
+        // Execute the capability selected by Planner, then adapt its typed result to one chat response.
         return plan.Route switch
         {
             "skills.summary" => ConvertSummaryToAssistantMessage(await summarySkill.RunAsync(
@@ -57,6 +63,7 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
             "skills.resume-review" => ConvertResumeReviewToAssistantMessage(await resumeReviewSkill.RunAsync(
                 new ResumeReviewSkillRequest(plan.DocumentId, request.Message, request.AiProvider),
                 cancellationToken)),
+            "tools.execute" => await ExecuteToolPlanAsync(request, plan, cancellationToken),
             "workflows.document-review" => ConvertWorkflowToAssistantMessage(await documentReviewWorkflow.RunAsync(
                 new DocumentReviewWorkflowRequest(plan.DocumentId, "Prepare a concise follow-up email draft.", request.AiProvider),
                 cancellationToken), request),
@@ -64,11 +71,43 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
         };
     }
 
+    private async Task<StructuredAssistantMessage> ExecuteToolPlanAsync(
+        ChatRequest request,
+        AgentPlanResponse plan,
+        CancellationToken cancellationToken)
+    {
+        // Planner selects the tool capability; Tool Gateway still owns lookup, execution, errors, and audit.
+        var checksHealth = request.Message.Contains("health", StringComparison.OrdinalIgnoreCase)
+            || request.Message.Contains("健康", StringComparison.Ordinal);
+        var toolName = checksHealth ? "get_health_status" : "get_document_metadata";
+        var arguments = new Dictionary<string, JsonElement>();
+
+        if (!checksHealth)
+        {
+            arguments["documentId"] = JsonSerializer.SerializeToElement(plan.DocumentId);
+        }
+
+        var result = await toolExecutor.ExecuteAsync(
+            new ToolExecutionRequest(toolName, arguments),
+            cancellationToken);
+        var answer = result.Succeeded
+            ? string.Join(Environment.NewLine, result.Data.Select(item => $"{item.Key}: {item.Value}"))
+            : result.Error ?? "Tool execution failed.";
+
+        return new StructuredAssistantMessage(
+            answer,
+            result.Succeeded ? "high" : "low",
+            [],
+            EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message)
+                ? ["继续询问文档内容"]
+                : ["Ask another document question"]);
+    }
+
     public StructuredAssistantMessage AttachDocumentCitations(
         ChatRequest request,
         StructuredAssistantMessage message)
     {
-        // V1 citations come from parsed sections; the later RAG step can replace this with retrieved chunks.
+        // Non-RAG capability responses use parsed sections as citations; RAG supplies retrieved citations directly.
         if (string.IsNullOrWhiteSpace(request.DocumentId))
         {
             return message;
@@ -175,15 +214,15 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
             ? BuildNoRisksMessage(request)
             : string.Join("; ", response.RiskAnalysis.Risks.Select(risk => $"{risk.Title} ({risk.Severity})"));
 
-        var answer = PrefersChinese(request)
+        var answer = EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message)
             ? $"""
-              \u6d41\u7a0b\u5df2\u5b8c\u6210\u3002
+              流程已完成。
 
-              \u6458\u8981\uff1a{response.Summary.Summary}
+              摘要：{response.Summary.Summary}
 
-              \u98ce\u9669\uff1a{risks}
+              风险：{risks}
 
-              \u90ae\u4ef6\u8349\u7a3f\uff1a{response.EmailDraft.Subject}
+              邮件草稿：{response.EmailDraft.Subject}
               {response.EmailDraft.Body}
               """
             : $"""
@@ -210,12 +249,12 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
 
     private static IReadOnlyList<string> BuildSummarySuggestedActions(ChatRequest request)
     {
-        return PrefersChinese(request)
+        return EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message)
             ?
             [
-                "\u5206\u6790\u98ce\u9669",
-                "\u751f\u6210\u540e\u7eed\u90ae\u4ef6",
-                "\u68c0\u67e5\u7b80\u5386\u5b9a\u4f4d"
+                "分析风险",
+                "生成后续邮件",
+                "检查简历定位"
             ]
             :
             [
@@ -227,12 +266,12 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
 
     private static IReadOnlyList<string> BuildRiskSuggestedActions(ChatRequest request)
     {
-        return PrefersChinese(request)
+        return EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message)
             ?
             [
-                "\u603b\u7ed3\u5173\u952e\u70b9",
-                "\u751f\u6210\u540e\u7eed\u90ae\u4ef6",
-                "\u6267\u884c\u5b8c\u6574\u6d41\u7a0b"
+                "总结关键点",
+                "生成后续邮件",
+                "执行完整流程"
             ]
             :
             [
@@ -244,12 +283,12 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
 
     private static IReadOnlyList<string> BuildClassificationSuggestedActions(ChatRequest request)
     {
-        return PrefersChinese(request)
+        return EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message)
             ?
             [
-                "\u603b\u7ed3\u8fd9\u4efd\u6587\u6863",
-                "\u5206\u6790\u98ce\u9669",
-                "\u751f\u6210\u7b80\u5386\u8bc4\u4f30"
+                "总结这份文档",
+                "分析风险",
+                "生成简历评估"
             ]
             :
             [
@@ -261,12 +300,12 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
 
     private static IReadOnlyList<string> BuildWorkflowSuggestedActions(ChatRequest request)
     {
-        return PrefersChinese(request)
+        return EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message)
             ?
             [
-                "\u67e5\u770b\u5f15\u7528\u6765\u6e90",
-                "\u4f18\u5316\u90ae\u4ef6\u8349\u7a3f",
-                "\u7ee7\u7eed\u8ffd\u95ee"
+                "查看引用来源",
+                "优化邮件草稿",
+                "继续追问"
             ]
             :
             [
@@ -278,29 +317,24 @@ public sealed class AssistantMessageAdapter : IAssistantMessageAdapter
 
     private static string BuildNoRisksMessage(ChatRequest request)
     {
-        return PrefersChinese(request)
-            ? "\u4ece\u5f53\u524d\u6587\u6863\u4e0a\u4e0b\u6587\u4e2d\u6ca1\u6709\u8bc6\u522b\u51fa\u660e\u663e\u98ce\u9669\u9879\u3002"
+        return EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message)
+            ? "从当前文档上下文中没有识别出明显风险项。"
             : "No major risk items were identified from the selected document.";
     }
 
     private static string FormatSeverity(string severity, ChatRequest request)
     {
-        if (!PrefersChinese(request))
+        if (!EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message))
         {
             return severity;
         }
 
         return severity.ToLowerInvariant() switch
         {
-            "high" => "\u9ad8",
-            "low" => "\u4f4e",
-            _ => "\u4e2d"
+            "high" => "高",
+            "low" => "低",
+            _ => "中"
         };
-    }
-
-    private static bool PrefersChinese(ChatRequest request)
-    {
-        return request.Message.Any(character => character is >= '\u4e00' and <= '\u9fff');
     }
 
     private static string Truncate(string value, int maxLength)

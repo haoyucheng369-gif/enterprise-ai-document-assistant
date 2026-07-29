@@ -19,7 +19,7 @@ public static class DocumentAssistantPrompt
             [
                 "Answer the user question directly.",
                 "Mention when document context is missing or limited.",
-                "Prepare the response so citations can be attached in a later RAG step.",
+                "Ground the answer in the supplied document or retrieved context.",
                 "Suggested actions must be short user-facing commands, not assistant-perspective statements.",
                 "Suggested actions must be written as direct user commands, not assistant-offer phrases.",
                 "Good suggested action examples: 'Summarize key points', 'Extract the skill list', 'Review risk items'."

@@ -73,8 +73,8 @@ internal static class AgentPlanCatalog
                 "document_question",
                 "chat",
                 normalizedDocumentId,
-                ["Build prompt", "Use conversation memory", "Prepare answer path for later RAG"],
-                ["PromptOrchestration", "ConversationMemory"])
+                ["Retrieve relevant chunks", "Build prompt with conversation memory", "Generate grounded answer"],
+                ["RAG", "PromptOrchestration", "ConversationMemory"])
         };
     }
 }

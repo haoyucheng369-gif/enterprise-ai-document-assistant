@@ -23,7 +23,8 @@ public sealed class DocumentsController : ControllerBase
         CancellationToken cancellationToken)
     {
         // HTTP upload endpoint delegates validation, parsing, chunking, persistence, and audit to the upload service.
-        var result = await documentUploadService.UploadAsync(form.File, cancellationToken);
+        // Upload uses the same provider selected by the workspace so parsing and RAG indexing follow one global mode.
+        var result = await documentUploadService.UploadAsync(form.File, form.AiProvider, cancellationToken);
         if (!result.Succeeded || result.Document is null)
         {
             ModelState.AddModelError(nameof(form.File), result.Error ?? "Upload failed.");

@@ -4,6 +4,7 @@ public sealed class SimpleDocumentChunker : IDocumentChunker
 {
     private const int MaxPreviewChunks = 6;
     private const int MaxChunkLength = 900;
+    private const int MaxGeneratedTitleLength = 72;
 
     public IReadOnlyList<DocumentPreviewSection> BuildPreviewSections(
         string text,
@@ -28,14 +29,17 @@ public sealed class SimpleDocumentChunker : IDocumentChunker
         var normalizedText = NormalizeWhitespace(text);
         var chunks = new List<DocumentPreviewSection>();
 
-        // Preview chunks are intentionally limited; full RAG indexing will own larger chunking later.
+        // These sections back preview, persistence, skills, and the current RAG index.
         for (var index = 0; index < normalizedText.Length && chunks.Count < MaxPreviewChunks; index += MaxChunkLength)
         {
             var length = Math.Min(MaxChunkLength, normalizedText.Length - index);
+            var chunkBody = normalizedText.Substring(index, length).Trim();
+
+            // Generate a readable title so preview entries and citations can identify the chunk.
             chunks.Add(new DocumentPreviewSection(
                 $"Chunk {chunks.Count + 1}",
-                "Extracted text",
-                normalizedText.Substring(index, length).Trim()));
+                BuildChunkTitle(chunkBody),
+                chunkBody));
         }
 
         return chunks;
@@ -52,5 +56,22 @@ public sealed class SimpleDocumentChunker : IDocumentChunker
                 .Select(block => string.Join(" ", block.Split(
                     [' ', '\t', '\r', '\n'],
                     StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))));
+    }
+
+    private static string BuildChunkTitle(string chunkBody)
+    {
+        // Use the first sentence-like fragment instead of a fixed "Extracted text" label.
+        var titleSource = chunkBody
+            .Split(['.', '!', '?', '\r', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(titleSource))
+        {
+            return "Extracted content";
+        }
+
+        return titleSource.Length <= MaxGeneratedTitleLength
+            ? titleSource
+            : $"{titleSource[..MaxGeneratedTitleLength].TrimEnd()}...";
     }
 }

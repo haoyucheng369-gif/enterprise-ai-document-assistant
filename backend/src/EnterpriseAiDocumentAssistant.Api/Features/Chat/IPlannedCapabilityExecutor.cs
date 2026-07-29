@@ -3,9 +3,9 @@ using EnterpriseAiDocumentAssistant.Api.Planner;
 
 namespace EnterpriseAiDocumentAssistant.Api.Chat;
 
-public interface IAssistantMessageAdapter
+public interface IPlannedCapabilityExecutor
 {
-    Task<StructuredAssistantMessage?> TryBuildFromPlanAsync(
+    Task<StructuredAssistantMessage?> ExecutePlanAsync(
         ChatRequest request,
         AgentPlanResponse plan,
         CancellationToken cancellationToken);
