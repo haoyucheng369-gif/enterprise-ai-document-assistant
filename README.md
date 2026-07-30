@@ -2,7 +2,7 @@
 
 A production-oriented React + ASP.NET Core application for connecting the core building blocks of modern AI applications: assistant UI, prompt orchestration, AI Gateway, document processing, controlled skills, Tool Gateway, MCP surface, and workflow orchestration.
 
-V1 is intentionally small: one end-to-end document assistant flow, implemented in clear steps. Retrieval now starts with an in-memory vector store so the RAG path stays understandable before a later Qdrant or Azure AI Search upgrade.
+V1 is intentionally small: one end-to-end document assistant flow, implemented in clear steps. Retrieval supports both an in-memory vector store and persistent Qdrant behind the same application interface.
 
 ---
 
@@ -28,7 +28,7 @@ flowchart LR
         gateway --> prompts[Prompt Orchestration]
         api --> rag[RAG Retrieval]
         rag --> embeddings[Embedding Gateway]
-        rag --> vectors[In-memory Vector Store]
+        rag --> vectors[Qdrant / In-memory Vector Store]
         workflows --> planner[AI Planner + Fallback]
     end
 
@@ -71,8 +71,8 @@ sequenceDiagram
 | ASP.NET Core API | Backend boundary | `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows` |
 | Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, safety classifier, guardrails, AI Gateway |
 | Tool Gateway and Skills | Controlled actions | `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ResumeReviewSkill` |
-| Document Processing and RAG | Source-grounded answers | Upload, parse, chunk, embedding, in-memory vector search, citations |
-| Persistence | Application state | Conversation history, document metadata, workflow records, audit/tool records; MongoDB remains optional |
+| Document Processing and RAG | Source-grounded answers | Upload, parse, chunk, embedding, Qdrant vector search, citations |
+| Persistence | Application state | MongoDB document records and Qdrant vector indexes |
 | MCP / Harness / Workflow / Integration | Extension path | MCP wrapper over existing tools, prompt/tool harnesses, one workflow, Microsoft Graph adapter boundary |
 
 ---
@@ -95,8 +95,9 @@ sequenceDiagram
 - [x] AI intent routing through Agent Planner with deterministic fallback
 - [x] MongoDB document persistence for uploaded document metadata and parsed sections
 - [x] Input Guardrails with rule-based safety classification, optional AI-backed safety classification, and deterministic fallback
-- [x] RAG baseline with embedding gateway, in-memory vector store, semantic retrieval, and retrieved chunk citations
+- [x] RAG baseline with embedding gateway, configurable in-memory/Qdrant vector store, semantic retrieval, and retrieved chunk citations
 - [x] RAG no-answer threshold with controlled insufficient-evidence responses
+- [x] Qdrant vector persistence behind `IVectorStore`, with provider-specific collections
 
 ### Lightweight Boundaries
 
@@ -114,7 +115,6 @@ sequenceDiagram
 
 - [ ] Conversation storage with MongoDB or relational storage
 - [ ] Citation display review
-- [ ] Optional Qdrant vector store implementation behind `IVectorStore`
 - [ ] Basic document permission filtering
 
 ### Build Lightly
@@ -133,7 +133,6 @@ sequenceDiagram
 ```text
 Persistence
   -> Citation Display Review
-  -> Optional Qdrant Vector Store
   -> Basic Document Permission Filtering
   -> Rate Limiting
   -> Observability and Cost Tracking
@@ -162,7 +161,7 @@ Persistence
 | Backend | ASP.NET Core Web API |
 | AI | OpenAI / Azure OpenAI, Semantic Kernel or Microsoft.Extensions.AI friendly design |
 | Retrieval | Embeddings, vector store, source citations |
-| Persistence | In-memory first, MongoDB or relational storage later |
+| Persistence | MongoDB document records, Qdrant vectors, in-memory development alternatives |
 | Integration | Microsoft Graph, REST APIs, MCP |
 
 ---
@@ -190,10 +189,10 @@ backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
 
 Edit that local file with your provider, model, and API key. The local file is ignored by Git.
 
-Local MongoDB can be started from the repository root:
+Local MongoDB and Qdrant can be started from the repository root:
 
 ```bash
-docker compose up -d mongodb
+docker compose up -d mongodb qdrant
 docker compose ps
 ```
 
@@ -203,7 +202,13 @@ MongoDB Compass connection string:
 mongodb://localhost:27017
 ```
 
-The database uses a Docker named volume, so data survives container restarts. Use `docker compose down -v` only when you intentionally want to remove the local database volume.
+Qdrant dashboard:
+
+```text
+http://localhost:6333/dashboard
+```
+
+Both databases use Docker named volumes, so data survives container restarts. Use `docker compose down -v` only when you intentionally want to remove the local data.
 
 ---
 

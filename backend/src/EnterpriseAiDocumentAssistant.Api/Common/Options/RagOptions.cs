@@ -4,6 +4,9 @@ public sealed class RagOptions
 {
     public const string SectionName = "Rag";
 
+    // Selects the IVectorStore implementation without changing RAG business code.
+    public string VectorStore { get; init; } = "InMemory";
+
     public int TopK { get; init; } = 4;
 
     // Results below this score are not trusted as evidence for a grounded answer.

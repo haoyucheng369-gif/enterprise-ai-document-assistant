@@ -1,6 +1,7 @@
 using EnterpriseAiDocumentAssistant.Api.Options;
 using EnterpriseAiDocumentAssistant.Api.Extensions;
 using EnterpriseAiDocumentAssistant.Api.Swagger;
+using Grpc.Core;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +20,8 @@ builder.Services.Configure<AiGatewayOptions>(
     builder.Configuration.GetSection(AiGatewayOptions.SectionName));
 builder.Services.Configure<RagOptions>(
     builder.Configuration.GetSection(RagOptions.SectionName));
+builder.Services.Configure<QdrantOptions>(
+    builder.Configuration.GetSection(QdrantOptions.SectionName));
 builder.Services.Configure<MongoDbOptions>(
     builder.Configuration.GetSection(MongoDbOptions.SectionName));
 
@@ -62,26 +65,25 @@ app.UseExceptionHandler(errorApp =>
     errorApp.Run(async context =>
     {
         var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
-        var logger = context.RequestServices
-            .GetRequiredService<ILoggerFactory>()
-            .CreateLogger("GlobalExceptionHandler");
 
-        if (exceptionFeature?.Error is not null)
+        // Map known infrastructure failures while keeping unexpected implementation details private.
+        var (status, title, detail) = exceptionFeature?.Error switch
         {
-            logger.LogError(
-                exceptionFeature.Error,
-                "Unhandled exception while processing {Method} {Path}",
-                context.Request.Method,
-                context.Request.Path);
-        }
+            RpcException { StatusCode: Grpc.Core.StatusCode.Unavailable } =>
+                (StatusCodes.Status503ServiceUnavailable, "DependencyUnavailable", "A required service is unavailable."),
+            RpcException { StatusCode: Grpc.Core.StatusCode.DeadlineExceeded } =>
+                (StatusCodes.Status504GatewayTimeout, "DependencyTimeout", "A required service timed out."),
+            _ =>
+                (StatusCodes.Status500InternalServerError, "UnexpectedError", "An unexpected error occurred.")
+        };
 
-        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.StatusCode = status;
 
         await context.Response.WriteAsJsonAsync(new ProblemDetails
         {
-            Status = StatusCodes.Status500InternalServerError,
-            Title = "UnexpectedError",
-            Detail = "An unexpected error occurred."
+            Status = status,
+            Title = title,
+            Detail = detail
         });
     });
 });

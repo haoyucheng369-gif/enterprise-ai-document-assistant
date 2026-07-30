@@ -126,7 +126,7 @@ public sealed class RagService : IRagService
             return;
         }
 
-        // Rebuild derived vectors lazily from MongoDB when the in-memory index is empty.
+        // Rebuild derived vectors lazily from MongoDB when the selected vector store has no index.
         await IndexDocumentAsync(document, provider, cancellationToken);
     }
 
@@ -186,7 +186,7 @@ public sealed class RagService : IRagService
             Selected document id: {document.Id}
             Title: {document.Title}
             Type: {document.Type}
-            Retrieval mode: in-memory vector search
+            Retrieval mode: vector search
             Retrieved evidence:
             {string.Join(Environment.NewLine, chunks)}
             """;

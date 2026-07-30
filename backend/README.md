@@ -26,6 +26,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Mock AI Gateway
 - Configurable OpenAI / Azure OpenAI Gateway provider
 - Document upload, text extraction, and chunking
+- Configurable in-memory or Qdrant vector storage for RAG
 - Document review workflow
 - Mock Microsoft Graph email draft integration
 - CORS for the React development server
@@ -63,6 +64,24 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 ```bash
 dotnet build EnterpriseAiDocumentAssistant.sln
 dotnet run --project src/EnterpriseAiDocumentAssistant.Api
+```
+
+Start local persistence services from the repository root:
+
+```bash
+docker compose up -d mongodb qdrant
+```
+
+Qdrant uses gRPC port `6334` from the API and exposes its dashboard at `http://localhost:6333/dashboard`.
+
+Select persistent vector storage in `appsettings.json`:
+
+```json
+{
+  "Rag": {
+    "VectorStore": "Qdrant"
+  }
+}
 ```
 
 ## AI Gateway Configuration

@@ -109,7 +109,7 @@ public sealed class DocumentUploadService : IDocumentUploadService
 
     public async Task<bool> DeleteAsync(string documentId, CancellationToken cancellationToken)
     {
-        // Delete removes parsed metadata/chunks from MongoDB and clears provider-specific in-memory vectors.
+        // Delete removes parsed metadata/chunks from MongoDB and clears provider-specific vector entries.
         var deleted = await documentRepository.DeleteAsync(documentId, cancellationToken);
         await ragService.DeleteDocumentAsync(documentId, cancellationToken);
 

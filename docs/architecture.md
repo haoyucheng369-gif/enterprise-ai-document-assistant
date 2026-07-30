@@ -254,12 +254,14 @@ Current implementation:
 - `IEmbeddingGateway` converts document chunks and user questions into vectors.
 - `RoutingEmbeddingGateway` uses deterministic local vectors for Mock and real OpenAI/Azure OpenAI embedding calls when a real provider is selected.
 - `IVectorStore` keeps vector search replaceable.
-- `InMemoryVectorStore` implements first-version cosine similarity search.
+- `InMemoryVectorStore` keeps a process-local comparison implementation.
+- `QdrantVectorStore` persists vectors and chunk payloads in provider-specific Qdrant collections.
 - `RagService` indexes uploaded chunks, lazily rebuilds missing provider-specific indexes, retrieves top chunks, and returns citations from the matched chunks.
 
-Later replacement path:
+Configuration boundary:
 
-- Replace `InMemoryVectorStore` with `QdrantVectorStore`, MongoDB Atlas Vector Search, or Azure AI Search without changing chat orchestration.
+- `Rag:VectorStore` selects `InMemory` or `Qdrant` through dependency injection.
+- MongoDB Atlas Vector Search or Azure AI Search can later replace Qdrant without changing chat orchestration.
 
 ### Tool Gateway
 

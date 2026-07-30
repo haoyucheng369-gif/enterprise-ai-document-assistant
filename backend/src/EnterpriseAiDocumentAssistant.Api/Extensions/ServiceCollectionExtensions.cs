@@ -18,6 +18,7 @@ using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway.Tools;
 using EnterpriseAiDocumentAssistant.Api.Workflows;
+using Microsoft.Extensions.Options;
 
 namespace EnterpriseAiDocumentAssistant.Api.Extensions;
 
@@ -43,7 +44,15 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAiGateway, RoutingAiGateway>();
         services.AddHttpClient<RoutingEmbeddingGateway>();
         services.AddSingleton<IEmbeddingGateway, RoutingEmbeddingGateway>();
-        services.AddSingleton<IVectorStore, InMemoryVectorStore>();
+        services.AddSingleton<InMemoryVectorStore>();
+        services.AddSingleton<QdrantVectorStore>();
+        services.AddSingleton<IVectorStore>(serviceProvider =>
+        {
+            var ragOptions = serviceProvider.GetRequiredService<IOptions<RagOptions>>().Value;
+            return string.Equals(ragOptions.VectorStore, "Qdrant", StringComparison.OrdinalIgnoreCase)
+                ? serviceProvider.GetRequiredService<QdrantVectorStore>()
+                : serviceProvider.GetRequiredService<InMemoryVectorStore>();
+        });
         services.AddSingleton<IRagService, RagService>();
         services.AddSingleton<IDocumentAssistantPromptOrchestrator, DocumentAssistantPromptOrchestrator>();
         services.AddSingleton<IPlannedCapabilityExecutor, PlannedCapabilityExecutor>();

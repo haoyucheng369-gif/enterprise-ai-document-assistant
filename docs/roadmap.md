@@ -354,7 +354,8 @@ Expected outcome:
 Current V1 progress:
 
 - `IEmbeddingGateway` generates local deterministic embeddings for Mock and real embeddings for OpenAI/Azure OpenAI.
-- `IVectorStore` is implemented first as `InMemoryVectorStore`, with a Qdrant replacement path left behind the same interface.
+- `IVectorStore` supports both `InMemoryVectorStore` and persistent `QdrantVectorStore`.
+- Qdrant stores provider-specific vector collections and source chunk payloads in a Docker named volume.
 - `RagService` indexes uploaded document chunks, lazily rebuilds missing provider-specific indexes, retrieves top chunks, and returns citations from the matched chunks.
 - Normal assistant chat uses retrieved RAG context before calling the selected chat model.
 - Weak retrieval results are rejected by a configurable similarity threshold and return a controlled no-answer response.
