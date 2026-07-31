@@ -3,15 +3,12 @@ import type {
   ClassificationSkillResponse,
   UserIdentity,
 } from '../types'
-import { buildUserHeaders } from './requestHeaders'
-
-const defaultApiBaseUrl = 'http://localhost:5221'
+import { apiBaseUrl, buildUserHeaders, ensureSuccess } from './apiClient'
 
 export async function classifyDocument(
   request: ClassificationSkillRequest,
   userId: UserIdentity,
 ): Promise<ClassificationSkillResponse> {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? defaultApiBaseUrl
   const response = await fetch(`${apiBaseUrl}/api/skills/classification`, {
     method: 'POST',
     headers: buildUserHeaders(userId, {
@@ -21,9 +18,7 @@ export async function classifyDocument(
     body: JSON.stringify(request),
   })
 
-  if (!response.ok) {
-    throw new Error(`Document classification failed with ${response.status}`)
-  }
+  await ensureSuccess(response, 'Document classification')
 
   return response.json() as Promise<ClassificationSkillResponse>
 }

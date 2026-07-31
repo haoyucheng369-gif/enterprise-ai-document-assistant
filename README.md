@@ -38,6 +38,7 @@ flowchart LR
 | Grounded assistance | Embeddings, semantic retrieval, Qdrant or in-memory vectors, similarity threshold, and source citations |
 | Controlled capabilities | Skills, document workflow, Agent Planner, Tool Gateway, native tool calling, and MCP exposure |
 | Persistence and access | MongoDB records, owner-reader ACL filtering, per-user AI rate limiting, and Qdrant vector indexes |
+| Operations | Structured audit events and an AI execution view for provider, model, tokens, latency, user, and outcome |
 
 ## Request Flow
 

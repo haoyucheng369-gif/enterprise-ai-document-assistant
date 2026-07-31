@@ -3,16 +3,21 @@ using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
+using EnterpriseAiDocumentAssistant.Api.Security;
 
 namespace EnterpriseAiDocumentAssistant.Api.AiGateway;
 
 public sealed class MockAiGateway : IAiGateway
 {
     private readonly IAuditLogger auditLogger;
+    private readonly ICurrentUserAccessor currentUserAccessor;
 
-    public MockAiGateway(IAuditLogger auditLogger)
+    public MockAiGateway(
+        IAuditLogger auditLogger,
+        ICurrentUserAccessor currentUserAccessor)
     {
         this.auditLogger = auditLogger;
+        this.currentUserAccessor = currentUserAccessor;
     }
 
     public Task<ChatModelResponse> GenerateChatResponseAsync(
@@ -43,6 +48,7 @@ public sealed class MockAiGateway : IAiGateway
             new Dictionary<string, string>
             {
                 ["model"] = response.Model,
+                ["userId"] = currentUserAccessor.UserId,
                 ["inputTokenEstimate"] = response.InputTokenEstimate.ToString(),
                 ["outputTokenEstimate"] = response.OutputTokenEstimate.ToString()
             }));

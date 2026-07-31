@@ -3,15 +3,12 @@ import type {
   ResumeReviewSkillResponse,
   UserIdentity,
 } from '../types'
-import { buildUserHeaders } from './requestHeaders'
-
-const defaultApiBaseUrl = 'http://localhost:5221'
+import { apiBaseUrl, buildUserHeaders, ensureSuccess } from './apiClient'
 
 export async function generateResumeReview(
   request: ResumeReviewSkillRequest,
   userId: UserIdentity,
 ): Promise<ResumeReviewSkillResponse> {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? defaultApiBaseUrl
   const response = await fetch(`${apiBaseUrl}/api/skills/resume-review`, {
     method: 'POST',
     headers: buildUserHeaders(userId, {
@@ -21,9 +18,7 @@ export async function generateResumeReview(
     body: JSON.stringify(request),
   })
 
-  if (!response.ok) {
-    throw new Error(`Resume review failed with ${response.status}`)
-  }
+  await ensureSuccess(response, 'Resume review')
 
   return response.json() as Promise<ResumeReviewSkillResponse>
 }

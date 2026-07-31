@@ -38,6 +38,7 @@ flowchart LR
 | 可信问答 | Embedding、语义检索、Qdrant 或内存向量、相似度阈值和来源引用 |
 | 受控能力 | Skills、文档工作流、Agent Planner、Tool Gateway、Tool Calling 和 MCP |
 | 持久化与权限 | MongoDB 记录、Owner/Reader ACL 过滤、按用户的 AI 限流、Qdrant 向量索引 |
+| 运行信息 | 结构化审计事件，以及 Provider、模型、Token、耗时、用户和结果的 AI 调用视图 |
 
 ## 请求主线
 

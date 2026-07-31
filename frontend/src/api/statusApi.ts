@@ -1,11 +1,9 @@
 import type { ApiStatusResponse } from '../types'
-
-const defaultApiBaseUrl = 'http://localhost:5221'
+import { apiBaseUrl, ensureSuccess } from './apiClient'
 
 export async function getApiStatus(
   signal?: AbortSignal,
 ): Promise<ApiStatusResponse> {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? defaultApiBaseUrl
   const response = await fetch(`${apiBaseUrl}/api/status`, {
     headers: {
       Accept: 'application/json',
@@ -13,9 +11,7 @@ export async function getApiStatus(
     signal,
   })
 
-  if (!response.ok) {
-    throw new Error(`Status request failed with ${response.status}`)
-  }
+  await ensureSuccess(response, 'Status request')
 
   return response.json() as Promise<ApiStatusResponse>
 }

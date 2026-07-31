@@ -3,15 +3,12 @@ import type {
   DocumentReviewWorkflowResponse,
   UserIdentity,
 } from '../types'
-import { buildUserHeaders } from './requestHeaders'
-
-const defaultApiBaseUrl = 'http://localhost:5221'
+import { apiBaseUrl, buildUserHeaders, ensureSuccess } from './apiClient'
 
 export async function runDocumentReviewWorkflow(
   request: DocumentReviewWorkflowRequest,
   userId: UserIdentity,
 ): Promise<DocumentReviewWorkflowResponse> {
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? defaultApiBaseUrl
   const response = await fetch(`${apiBaseUrl}/api/workflows/document-review`, {
     method: 'POST',
     headers: buildUserHeaders(userId, {
@@ -21,9 +18,7 @@ export async function runDocumentReviewWorkflow(
     body: JSON.stringify(request),
   })
 
-  if (!response.ok) {
-    throw new Error(`Document review workflow failed with ${response.status}`)
-  }
+  await ensureSuccess(response, 'Document review workflow')
 
   return response.json() as Promise<DocumentReviewWorkflowResponse>
 }

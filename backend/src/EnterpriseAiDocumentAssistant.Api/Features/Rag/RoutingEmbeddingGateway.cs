@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.Options;
+using EnterpriseAiDocumentAssistant.Api.Security;
 using Microsoft.Extensions.Options;
 
 namespace EnterpriseAiDocumentAssistant.Api.Rag;
@@ -15,16 +16,19 @@ public sealed class RoutingEmbeddingGateway : IEmbeddingGateway
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IAuditLogger auditLogger;
+    private readonly ICurrentUserAccessor currentUserAccessor;
     private readonly HttpClient httpClient;
     private readonly AiGatewayOptions options;
 
     public RoutingEmbeddingGateway(
         HttpClient httpClient,
         IAuditLogger auditLogger,
+        ICurrentUserAccessor currentUserAccessor,
         IOptions<AiGatewayOptions> options)
     {
         this.httpClient = httpClient;
         this.auditLogger = auditLogger;
+        this.currentUserAccessor = currentUserAccessor;
         this.options = options.Value;
         this.httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(1, this.options.TimeoutSeconds));
     }
@@ -40,7 +44,17 @@ public sealed class RoutingEmbeddingGateway : IEmbeddingGateway
         if (IsMock(provider))
         {
             // Deterministic Mock vectors keep local RAG debuggable without API cost.
-            return new EmbeddingResponse("Mock", "deterministic-local-embedding", BuildMockEmbedding(request.Text));
+            var embedding = new EmbeddingResponse(
+                "Mock",
+                "deterministic-local-embedding",
+                BuildMockEmbedding(request.Text));
+            RecordAudit(
+                embedding.Provider,
+                embedding.Model,
+                true,
+                stopwatch.ElapsedMilliseconds,
+                EstimateTokens(request.Text));
+            return embedding;
         }
 
         try
@@ -57,13 +71,23 @@ public sealed class RoutingEmbeddingGateway : IEmbeddingGateway
             }
 
             var embedding = ParseEmbeddingResponse(responseJson);
-            RecordAudit(provider, true, stopwatch.ElapsedMilliseconds);
+            RecordAudit(
+                provider,
+                options.EmbeddingModel,
+                true,
+                stopwatch.ElapsedMilliseconds,
+                EstimateTokens(request.Text));
 
             return new EmbeddingResponse(provider, options.EmbeddingModel, embedding);
         }
         catch
         {
-            RecordAudit(provider, false, stopwatch.ElapsedMilliseconds);
+            RecordAudit(
+                provider,
+                options.EmbeddingModel,
+                false,
+                stopwatch.ElapsedMilliseconds,
+                EstimateTokens(request.Text));
             throw;
         }
     }
@@ -117,7 +141,12 @@ public sealed class RoutingEmbeddingGateway : IEmbeddingGateway
         }
     }
 
-    private void RecordAudit(string provider, bool succeeded, long durationMs)
+    private void RecordAudit(
+        string provider,
+        string model,
+        bool succeeded,
+        long durationMs,
+        int inputTokenEstimate)
     {
         auditLogger.Record(new AuditEventRequest(
             "ai_gateway",
@@ -127,7 +156,9 @@ public sealed class RoutingEmbeddingGateway : IEmbeddingGateway
             durationMs,
             new Dictionary<string, string>
             {
-                ["model"] = options.EmbeddingModel
+                ["model"] = model,
+                ["userId"] = currentUserAccessor.UserId,
+                ["inputTokenEstimate"] = inputTokenEstimate.ToString()
             }));
     }
 
@@ -141,6 +172,11 @@ public sealed class RoutingEmbeddingGateway : IEmbeddingGateway
     private static bool IsMock(string provider)
     {
         return string.Equals(provider, "Mock", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static int EstimateTokens(string value)
+    {
+        return Math.Max(1, (int)Math.Ceiling(value.Length / 4.0));
     }
 
     private static float[] ParseEmbeddingResponse(string responseJson)

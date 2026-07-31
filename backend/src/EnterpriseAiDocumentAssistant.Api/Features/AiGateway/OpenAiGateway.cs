@@ -5,6 +5,7 @@ using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Options;
+using EnterpriseAiDocumentAssistant.Api.Security;
 using Microsoft.Extensions.Options;
 
 namespace EnterpriseAiDocumentAssistant.Api.AiGateway;
@@ -14,16 +15,19 @@ public sealed class OpenAiGateway : IAiGateway
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private readonly IAuditLogger auditLogger;
+    private readonly ICurrentUserAccessor currentUserAccessor;
     private readonly HttpClient httpClient;
     private readonly AiGatewayOptions options;
 
     public OpenAiGateway(
         HttpClient httpClient,
         IAuditLogger auditLogger,
+        ICurrentUserAccessor currentUserAccessor,
         IOptions<AiGatewayOptions> options)
     {
         this.httpClient = httpClient;
         this.auditLogger = auditLogger;
+        this.currentUserAccessor = currentUserAccessor;
         this.options = options.Value;
         this.httpClient.Timeout = TimeSpan.FromSeconds(Math.Max(1, this.options.TimeoutSeconds));
     }
@@ -285,7 +289,8 @@ public sealed class OpenAiGateway : IAiGateway
         // Audit records latency and token counts without storing prompt text or model output.
         var metadata = new Dictionary<string, string>
         {
-            ["model"] = options.ChatModel
+            ["model"] = options.ChatModel,
+            ["userId"] = currentUserAccessor.UserId
         };
 
         if (inputTokenEstimate is not null)

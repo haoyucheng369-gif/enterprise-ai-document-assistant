@@ -1,15 +1,15 @@
 using EnterpriseAiDocumentAssistant.Api.Contracts;
-using EnterpriseAiDocumentAssistant.Api.DocumentUpload;
+using EnterpriseAiDocumentAssistant.Api.Documents;
 
 namespace EnterpriseAiDocumentAssistant.Api.Services;
 
 public sealed class ApplicationDocumentProvider : IApplicationDocumentProvider
 {
-    private readonly IDocumentUploadService documentUploadService;
+    private readonly IDocumentRepository documentRepository;
 
-    public ApplicationDocumentProvider(IDocumentUploadService documentUploadService)
+    public ApplicationDocumentProvider(IDocumentRepository documentRepository)
     {
-        this.documentUploadService = documentUploadService;
+        this.documentRepository = documentRepository;
     }
 
     public DocumentItemResponse? FindById(string documentId)
@@ -20,10 +20,8 @@ public sealed class ApplicationDocumentProvider : IApplicationDocumentProvider
             return null;
         }
 
-        // Read the document boundary directly; workspace composition also loads conversation history.
-        var uploadedDocument = documentUploadService.ListRecent()
-            .FirstOrDefault(candidate =>
-                string.Equals(candidate.Id, documentId, StringComparison.OrdinalIgnoreCase));
+        // Repository performs one ACL-filtered lookup instead of scanning the latest workspace documents.
+        var uploadedDocument = documentRepository.FindById(documentId);
 
         if (uploadedDocument is null)
         {

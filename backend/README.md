@@ -26,6 +26,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - MongoDB persistence for complete validated conversation turns
 - Owner/reader document ACL filtering through the `X-User-Id` local identity adapter
 - Per-user fixed-window rate limiting for model-backed endpoints
+- AI execution observability through `GET /api/audit/ai-executions`
 - Simple agent planner
 - In-memory audit trail
 - Mock AI Gateway

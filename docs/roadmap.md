@@ -415,6 +415,12 @@ Expected outcome:
 - The project demonstrates cost and latency awareness around model calls.
 - Prompt changes can be traced by version without logging full sensitive content.
 
+Current V1 progress:
+
+- Chat and embedding gateway calls record provider, model, user, success, latency, and available token counts.
+- `GET /api/audit/ai-executions` exposes recent AI execution records without prompt or response content.
+- Records remain in memory for V1; external telemetry and persistent cost reporting are deferred.
+
 ---
 
 ## Phase 16 - Intent Classification and Routing

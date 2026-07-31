@@ -1,18 +1,11 @@
 import type { ChatRequest, ChatResponse, UserIdentity } from '../types'
-import { buildUserHeaders } from './requestHeaders'
-
-const defaultApiBaseUrl = 'http://localhost:5221'
-
-function getApiBaseUrl() {
-  return import.meta.env.VITE_API_BASE_URL ?? defaultApiBaseUrl
-}
+import { apiBaseUrl, buildUserHeaders, ensureSuccess } from './apiClient'
 
 export async function sendChatMessage(
   request: ChatRequest,
   userId: UserIdentity,
   signal?: AbortSignal,
 ): Promise<ChatResponse> {
-  const apiBaseUrl = getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/api/chat`, {
     method: 'POST',
     headers: buildUserHeaders(userId, {
@@ -23,9 +16,7 @@ export async function sendChatMessage(
     signal,
   })
 
-  if (!response.ok) {
-    throw new Error(`Chat request failed with ${response.status}`)
-  }
+  await ensureSuccess(response, 'Chat request')
 
   return response.json() as Promise<ChatResponse>
 }
@@ -36,7 +27,6 @@ export async function streamChatMessage(
   onChunk: (chunk: string) => void,
   signal?: AbortSignal,
 ): Promise<void> {
-  const apiBaseUrl = getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/api/chat/stream`, {
     method: 'POST',
     headers: buildUserHeaders(userId, {
@@ -47,9 +37,7 @@ export async function streamChatMessage(
     signal,
   })
 
-  if (!response.ok) {
-    throw new Error(`Streaming chat request failed with ${response.status}`)
-  }
+  await ensureSuccess(response, 'Streaming chat request')
 
   if (response.body === null) {
     onChunk(await response.text())
