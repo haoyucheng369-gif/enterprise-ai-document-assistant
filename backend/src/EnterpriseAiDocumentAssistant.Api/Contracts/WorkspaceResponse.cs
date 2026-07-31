@@ -22,7 +22,10 @@ public sealed record DocumentSectionResponse(
 public sealed record MessageResponse(
     string Id,
     string Role,
-    string Content);
+    string Content,
+    string? Confidence = null,
+    IReadOnlyList<string>? Citations = null,
+    IReadOnlyList<string>? SuggestedActions = null);
 
 public sealed record CitationResponse(
     string Id,

@@ -3,6 +3,7 @@ using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.Chat;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
+using EnterpriseAiDocumentAssistant.Api.Conversations;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseAiDocumentAssistant.Api.Controllers;
@@ -14,15 +15,18 @@ public sealed class ChatController : ControllerBase
     private readonly IChatOrchestrationService chatOrchestrationService;
     private readonly IAiGateway aiGateway;
     private readonly IAuditLogger auditLogger;
+    private readonly IConversationRepository conversationRepository;
 
     public ChatController(
         IChatOrchestrationService chatOrchestrationService,
         IAiGateway aiGateway,
-        IAuditLogger auditLogger)
+        IAuditLogger auditLogger,
+        IConversationRepository conversationRepository)
     {
         this.chatOrchestrationService = chatOrchestrationService;
         this.aiGateway = aiGateway;
         this.auditLogger = auditLogger;
+        this.conversationRepository = conversationRepository;
     }
 
     [HttpPost]
@@ -45,10 +49,24 @@ public sealed class ChatController : ControllerBase
             return StructuredOutputProblem(result);
         }
 
+        var userMessage = new MessageResponse(
+            $"user-{Guid.NewGuid():N}",
+            "user",
+            request.Message);
         var response = new MessageResponse(
             $"assistant-{Guid.NewGuid():N}",
             "assistant",
-            result.Message.Answer);
+            result.Message.Answer,
+            result.Message.Confidence,
+            result.Message.Citations,
+            result.Message.SuggestedActions);
+
+        // Persist only complete, validated turns returned by the primary frontend endpoint.
+        await conversationRepository.AppendTurnAsync(
+            request.DocumentId,
+            userMessage,
+            response,
+            cancellationToken);
 
         RecordChatAudit("chat_completed", "api/chat", request, true, stopwatch.ElapsedMilliseconds);
         return Ok(new ChatResponse(response, result.Message));

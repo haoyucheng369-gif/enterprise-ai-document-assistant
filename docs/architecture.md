@@ -314,7 +314,7 @@ Responsibilities:
 
 ### Conversation Memory
 
-Conversation memory keeps recent context available for follow-up questions without requiring database persistence in the first version.
+Conversation memory keeps recent context available for follow-up questions, while MongoDB restores validated turns after an API or browser restart.
 
 Responsibilities:
 
@@ -327,6 +327,8 @@ Current implementation:
 
 - `ConversationMemoryBuilder` reads recent turns from `ChatRequest.History`
 - `DocumentAssistantPromptOrchestrator` injects `conversation_memory` into the rendered prompt
+- `MongoConversationRepository` stores one complete user/assistant turn per MongoDB record
+- `WorkspaceDataProvider` restores the latest persisted turns for the React workspace
 - The harness verifies that recent context is included before model integration
 
 ### Harnesses
@@ -411,20 +413,20 @@ Planned shape:
 
 Persistence stores application state without making any single database the center of the architecture.
 
-Storage responsibilities:
+Storage boundaries:
 
-- Relational database: users, documents, conversations, tool executions, workflow records
+- Application database: document records, conversations, tool executions, and workflow records
 - Vector store: embeddings and semantic retrieval indexes
 - File or object storage: uploaded source documents
 - Optional document database or JSON columns: conversation memory, flexible AI records, and workflow state
 
-Current V1 stance:
+Current implementation:
 
-- In-memory storage keeps the early implementation simple
-- A Docker Compose MongoDB service provides the local database baseline for persistence work
-- Uploaded document metadata and parsed sections are stored through a MongoDB repository
-- Conversation, workflow, and audit storage can be moved behind repositories later
-- MongoDB is useful for flexible AI records, but it is not the core RAG mechanism
+- MongoDB stores uploaded document metadata, parsed sections, and complete validated conversation turns
+- Qdrant stores persistent embedding vectors used by semantic retrieval
+- In-memory audit and vector implementations remain available behind interfaces where useful
+- Uploaded source files, workflow records, and audit events are not persisted yet
+- Storage remains behind repository interfaces so business and AI flows do not depend on database drivers
 
 ---
 

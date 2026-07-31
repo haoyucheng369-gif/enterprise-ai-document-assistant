@@ -1,181 +1,89 @@
 # Enterprise AI Document Assistant
 
-A production-oriented React + ASP.NET Core application for connecting the core building blocks of modern AI applications: assistant UI, prompt orchestration, AI Gateway, document processing, controlled skills, Tool Gateway, MCP surface, and workflow orchestration.
+An enterprise-oriented document intelligence workspace built with React and ASP.NET Core. It combines document ingestion, grounded AI assistance, controlled capability execution, and persistent application state behind clear service boundaries.
 
-V1 is intentionally small: one end-to-end document assistant flow, implemented in clear steps. Retrieval supports both an in-memory vector store and persistent Qdrant behind the same application interface.
+The solution demonstrates how common enterprise AI patterns fit into one coherent application without coupling business workflows directly to a model provider.
 
----
-
-## V1 Architecture
+## Architecture
 
 ```mermaid
 flowchart LR
     user[User] --> ui[React Workspace]
+    ui --> api[ASP.NET Core API]
 
-    subgraph frontend[Frontend]
-        ui --> docs[Document View]
-        ui --> assistant[Right-side Assistant]
-        ui --> panels[Citations + Tool Results]
-    end
+    api --> safety[Input Guardrails]
+    safety --> planner[Intent Classifier + Planner]
 
-    assistant --> api[ASP.NET Core API]
-    docs --> api
+    planner --> rag[RAG]
+    planner --> skills[Skills + Workflow]
+    planner --> tools[Tool Gateway]
 
-    subgraph backend[Backend]
-        api --> gateway[AI Gateway]
-        api --> tools[Tool Gateway]
-        api --> workflows[Workflow API]
-        api --> intent[Intent Classifier]
-        intent --> planner[Agent Planner]
-        planner --> workflows
-        gateway --> prompts[Prompt Orchestration]
-        api --> rag[RAG Retrieval]
-        rag --> embeddings[Embedding Gateway]
-        rag --> vectors[Qdrant / In-memory Vector Store]
-    end
+    rag --> embeddings[Embedding Gateway]
+    embeddings --> vectors[Qdrant]
+    rag --> ai[AI Gateway]
+    skills --> ai
+    tools --> ai
 
-    subgraph ai[AI + Extension Points]
-        gateway --> models[OpenAI / Azure OpenAI]
-        tools --> mcp[MCP Surface]
-        tools --> msgraph[Microsoft Graph Adapter]
-    end
+    ai --> models[OpenAI / Azure OpenAI]
+    api --> mongo[MongoDB]
+    tools --> mcp[MCP Surface]
 ```
 
----
+## Solution Scope
 
-## Current Core Flow
+| Area | Implementation |
+|---|---|
+| Document workspace | Upload, parsing, chunk preview, classification, workflow results, citations, and tool output |
+| AI application layer | Prompt orchestration, structured responses, input guardrails, validation, and provider routing |
+| Grounded assistance | Embeddings, semantic retrieval, Qdrant or in-memory vectors, similarity threshold, and source citations |
+| Controlled capabilities | Skills, document workflow, Agent Planner, Tool Gateway, native tool calling, and MCP exposure |
+| Persistence | MongoDB document records and conversation turns; Qdrant vector indexes |
+
+## Request Flow
 
 ```mermaid
 sequenceDiagram
-    participant U as User
     participant UI as React Workspace
     participant API as ASP.NET Core API
+    participant Plan as Guardrails + Planner
+    participant Capability as RAG / Skill / Tool
     participant AI as AI Gateway
-    participant Model as OpenAI / Azure OpenAI / Mock
+    participant DB as MongoDB
 
-    U->>UI: Ask about a document
-    UI->>API: POST /api/chat/stream
-    API->>API: Safety classifier + guardrails + conversation memory
-    API->>AI: Build orchestrated prompt
-    AI->>Model: Generate structured answer
-    Model-->>AI: JSON-shaped response
-    AI-->>API: Validated answer
-    API-->>UI: Stream response
+    UI->>API: Document question
+    API->>Plan: Validate and classify intent
+    Plan->>Capability: Execute controlled route
+    Capability->>AI: Grounded prompt or tool result
+    AI-->>API: Structured assistant response
+    API->>DB: Persist validated conversation turn
+    API-->>UI: Answer, citations, and suggested actions
 ```
 
----
+## Technology
 
-## V1 Modules
+- React, TypeScript, Vite, Tailwind CSS
+- ASP.NET Core Web API, controllers, dependency injection, Swagger, ProblemDetails
+- OpenAI and Azure OpenAI behind an AI Gateway abstraction
+- MongoDB for document and conversation records
+- Qdrant for persistent vector search
+- Docker Compose for local infrastructure
 
-| Module | Purpose | First Scope |
-|---|---|---|
-| React Workspace | User-facing work area | Document list, document workspace tabs, right-side Assistant, citations, tool results |
-| ASP.NET Core API | Backend boundary | `/api/chat`, `/api/documents`, `/api/tools`, `/api/workflows` |
-| Prompt and AI Layer | Controlled model behavior | Prompt orchestration, structured output, validation, safety classifier, guardrails, AI Gateway |
-| Tool Gateway and Skills | Controlled actions | `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ResumeReviewSkill` |
-| Document Processing and RAG | Source-grounded answers | Upload, parse, chunk, embedding, Qdrant vector search, citations |
-| Persistence | Application state | MongoDB document records and Qdrant vector indexes |
-| MCP / Harness / Workflow / Integration | Extension path | MCP wrapper over existing tools, prompt/tool harnesses, one workflow, Microsoft Graph adapter boundary |
+## Run Locally
 
----
-
-## Current Status
-
-### Completed Core
-
-- [x] React workspace with document list, upload zone, document tabs, and right-side Assistant
-- [x] ASP.NET Core controller API with Swagger, contracts, and ProblemDetails
-- [x] Backend-driven workspace data and document upload flow
-- [x] Text parsing, chunking, and document preview
-- [x] Chat endpoint with prompt orchestration, conversation memory, structured output, safety classifier, and guardrails
-- [x] AI Gateway with local mock, OpenAI, and Azure OpenAI provider selection
-- [x] Skills: classification, summary, risk analysis, email draft, and resume review
-- [x] Workflow: document summary -> risk analysis -> email draft
-- [x] Tool Gateway with health and document metadata tools
-- [x] Single-turn LLM-native tool calling: model selection -> validated Tool Gateway execution -> model response
-- [x] MCP controller surface over registered tools
-- [x] In-memory audit logging
-- [x] Separate Intent Classifier, Agent Planner, and capability executor with AI classification and deterministic fallback
-- [x] MongoDB document persistence for uploaded document metadata and parsed sections
-- [x] Input Guardrails with rule-based safety classification, optional AI-backed safety classification, and deterministic fallback
-- [x] RAG baseline with embedding gateway, configurable in-memory/Qdrant vector store, semantic retrieval, and retrieved chunk citations
-- [x] RAG no-answer threshold with controlled insufficient-evidence responses
-- [x] Qdrant vector persistence behind `IVectorStore`, with provider-specific collections
-
-### Lightweight Boundaries
-
-- [x] Microsoft Graph adapter scaffold with mock email draft output, not OAuth-backed real Graph calls
-- [x] Prompt and tool harness checks for basic regression coverage
-
-### Not Built Yet
-
-- [ ] MongoDB persistence for conversation, workflow, and audit storage
-- [ ] Real Microsoft Graph OAuth integration
-- [ ] Basic document permission filtering
-
-### Build Next
-
-- [ ] Conversation storage with MongoDB or relational storage
-- [ ] Citation display review
-- [ ] Basic document permission filtering
-
-### Build Lightly
-
-- [ ] Rate limiting
-- [ ] Observability and cost tracking
-- [ ] Prompt versioning
-- [ ] Sensitive data redaction for AI logs
-- [ ] Expanded harness checks for prompts, skills, tools, and workflows
-- [ ] Simple Agent Orchestration / A2A handoff
-
----
-
-## Next Implementation Order
-
-```text
-Persistence
-  -> Citation Display Review
-  -> Basic Document Permission Filtering
-  -> Rate Limiting
-  -> Observability and Cost Tracking
-  -> Prompt Versioning
-  -> Sensitive Data Redaction
-  -> Expanded Harness Checks
-  -> Simple Agent Orchestration / A2A Handoff
-```
-
-`Build Next` items form the main delivery path. `Build Lightly` items stay intentionally small and are implemented only when they strengthen the application architecture.
-
-### Deferred Scope
-
-- Hybrid search and semantic ranking
-- Real Microsoft Graph OAuth integration
-- GraphQL API surface
-- CI and deployment hardening
-
----
-
-## Tech Stack
-
-| Area | Stack |
-|---|---|
-| Frontend | React, TypeScript, Vite, Tailwind CSS |
-| Backend | ASP.NET Core Web API |
-| AI | OpenAI / Azure OpenAI, Semantic Kernel or Microsoft.Extensions.AI friendly design |
-| Retrieval | Embeddings, vector store, source citations |
-| Persistence | MongoDB document records, Qdrant vectors, in-memory development alternatives |
-| Integration | Microsoft Graph, REST APIs, MCP |
-
----
-
-## Local Development
+Start MongoDB and Qdrant from the repository root:
 
 ```bash
-git clone https://github.com/haoyucheng369-gif/enterprise-ai-document-assistant.git
-cd enterprise-ai-document-assistant
+docker compose up -d mongodb qdrant
 ```
 
-Frontend:
+Start the API:
+
+```bash
+cd backend
+dotnet run --project src/EnterpriseAiDocumentAssistant.Api
+```
+
+Start the React workspace:
 
 ```bash
 cd frontend
@@ -183,40 +91,24 @@ npm install
 npm run dev
 ```
 
-Backend local AI provider settings can be placed in:
+Local provider credentials belong in the Git-ignored file:
 
 ```text
 backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
 ```
 
-Edit that local file with your provider, model, and API key. The local file is ignored by Git.
+Operational interfaces:
 
-Local MongoDB and Qdrant can be started from the repository root:
+- Swagger: `http://localhost:5221/swagger`
+- MongoDB Compass: `mongodb://localhost:27017`
+- Qdrant dashboard: `http://localhost:6333/dashboard`
 
-```bash
-docker compose up -d mongodb qdrant
-docker compose ps
-```
+## Direction
 
-MongoDB Compass connection string:
+The current application covers the main document-assistant flow from ingestion through retrieval, controlled execution, structured response, and persistence. The next focused additions are document-level permission filtering, concise observability, and a lightweight agent handoff.
 
-```text
-mongodb://localhost:27017
-```
-
-Qdrant dashboard:
-
-```text
-http://localhost:6333/dashboard
-```
-
-Both databases use Docker named volumes, so data survives container restarts. Use `docker compose down -v` only when you intentionally want to remove the local data.
-
----
-
-## Documentation
+Detailed design and implementation order:
 
 - [Architecture](docs/architecture.md)
 - [Roadmap](docs/roadmap.md)
-- [Chinese README](README.zh-CN.md)
-
+- [中文说明](README.zh-CN.md)

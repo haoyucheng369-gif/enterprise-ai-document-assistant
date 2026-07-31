@@ -2,6 +2,7 @@ using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.Chat;
 using EnterpriseAiDocumentAssistant.Api.ConversationMemory;
+using EnterpriseAiDocumentAssistant.Api.Conversations;
 using EnterpriseAiDocumentAssistant.Api.DocumentParsing;
 using EnterpriseAiDocumentAssistant.Api.DocumentUpload;
 using EnterpriseAiDocumentAssistant.Api.Documents;
@@ -39,6 +40,7 @@ public static class ServiceCollectionExtensions
 
         // Repository hides MongoDB from upload, workspace, skills, and tools.
         services.AddSingleton<IDocumentRepository, MongoDocumentRepository>();
+        services.AddSingleton<IConversationRepository, MongoConversationRepository>();
         services.AddSingleton<IDocumentUploadService, DocumentUploadService>();
         services.AddSingleton<IApplicationDocumentProvider, ApplicationDocumentProvider>();
         services.AddSingleton<MockAiGateway>();

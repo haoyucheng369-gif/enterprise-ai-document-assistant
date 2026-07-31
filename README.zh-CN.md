@@ -1,109 +1,89 @@
 # Enterprise AI Document Assistant
 
-一个面向企业应用场景的 React + ASP.NET Core AI 文档助手，用来串起现代 AI 应用里的核心模块：Assistant UI、Prompt Orchestration、AI Gateway、文档解析、结构化输出、Safety Classifier、Tool Gateway、MCP、Skills、Workflow、Planner、MongoDB，以及基于 Qdrant 的 RAG 检索。
+一个基于 React 与 ASP.NET Core 的企业 AI 文档工作台。系统将文档处理、可信问答、受控能力调用和应用数据持久化组织在清晰的服务边界内。
 
-V1 保持小而完整：端到端文档问答和向量检索主线已经跑通，后续只补持久化、基础权限和轻量运行保障。
+项目重点展示常见企业 AI 模式如何组成一条完整主线，同时避免业务流程直接依赖某一家模型供应商。
 
----
-
-## V1 架构
+## 架构
 
 ```mermaid
 flowchart LR
-    user[User] --> ui[React Workspace]
+    user[用户] --> ui[React 工作台]
+    ui --> api[ASP.NET Core API]
 
-    subgraph frontend[Frontend]
-        ui --> docs[Document Workspace]
-        ui --> assistant[Assistant Panel]
-        ui --> insights[Preview + Classification + Workflow + Citations + Tools]
-    end
+    api --> safety[输入安全检查]
+    safety --> planner[意图分类 + Planner]
 
-    assistant --> api[ASP.NET Core API]
-    docs --> api
+    planner --> rag[RAG]
+    planner --> skills[Skills + Workflow]
+    planner --> tools[Tool Gateway]
 
-    subgraph backend[Backend]
-        api --> safety[Safety Classifier + Guardrails]
-        safety --> intent[Intent Classifier]
-        intent --> planner[Agent Planner]
-        planner --> skills[Skills]
-        planner --> workflows[Workflow]
-        api --> gateway[AI Gateway]
-        api --> tools[Tool Gateway]
-        api --> mongo[MongoDB]
-        api --> rag[RAG]
-        rag --> vectors[Qdrant / In-memory Vector Store]
-    end
+    rag --> embeddings[Embedding Gateway]
+    embeddings --> vectors[Qdrant]
+    rag --> ai[AI Gateway]
+    skills --> ai
+    tools --> ai
 
-    subgraph extensions[Extension Points]
-        gateway --> models[OpenAI / Azure OpenAI / Mock]
-        tools --> mcp[MCP Surface]
-        workflows --> graph[Microsoft Graph Adapter]
-    end
+    ai --> models[OpenAI / Azure OpenAI]
+    api --> mongo[MongoDB]
+    tools --> mcp[MCP 接口]
 ```
 
----
+## 解决方案范围
 
-## 当前状态
+| 模块 | 当前实现 |
+|---|---|
+| 文档工作台 | 上传、解析、分块预览、分类、工作流结果、引用和工具结果 |
+| AI 应用层 | Prompt 编排、结构化输出、输入安全检查、结果校验和模型路由 |
+| 可信问答 | Embedding、语义检索、Qdrant 或内存向量、相似度阈值和来源引用 |
+| 受控能力 | Skills、文档工作流、Agent Planner、Tool Gateway、Tool Calling 和 MCP |
+| 持久化 | MongoDB 文档与对话记录、Qdrant 向量索引 |
 
-### 已完成
+## 请求主线
 
-- [x] React workspace：文档列表、上传区、文档 tabs、右侧 Assistant
-- [x] ASP.NET Core controller API、Swagger、ProblemDetails
-- [x] 后端驱动 workspace 数据
-- [x] 文档上传、文本解析、preview chunk
-- [x] MongoDB 持久化 uploaded document metadata 和 parsed sections
-- [x] Chat endpoint：prompt orchestration、conversation memory、structured output
-- [x] Input Guardrails：规则安全分类、可选 AI 安全分类、fallback
-- [x] Guardrails：prompt injection、unauthorized data 基础拦截
-- [x] AI Gateway：Mock、OpenAI、Azure OpenAI provider selection
-- [x] Skills：classification、summary、risk analysis、email draft、resume review
-- [x] Workflow：summary -> risk analysis -> email draft
-- [x] Tool Gateway：health 和 document metadata tools
-- [x] 单轮原生 Tool Calling：模型选择 -> Tool Gateway 校验执行 -> 模型生成最终回答
-- [x] MCP surface：暴露已注册 tools
-- [x] Intent Classifier、Agent Planner、Executor 职责拆分：AI 分类 + 规则 fallback
-- [x] Microsoft Graph adapter mock
-- [x] In-memory audit logging
-- [x] Harness checks
-- [x] RAG：embedding、语义检索、引用和 no-answer threshold
-- [x] Qdrant 向量持久化与 in-memory 替代实现
+```mermaid
+sequenceDiagram
+    participant UI as React 工作台
+    participant API as ASP.NET Core API
+    participant Plan as Guardrails + Planner
+    participant Capability as RAG / Skill / Tool
+    participant AI as AI Gateway
+    participant DB as MongoDB
 
-### 下一步主线
-
-- [ ] MongoDB 对话持久化
-- [ ] 基础文档权限过滤
-- [ ] 简单 Agent Orchestration / A2A
-- [ ] 轻量限流、日志和成本记录
-
-### 轻量增强
-
-- [ ] Prompt versioning
-- [ ] Sensitive data redaction
-- [ ] Expanded harness checks
-
----
-
-## 当前核心流程
-
-```text
-User message
-  -> React Assistant
-  -> ASP.NET Core /api/chat
-  -> Safety Classifier
-  -> Guardrails
-  -> Intent Classifier
-  -> Agent Planner
-  -> Skill / Workflow / Tool Calling / RAG chat
-  -> AI Gateway
-  -> Structured Output Validation
-  -> React UI
+    UI->>API: 提交文档问题
+    API->>Plan: 安全检查并识别意图
+    Plan->>Capability: 执行受控路径
+    Capability->>AI: 提交检索上下文或工具结果
+    AI-->>API: 返回结构化回答
+    API->>DB: 保存已校验的完整对话轮次
+    API-->>UI: 显示回答、引用和建议操作
 ```
 
----
+## 技术栈
 
-## 本地开发
+- React、TypeScript、Vite、Tailwind CSS
+- ASP.NET Core Web API、Controllers、依赖注入、Swagger、ProblemDetails
+- OpenAI 与 Azure OpenAI，通过 AI Gateway 隔离供应商实现
+- MongoDB 保存文档和对话记录
+- Qdrant 提供持久化向量检索
+- Docker Compose 启动本地基础设施
 
-Frontend:
+## 本地运行
+
+在仓库根目录启动 MongoDB 和 Qdrant：
+
+```bash
+docker compose up -d mongodb qdrant
+```
+
+启动 API：
+
+```bash
+cd backend
+dotnet run --project src/EnterpriseAiDocumentAssistant.Api
+```
+
+启动 React 工作台：
 
 ```bash
 cd frontend
@@ -111,38 +91,24 @@ npm install
 npm run dev
 ```
 
-Backend:
-
-```bash
-cd backend
-dotnet run --project src/EnterpriseAiDocumentAssistant.Api
-```
-
-MongoDB:
-
-```bash
-docker compose up -d mongodb
-docker compose ps
-```
-
-MongoDB Compass:
-
-```text
-mongodb://localhost:27017
-```
-
-本地 AI provider 配置放在：
+本地模型配置和密钥放在 Git 已忽略的文件中：
 
 ```text
 backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
 ```
 
-这个文件已被 Git ignore。
+常用入口：
 
----
+- Swagger：`http://localhost:5221/swagger`
+- MongoDB Compass：`mongodb://localhost:27017`
+- Qdrant Dashboard：`http://localhost:6333/dashboard`
 
-## 文档
+## 后续方向
 
-- [Architecture](docs/architecture.md)
-- [Roadmap](docs/roadmap.md)
+当前应用已经覆盖从文档接入、检索、受控能力执行、结构化回答到持久化的完整主线。下一阶段集中补充文档级权限过滤、精简的可观测性和轻量 Agent 交接。
+
+详细设计与实现顺序：
+
+- [架构说明](docs/architecture.md)
+- [路线图](docs/roadmap.md)
 - [English README](README.md)

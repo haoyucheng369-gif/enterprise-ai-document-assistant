@@ -10,4 +10,6 @@ public sealed class MongoDbOptions
     public string DatabaseName { get; init; } = "enterprise_ai_document_assistant";
 
     public string DocumentsCollectionName { get; init; } = "documents";
+
+    public string ConversationsCollectionName { get; init; } = "conversation_turns";
 }
