@@ -1,4 +1,5 @@
-import type { ChatRequest, ChatResponse } from '../types'
+import type { ChatRequest, ChatResponse, UserIdentity } from '../types'
+import { buildUserHeaders } from './requestHeaders'
 
 const defaultApiBaseUrl = 'http://localhost:5221'
 
@@ -8,15 +9,16 @@ function getApiBaseUrl() {
 
 export async function sendChatMessage(
   request: ChatRequest,
+  userId: UserIdentity,
   signal?: AbortSignal,
 ): Promise<ChatResponse> {
   const apiBaseUrl = getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/api/chat`, {
     method: 'POST',
-    headers: {
+    headers: buildUserHeaders(userId, {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-    },
+    }),
     body: JSON.stringify(request),
     signal,
   })
@@ -30,16 +32,17 @@ export async function sendChatMessage(
 
 export async function streamChatMessage(
   request: ChatRequest,
+  userId: UserIdentity,
   onChunk: (chunk: string) => void,
   signal?: AbortSignal,
 ): Promise<void> {
   const apiBaseUrl = getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/api/chat/stream`, {
     method: 'POST',
-    headers: {
+    headers: buildUserHeaders(userId, {
       Accept: 'text/plain',
       'Content-Type': 'application/json',
-    },
+    }),
     body: JSON.stringify(request),
     signal,
   })

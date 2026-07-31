@@ -31,7 +31,8 @@ public sealed class WorkspaceDataProvider : IWorkspaceDataProvider
                 document.Sections.Select(section => new DocumentSectionResponse(
                     section.Label,
                     section.Title,
-                    section.Body)).ToArray()))
+                    section.Body)).ToArray(),
+                document.OwnerId))
             .ToArray();
 
         // Restore recent validated turns so a browser refresh does not erase the conversation.
@@ -54,7 +55,9 @@ public sealed class WorkspaceDataProvider : IWorkspaceDataProvider
                     new MessageResponse(
                         "m1",
                         "assistant",
-                        "Select a document and ask a question. I can summarize, classify, review risks, and suggest follow-up actions.")
+                        "Select a document and ask a question. I can summarize, classify, review risks, and suggest follow-up actions.",
+                        Citations: [],
+                        SuggestedActions: [])
                 ],
             Citations: latestCitations,
             ToolResult: new ToolResultResponse(

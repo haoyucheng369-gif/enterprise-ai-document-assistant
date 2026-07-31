@@ -12,7 +12,8 @@ public sealed record DocumentItemResponse(
     string Type,
     string UpdatedAt,
     string Status,
-    IReadOnlyList<DocumentSectionResponse> Sections);
+    IReadOnlyList<DocumentSectionResponse> Sections,
+    string OwnerId);
 
 public sealed record DocumentSectionResponse(
     string Label,

@@ -24,6 +24,12 @@ public sealed class MongoDocumentRecord
     [BsonElement("sizeBytes")]
     public long SizeBytes { get; init; }
 
+    [BsonElement("ownerId")]
+    public string OwnerId { get; init; } = string.Empty;
+
+    [BsonElement("allowedUserIds")]
+    public IReadOnlyList<string> AllowedUserIds { get; init; } = [];
+
     [BsonElement("uploadedAtUtc")]
     public DateTime UploadedAtUtc { get; init; }
 

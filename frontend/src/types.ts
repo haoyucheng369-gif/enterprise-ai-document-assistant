@@ -5,6 +5,7 @@ export type DocumentItem = {
   updatedAt: string
   status: string
   sections: DocumentSection[]
+  ownerId: UserIdentity
 }
 
 export type DocumentSection = {
@@ -17,9 +18,9 @@ export type Message = {
   id: string
   role: 'user' | 'assistant'
   content: string
-  confidence?: string
-  citations?: string[]
-  suggestedActions?: string[]
+  confidence?: string | null
+  citations?: string[] | null
+  suggestedActions?: string[] | null
 }
 
 export type Citation = {
@@ -46,6 +47,8 @@ export type ApiConnectionState = 'loading' | 'connected' | 'unavailable'
 
 export type AiProviderSelection = 'Mock' | 'OpenAI' | 'AzureOpenAI'
 
+export type UserIdentity = 'local-user' | 'alice' | 'bob' | 'charlie'
+
 export type WorkspaceResponse = {
   documents: DocumentItem[]
   messages: Message[]
@@ -61,6 +64,7 @@ export type DocumentUploadResponse = {
   status: string
   sizeBytes: number
   sections: DocumentSection[]
+  ownerId: UserIdentity
 }
 
 export type WorkflowStep = {

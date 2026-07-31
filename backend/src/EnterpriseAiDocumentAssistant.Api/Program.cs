@@ -39,6 +39,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<ToolExecuteExampleOperationFilter>();
+    options.OperationFilter<CurrentUserHeaderOperationFilter>();
 });
 
 // Frontend origins stay configurable so local and deployed clients can use the same API setup.

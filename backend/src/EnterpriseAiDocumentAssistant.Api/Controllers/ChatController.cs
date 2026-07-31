@@ -4,6 +4,7 @@ using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.Chat;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Conversations;
+using EnterpriseAiDocumentAssistant.Api.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseAiDocumentAssistant.Api.Controllers;
@@ -16,22 +17,26 @@ public sealed class ChatController : ControllerBase
     private readonly IAiGateway aiGateway;
     private readonly IAuditLogger auditLogger;
     private readonly IConversationRepository conversationRepository;
+    private readonly IDocumentAccessPolicy documentAccessPolicy;
 
     public ChatController(
         IChatOrchestrationService chatOrchestrationService,
         IAiGateway aiGateway,
         IAuditLogger auditLogger,
-        IConversationRepository conversationRepository)
+        IConversationRepository conversationRepository,
+        IDocumentAccessPolicy documentAccessPolicy)
     {
         this.chatOrchestrationService = chatOrchestrationService;
         this.aiGateway = aiGateway;
         this.auditLogger = auditLogger;
         this.conversationRepository = conversationRepository;
+        this.documentAccessPolicy = documentAccessPolicy;
     }
 
     [HttpPost]
     [ProducesResponseType<ChatResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ChatResponse>> Post(
         ChatRequest request,
         CancellationToken cancellationToken)
@@ -41,6 +46,12 @@ public sealed class ChatController : ControllerBase
         if (RequestHasMissingMessage(request))
         {
             return ValidationProblem(ModelState);
+        }
+
+        var accessProblem = BuildDocumentAccessProblem(request.DocumentId);
+        if (accessProblem is not null)
+        {
+            return accessProblem;
         }
 
         var result = await chatOrchestrationService.BuildValidatedMessageAsync(request, cancellationToken);
@@ -75,6 +86,7 @@ public sealed class ChatController : ControllerBase
     [HttpPost("structured")]
     [ProducesResponseType<StructuredChatResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<StructuredChatResponse>> Structured(
         ChatRequest request,
         CancellationToken cancellationToken)
@@ -84,6 +96,12 @@ public sealed class ChatController : ControllerBase
         if (RequestHasMissingMessage(request))
         {
             return ValidationProblem(ModelState);
+        }
+
+        var accessProblem = BuildDocumentAccessProblem(request.DocumentId);
+        if (accessProblem is not null)
+        {
+            return accessProblem;
         }
 
         var result = await chatOrchestrationService.BuildValidatedMessageAsync(request, cancellationToken);
@@ -100,6 +118,7 @@ public sealed class ChatController : ControllerBase
     [Produces("text/plain")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Stream(ChatRequest request, CancellationToken cancellationToken)
     {
         // V1 streaming writes chunks from a complete structured response; native model streaming can replace this later.
@@ -107,6 +126,12 @@ public sealed class ChatController : ControllerBase
         if (RequestHasMissingMessage(request))
         {
             return ValidationProblem(ModelState);
+        }
+
+        var accessProblem = BuildDocumentAccessProblem(request.DocumentId);
+        if (accessProblem is not null)
+        {
+            return accessProblem;
         }
 
         Response.ContentType = "text/plain; charset=utf-8";
@@ -147,6 +172,23 @@ public sealed class ChatController : ControllerBase
             title: "StructuredOutputValidationFailed",
             detail: string.Join(" ", result.Errors),
             statusCode: StatusCodes.Status502BadGateway);
+    }
+
+    private ObjectResult? BuildDocumentAccessProblem(string? documentId)
+    {
+        if (string.IsNullOrWhiteSpace(documentId)
+            || documentAccessPolicy.Evaluate(documentId) != DocumentAccessLevel.Denied)
+        {
+            return null;
+        }
+
+        // Authorization is decided before guardrails, retrieval, tools, or model execution.
+        return StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails
+        {
+            Title = "DocumentAccessDenied",
+            Detail = "The current user is not allowed to access the selected document.",
+            Status = StatusCodes.Status403Forbidden
+        });
     }
 
     private void RecordChatAudit(

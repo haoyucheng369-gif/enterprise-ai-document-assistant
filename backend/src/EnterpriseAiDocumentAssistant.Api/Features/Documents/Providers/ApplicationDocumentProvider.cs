@@ -41,6 +41,7 @@ public sealed class ApplicationDocumentProvider : IApplicationDocumentProvider
                     section.Label,
                     section.Title,
                     section.Body))
-                .ToArray());
+                .ToArray(),
+            uploadedDocument.OwnerId);
     }
 }

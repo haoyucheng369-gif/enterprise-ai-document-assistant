@@ -7,22 +7,26 @@ import {
   type LucideIcon,
   Upload,
 } from 'lucide-react'
-import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
-import type { DocumentItem } from '../../types'
+import { type ChangeEvent, type DragEvent, useEffect, useRef, useState } from 'react'
+import type { DocumentItem, UserIdentity } from '../../types'
 
 type DocumentNavProps = {
   documents: DocumentItem[]
   selectedDocumentId: string
   uploadState: 'idle' | 'uploading' | 'failed'
   deletingDocumentId?: string | null
+  documentActionError?: string | null
+  currentUserId: UserIdentity
   onSelectDocument: (documentId: string) => void
   onDeleteDocument: (documentId: string) => Promise<void>
-  onUploadDocument: (file: File) => Promise<void>
+  onUploadDocument: (file: File, allowedUserIds: UserIdentity[]) => Promise<void>
 }
 
 export function DocumentNav({
   documents,
+  currentUserId,
   deletingDocumentId,
+  documentActionError,
   onDeleteDocument,
   onSelectDocument,
   onUploadDocument,
@@ -31,13 +35,20 @@ export function DocumentNav({
 }: DocumentNavProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDraggingFile, setIsDraggingFile] = useState(false)
+  const [allowedUserIds, setAllowedUserIds] = useState<UserIdentity[]>([])
+
+  useEffect(() => {
+    setAllowedUserIds((currentIds) =>
+      currentIds.filter((userId) => userId !== currentUserId),
+    )
+  }, [currentUserId])
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ''
 
     if (file) {
-      await onUploadDocument(file)
+      await onUploadDocument(file, allowedUserIds)
     }
   }
 
@@ -47,7 +58,7 @@ export function DocumentNav({
 
     const file = event.dataTransfer.files[0]
     if (file) {
-      await onUploadDocument(file)
+      await onUploadDocument(file, allowedUserIds)
     }
   }
 
@@ -121,6 +132,50 @@ export function DocumentNav({
           </span>
         </button>
 
+        <fieldset className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-2">
+          <legend className="px-1 text-[11px] font-medium text-slate-500">
+            Allow readers
+          </legend>
+          <div className="flex flex-wrap gap-1.5">
+            {userIdentities
+              .filter((userId) => userId !== currentUserId)
+              .map((userId) => {
+                const isSelected = allowedUserIds.includes(userId)
+
+                return (
+                  <label
+                    className={`cursor-pointer rounded-sm border px-2 py-1 text-[11px] font-medium capitalize transition ${
+                      isSelected
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                    }`}
+                    key={userId}
+                  >
+                    <input
+                      checked={isSelected}
+                      className="sr-only"
+                      onChange={() => {
+                        setAllowedUserIds((currentIds) =>
+                          isSelected
+                            ? currentIds.filter((id) => id !== userId)
+                            : [...currentIds, userId],
+                        )
+                      }}
+                      type="checkbox"
+                    />
+                    {userId}
+                  </label>
+                )
+              })}
+          </div>
+        </fieldset>
+
+        {documentActionError ? (
+          <p className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-2 text-[11px] text-rose-700">
+            {documentActionError}
+          </p>
+        ) : null}
+
         <div className="mt-3 grid min-h-0 gap-2 overflow-y-auto pr-1">
           {documents.map((document) => {
             const fileIcon = getDocumentIcon(document.type)
@@ -163,16 +218,18 @@ export function DocumentNav({
                     </span>
                   </span>
                 </button>
-                <button
-                  aria-label={`Delete ${document.title}`}
-                  className="grid size-7 cursor-pointer place-items-center rounded-md text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-wait disabled:opacity-50"
-                  disabled={deletingDocumentId === document.id}
-                  onClick={() => onDeleteDocument(document.id)}
-                  title="Delete document"
-                  type="button"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {document.ownerId === currentUserId ? (
+                  <button
+                    aria-label={`Delete ${document.title}`}
+                    className="grid size-7 cursor-pointer place-items-center rounded-md text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-wait disabled:opacity-50"
+                    disabled={deletingDocumentId === document.id}
+                    onClick={() => onDeleteDocument(document.id)}
+                    title="Delete document"
+                    type="button"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                ) : null}
               </div>
             )
           })}
@@ -181,6 +238,8 @@ export function DocumentNav({
     </aside>
   )
 }
+
+const userIdentities: UserIdentity[] = ['local-user', 'alice', 'bob', 'charlie']
 
 function getDocumentIcon(type: string): {
   icon: LucideIcon

@@ -14,6 +14,7 @@ using EnterpriseAiDocumentAssistant.Api.Options;
 using EnterpriseAiDocumentAssistant.Api.Planner;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Rag;
+using EnterpriseAiDocumentAssistant.Api.Security;
 using EnterpriseAiDocumentAssistant.Api.Services;
 using EnterpriseAiDocumentAssistant.Api.Skills;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
@@ -35,11 +36,17 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IApiStatusProvider, ApiStatusProvider>();
         services.AddSingleton<IWorkspaceDataProvider, WorkspaceDataProvider>();
         services.AddSingleton<IConversationMemoryBuilder, ConversationMemoryBuilder>();
+        services.AddHttpContextAccessor();
+        services.AddSingleton<ICurrentUserAccessor, HttpHeaderCurrentUserAccessor>();
         services.AddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
         services.AddSingleton<IDocumentChunker, SimpleDocumentChunker>();
 
         // Repository hides MongoDB from upload, workspace, skills, and tools.
-        services.AddSingleton<IDocumentRepository, MongoDocumentRepository>();
+        services.AddSingleton<MongoDocumentRepository>();
+        services.AddSingleton<IDocumentRepository>(serviceProvider =>
+            serviceProvider.GetRequiredService<MongoDocumentRepository>());
+        services.AddSingleton<IDocumentAccessPolicy>(serviceProvider =>
+            serviceProvider.GetRequiredService<MongoDocumentRepository>());
         services.AddSingleton<IConversationRepository, MongoConversationRepository>();
         services.AddSingleton<IDocumentUploadService, DocumentUploadService>();
         services.AddSingleton<IApplicationDocumentProvider, ApplicationDocumentProvider>();

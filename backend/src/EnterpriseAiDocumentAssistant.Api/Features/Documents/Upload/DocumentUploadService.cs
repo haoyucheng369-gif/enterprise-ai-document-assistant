@@ -2,6 +2,7 @@ using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.DocumentParsing;
 using EnterpriseAiDocumentAssistant.Api.Documents;
 using EnterpriseAiDocumentAssistant.Api.Rag;
+using EnterpriseAiDocumentAssistant.Api.Security;
 using EnterpriseAiDocumentAssistant.Api.Services;
 
 namespace EnterpriseAiDocumentAssistant.Api.DocumentUpload;
@@ -23,6 +24,7 @@ public sealed class DocumentUploadService : IDocumentUploadService
     private readonly IDocumentTextExtractor documentTextExtractor;
     private readonly IRagService ragService;
     private readonly ISystemClock systemClock;
+    private readonly ICurrentUserAccessor currentUserAccessor;
 
     public DocumentUploadService(
         IAuditLogger auditLogger,
@@ -30,7 +32,8 @@ public sealed class DocumentUploadService : IDocumentUploadService
         IDocumentRepository documentRepository,
         IDocumentTextExtractor documentTextExtractor,
         IRagService ragService,
-        ISystemClock systemClock)
+        ISystemClock systemClock,
+        ICurrentUserAccessor currentUserAccessor)
     {
         this.auditLogger = auditLogger;
         this.documentChunker = documentChunker;
@@ -38,11 +41,13 @@ public sealed class DocumentUploadService : IDocumentUploadService
         this.documentTextExtractor = documentTextExtractor;
         this.ragService = ragService;
         this.systemClock = systemClock;
+        this.currentUserAccessor = currentUserAccessor;
     }
 
     public async Task<DocumentUploadResult> UploadAsync(
         IFormFile? file,
         string? aiProvider,
+        IReadOnlyList<string>? allowedUserIds,
         CancellationToken cancellationToken)
     {
         // Step 1: validate the HTTP file before parsing or storing anything.
@@ -76,7 +81,9 @@ public sealed class DocumentUploadService : IDocumentUploadService
             systemClock.UtcNow.ToString("yyyy-MM-dd"),
             "Parsed",
             file.Length,
-            sections);
+            sections,
+            currentUserAccessor.UserId,
+            NormalizeAllowedUsers(allowedUserIds, currentUserAccessor.UserId));
 
         // Step 3: persist the parsed document so workspace and skills can read it after API restart.
         await documentRepository.SaveAsync(document, cancellationToken);
@@ -95,7 +102,8 @@ public sealed class DocumentUploadService : IDocumentUploadService
             {
                 ["documentId"] = document.Id,
                 ["fileName"] = file.FileName,
-                ["sizeBytes"] = file.Length.ToString()
+                ["sizeBytes"] = file.Length.ToString(),
+                ["ownerId"] = document.OwnerId
             }));
 
         return new DocumentUploadResult(true, document, null);
@@ -111,7 +119,10 @@ public sealed class DocumentUploadService : IDocumentUploadService
     {
         // Delete removes parsed metadata/chunks from MongoDB and clears provider-specific vector entries.
         var deleted = await documentRepository.DeleteAsync(documentId, cancellationToken);
-        await ragService.DeleteDocumentAsync(documentId, cancellationToken);
+        if (deleted)
+        {
+            await ragService.DeleteDocumentAsync(documentId, cancellationToken);
+        }
 
         auditLogger.Record(new AuditEventRequest(
             "document",
@@ -130,6 +141,18 @@ public sealed class DocumentUploadService : IDocumentUploadService
     private static DocumentUploadResult Failed(string error)
     {
         return new DocumentUploadResult(false, null, error);
+    }
+
+    private static IReadOnlyList<string> NormalizeAllowedUsers(
+        IReadOnlyList<string>? allowedUserIds,
+        string ownerId)
+    {
+        return allowedUserIds?
+            .Select(userId => userId.Trim().ToLowerInvariant())
+            .Where(userId => userId.Length > 0)
+            .Where(userId => !string.Equals(userId, ownerId, StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray() ?? [];
     }
 
     private async Task TryIndexDocumentForRagAsync(

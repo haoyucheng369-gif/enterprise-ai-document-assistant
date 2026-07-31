@@ -1,5 +1,6 @@
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Options;
+using EnterpriseAiDocumentAssistant.Api.Security;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
@@ -7,11 +8,14 @@ namespace EnterpriseAiDocumentAssistant.Api.Conversations;
 
 public sealed class MongoConversationRepository : IConversationRepository
 {
-    private const string DefaultWorkspaceId = "default";
     private readonly IMongoCollection<MongoConversationTurnRecord> conversationTurns;
+    private readonly ICurrentUserAccessor currentUserAccessor;
 
-    public MongoConversationRepository(IOptions<MongoDbOptions> options)
+    public MongoConversationRepository(
+        IOptions<MongoDbOptions> options,
+        ICurrentUserAccessor currentUserAccessor)
     {
+        this.currentUserAccessor = currentUserAccessor;
         var mongoOptions = options.Value;
         var client = new MongoClient(mongoOptions.ConnectionString);
         var database = client.GetDatabase(mongoOptions.DatabaseName);
@@ -31,7 +35,7 @@ public sealed class MongoConversationRepository : IConversationRepository
         var turn = new MongoConversationTurnRecord
         {
             Id = $"turn-{Guid.NewGuid():N}",
-            WorkspaceId = DefaultWorkspaceId,
+            WorkspaceId = currentUserAccessor.UserId,
             DocumentId = documentId,
             CreatedAtUtc = DateTime.UtcNow,
             UserMessage = ToRecord(userMessage),
@@ -50,7 +54,7 @@ public sealed class MongoConversationRepository : IConversationRepository
 
         // Query newest turns efficiently, then restore chronological order for the chat UI.
         var turns = conversationTurns
-            .Find(turn => turn.WorkspaceId == DefaultWorkspaceId)
+            .Find(turn => turn.WorkspaceId == currentUserAccessor.UserId)
             .SortByDescending(turn => turn.CreatedAtUtc)
             .Limit(turnLimit)
             .ToList();
@@ -96,7 +100,7 @@ public sealed class MongoConversationRepository : IConversationRepository
             message.Role,
             message.Content,
             message.Confidence,
-            message.Citations,
-            message.SuggestedActions);
+            message.Citations ?? [],
+            message.SuggestedActions ?? []);
     }
 }

@@ -43,7 +43,8 @@ public sealed class RagService : IRagService
             document.Type,
             document.UpdatedAt,
             document.Status,
-            sections);
+            sections,
+            document.OwnerId);
 
         return IndexDocumentAsync(documentItem, providerOverride, cancellationToken);
     }
@@ -113,7 +114,8 @@ public sealed class RagService : IRagService
             document.Status,
             document.Sections
                 .Select(section => new DocumentSectionResponse(section.Label, section.Title, section.Body))
-                .ToArray());
+                .ToArray(),
+            document.OwnerId);
     }
 
     private async Task EnsureIndexedAsync(

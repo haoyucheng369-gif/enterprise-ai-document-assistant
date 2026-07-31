@@ -16,9 +16,11 @@ import type {
   DocumentReviewWorkflowResponse,
   Message,
   ResumeReviewSkillResponse,
+  UserIdentity,
 } from './types'
 
 const aiProviderStorageKey = 'enterprise-ai-document-assistant.aiProvider'
+const currentUserStorageKey = 'enterprise-ai-document-assistant.currentUser'
 
 function getStoredAiProvider(): AiProviderSelection {
   const storedProvider = localStorage.getItem(aiProviderStorageKey)
@@ -34,8 +36,20 @@ function getStoredAiProvider(): AiProviderSelection {
   return 'OpenAI'
 }
 
+function getStoredCurrentUser(): UserIdentity {
+  const storedUser = localStorage.getItem(currentUserStorageKey)
+  return storedUser === 'local-user'
+    || storedUser === 'alice'
+    || storedUser === 'bob'
+    || storedUser === 'charlie'
+    ? storedUser
+    : 'local-user'
+}
+
 function App() {
-  const workspace = useWorkspaceData()
+  const [currentUserId, setCurrentUserId] =
+    useState<UserIdentity>(getStoredCurrentUser)
+  const workspace = useWorkspaceData(currentUserId)
   const [messages, setMessages] = useState<Message[]>([])
   const [latestAssistantCitations, setLatestAssistantCitations] =
     useState<Citation[]>([])
@@ -44,6 +58,7 @@ function App() {
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null)
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'failed'>('idle')
   const [deletingDocumentId, setDeletingDocumentId] = useState<string | null>(null)
+  const [documentActionError, setDocumentActionError] = useState<string | null>(null)
   const [workflowState, setWorkflowState] = useState<'idle' | 'running' | 'failed'>('idle')
   const [workflowResult, setWorkflowResult] =
     useState<DocumentReviewWorkflowResponse | null>(null)
@@ -70,6 +85,20 @@ function App() {
     // Persist the last selected provider so repeated local testing does not require re-selecting it.
     localStorage.setItem(aiProviderStorageKey, aiProvider)
   }, [aiProvider])
+
+  useEffect(() => {
+    // The selected local identity controls every API request and survives a browser refresh.
+    localStorage.setItem(currentUserStorageKey, currentUserId)
+    setMessages([])
+    setLatestAssistantCitations([])
+    setUploadedDocuments([])
+    setDeletedDocumentIds([])
+    setSelectedDocumentId(null)
+    setDocumentActionError(null)
+    setWorkflowResult(null)
+    setClassificationResult(null)
+    setReviewResult(null)
+  }, [currentUserId])
 
   useEffect(() => {
     setClassificationResult(null)
@@ -107,12 +136,21 @@ function App() {
     visibleDocuments.find((document) => document.id === selectedDocumentId)
     ?? visibleDocuments[0]
 
-  async function handleUploadDocument(file: File) {
+  async function handleUploadDocument(
+    file: File,
+    allowedUserIds: UserIdentity[],
+  ) {
     setUploadState('uploading')
+    setDocumentActionError(null)
 
     try {
       // Upload follows the same global provider as chat, skills, workflow, and RAG retrieval.
-      const uploadedDocument = await uploadDocument(file, aiProvider)
+      const uploadedDocument = await uploadDocument(
+        file,
+        aiProvider,
+        currentUserId,
+        allowedUserIds,
+      )
       const documentItem: DocumentItem = {
         id: uploadedDocument.id,
         title: uploadedDocument.title,
@@ -120,6 +158,7 @@ function App() {
         updatedAt: uploadedDocument.updatedAt,
         status: uploadedDocument.status,
         sections: uploadedDocument.sections,
+        ownerId: uploadedDocument.ownerId,
       }
 
       setUploadedDocuments((currentDocuments) => [
@@ -135,9 +174,10 @@ function App() {
 
   async function handleDeleteDocument(documentId: string) {
     setDeletingDocumentId(documentId)
+    setDocumentActionError(null)
 
     try {
-      await deleteDocument(documentId)
+      await deleteDocument(documentId, currentUserId)
 
       // Keep the current React workspace in sync without forcing a full workspace reload.
       const remainingDocuments = visibleDocuments.filter(
@@ -154,6 +194,10 @@ function App() {
       if (selectedDocument?.id === documentId) {
         setSelectedDocumentId(remainingDocuments[0]?.id ?? null)
       }
+    } catch (error) {
+      setDocumentActionError(
+        error instanceof Error ? error.message : 'Document delete failed.',
+      )
     } finally {
       setDeletingDocumentId(null)
     }
@@ -192,12 +236,15 @@ function App() {
     try {
       setMessages([...nextMessages, assistantMessage])
 
-      const response = await sendChatMessage({
-        message,
-        documentId: selectedDocument.id,
-        history: messages,
-        aiProvider,
-      })
+      const response = await sendChatMessage(
+        {
+          message,
+          documentId: selectedDocument.id,
+          history: messages,
+          aiProvider,
+        },
+        currentUserId,
+      )
 
       const structuredMessage = response.structuredMessage
       setLatestAssistantCitations(
@@ -255,12 +302,15 @@ function App() {
     setWorkflowResult(null)
 
     try {
-      const result = await runDocumentReviewWorkflow({
-        documentId: selectedDocument.id,
-        emailPurpose:
-          'Ask the vendor to clarify renewal, liability, and service credit terms.',
-        aiProvider,
-      })
+      const result = await runDocumentReviewWorkflow(
+        {
+          documentId: selectedDocument.id,
+          emailPurpose:
+            'Ask the vendor to clarify renewal, liability, and service credit terms.',
+          aiProvider,
+        },
+        currentUserId,
+      )
 
       setWorkflowResult(result)
       setWorkflowState('idle')
@@ -278,10 +328,13 @@ function App() {
     setClassificationResult(null)
 
     try {
-      const result = await classifyDocument({
-        documentId: selectedDocument.id,
-        aiProvider,
-      })
+      const result = await classifyDocument(
+        {
+          documentId: selectedDocument.id,
+          aiProvider,
+        },
+        currentUserId,
+      )
 
       setClassificationResult(result)
       setClassificationState('idle')
@@ -299,12 +352,15 @@ function App() {
     setReviewResult(null)
 
     try {
-      const result = await generateResumeReview({
-        documentId: selectedDocument.id,
-        instruction:
-          'Create a practical resume review brief that I can use with the original resume in ChatGPT.',
-        aiProvider,
-      })
+      const result = await generateResumeReview(
+        {
+          documentId: selectedDocument.id,
+          instruction:
+            'Create a practical resume review brief that I can use with the original resume in ChatGPT.',
+          aiProvider,
+        },
+        currentUserId,
+      )
 
       setReviewResult(result)
       setReviewState('idle')
@@ -316,7 +372,9 @@ function App() {
   return (
     <main className="grid h-screen overflow-hidden bg-slate-100 text-slate-900 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[288px_minmax(420px,1fr)_640px] 2xl:grid-cols-[300px_minmax(440px,1fr)_700px]">
       <DocumentNav
+        currentUserId={currentUserId}
         deletingDocumentId={deletingDocumentId}
+        documentActionError={documentActionError}
         documents={visibleDocuments}
         onDeleteDocument={handleDeleteDocument}
         onSelectDocument={setSelectedDocumentId}
@@ -348,9 +406,11 @@ function App() {
       )}
       <AssistantPanel
         aiProvider={aiProvider}
+        currentUserId={currentUserId}
         isSending={isSendingMessage}
         messages={messages}
         onSelectAiProvider={setAiProvider}
+        onSelectCurrentUser={setCurrentUserId}
         onSendMessage={handleSendMessage}
       />
     </main>

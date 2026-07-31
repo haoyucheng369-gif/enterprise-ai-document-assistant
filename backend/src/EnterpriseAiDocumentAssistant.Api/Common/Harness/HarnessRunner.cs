@@ -128,7 +128,7 @@ public sealed class HarnessRunner : IHarnessRunner
         await using var stream = new MemoryStream(
             "Harness contract for renewal terms, liability cap, service credits, and follow-up review."u8.ToArray());
         var file = new FormFile(stream, 0, stream.Length, "file", "harness-contract.txt");
-        var upload = await documentUploadService.UploadAsync(file, "Mock", cancellationToken);
+        var upload = await documentUploadService.UploadAsync(file, "Mock", [], cancellationToken);
 
         return upload.Document?.Id ?? string.Empty;
     }
@@ -415,7 +415,7 @@ public sealed class HarnessRunner : IHarnessRunner
     {
         await using var stream = new MemoryStream("sample content"u8.ToArray());
         var file = new FormFile(stream, 0, stream.Length, "file", "sample-contract.txt");
-        var result = await documentUploadService.UploadAsync(file, "Mock", cancellationToken);
+        var result = await documentUploadService.UploadAsync(file, "Mock", [], cancellationToken);
 
         var passed = result.Succeeded
             && result.Document is not null

@@ -9,13 +9,17 @@ public sealed record DocumentUploadResponse(
     string UpdatedAt,
     string Status,
     long SizeBytes,
-    IReadOnlyList<DocumentPreviewSection> Sections);
+    IReadOnlyList<DocumentPreviewSection> Sections,
+    string OwnerId,
+    IReadOnlyList<string> AllowedUserIds);
 
 public sealed class DocumentUploadForm
 {
     public IFormFile? File { get; init; }
 
     public string? AiProvider { get; init; }
+
+    public string? AllowedUserIds { get; init; }
 }
 
 public sealed record DocumentUploadResult(

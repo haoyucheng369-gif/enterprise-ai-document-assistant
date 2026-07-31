@@ -362,6 +362,7 @@ Current V1 progress:
 - `RagService` indexes uploaded document chunks, lazily rebuilds missing provider-specific indexes, retrieves top chunks, and returns citations from the matched chunks.
 - Normal assistant chat uses retrieved RAG context before calling the selected chat model.
 - Weak retrieval results are rejected by a configurable similarity threshold and return a controlled no-answer response.
+- MongoDB applies owner/reader ACL filters before a document can reach RAG retrieval.
 
 ---
 
@@ -382,6 +383,14 @@ Expected outcome:
 - The assistant can explain why a user can or cannot access a document.
 - Expensive or sensitive endpoints have a controlled request boundary.
 - Grounded-answer behavior is explicit instead of relying on the model alone.
+
+Current implementation:
+
+- `X-User-Id` provides a local current-user adapter that can later be replaced by authenticated claims.
+- New documents store an owner and optional comma-separated reader ids.
+- React provides a global local-user selector and upload-time reader selection for direct ACL testing.
+- MongoDB filters workspace, Skill, Tool, and RAG document reads before content leaves the repository.
+- Owners can delete their documents; readers cannot delete them; denied chat access returns `403 ProblemDetails`.
 
 ---
 

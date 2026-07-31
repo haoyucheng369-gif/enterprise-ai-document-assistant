@@ -37,7 +37,7 @@ flowchart LR
 | AI application layer | Prompt orchestration, structured responses, input guardrails, validation, and provider routing |
 | Grounded assistance | Embeddings, semantic retrieval, Qdrant or in-memory vectors, similarity threshold, and source citations |
 | Controlled capabilities | Skills, document workflow, Agent Planner, Tool Gateway, native tool calling, and MCP exposure |
-| Persistence | MongoDB document records and conversation turns; Qdrant vector indexes |
+| Persistence and access | MongoDB document/conversation records, owner-reader ACL filtering, and Qdrant vector indexes |
 
 ## Request Flow
 
@@ -97,6 +97,8 @@ Local provider credentials belong in the Git-ignored file:
 backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
 ```
 
+For local ACL testing, requests may include `X-User-Id`; omitting it uses `local-user`. This header is a development identity adapter, not a replacement for authenticated claims in a deployed environment.
+
 Operational interfaces:
 
 - Swagger: `http://localhost:5221/swagger`
@@ -105,7 +107,7 @@ Operational interfaces:
 
 ## Direction
 
-The current application covers the main document-assistant flow from ingestion through retrieval, controlled execution, structured response, and persistence. The next focused additions are document-level permission filtering, concise observability, and a lightweight agent handoff.
+The current application covers the main document-assistant flow from ingestion through permission-filtered retrieval, controlled execution, structured response, and persistence. Remaining extensions are intentionally limited to concise observability and a lightweight agent handoff.
 
 Detailed design and implementation order:
 

@@ -3,22 +3,28 @@ import { useEffect, useRef, useState } from 'react'
 import type {
   AiProviderSelection,
   Message,
+  UserIdentity,
 } from '../../types'
 import { AiProviderSelector } from './AiProviderSelector'
+import { CurrentUserSelector } from './CurrentUserSelector'
 
 type AssistantPanelProps = {
   messages: Message[]
   aiProvider: AiProviderSelection
+  currentUserId: UserIdentity
   isSending: boolean
   onSelectAiProvider: (provider: AiProviderSelection) => void
+  onSelectCurrentUser: (userId: UserIdentity) => void
   onSendMessage: (message: string) => Promise<void>
 }
 
 export function AssistantPanel({
   messages,
   aiProvider,
+  currentUserId,
   isSending,
   onSelectAiProvider,
+  onSelectCurrentUser,
   onSendMessage,
 }: AssistantPanelProps) {
   const [draftMessage, setDraftMessage] = useState('')
@@ -83,10 +89,16 @@ export function AssistantPanel({
             </h2>
             <p className="mt-0.5 text-xs text-slate-500">Document context</p>
           </div>
-          <AiProviderSelector
-            onSelectProvider={onSelectAiProvider}
-            selectedProvider={aiProvider}
-          />
+          <div className="flex flex-wrap justify-end gap-2">
+            <CurrentUserSelector
+              onSelectUser={onSelectCurrentUser}
+              selectedUser={currentUserId}
+            />
+            <AiProviderSelector
+              onSelectProvider={onSelectAiProvider}
+              selectedProvider={aiProvider}
+            />
+          </div>
         </div>
 
         <div className="grid min-h-0 overflow-hidden">
@@ -101,37 +113,44 @@ export function AssistantPanel({
               className="flex min-h-0 flex-col gap-2 overflow-y-auto p-3"
               ref={messageListRef}
             >
-              {messages.map((message) => (
-                <div
-                  className={`rounded-md border p-3 ${
-                    message.role === 'assistant'
-                      ? 'border-indigo-100 bg-white'
-                      : 'border-blue-100 bg-blue-50'
-                  }`}
-                  key={message.id}
-                >
+              {messages.map((message) => {
+                // API contracts may return null optional arrays; normalize them before rendering.
+                const suggestedActions = Array.isArray(message.suggestedActions)
+                  ? message.suggestedActions.filter(
+                      (action): action is string =>
+                        typeof action === 'string' && action.trim().length > 0,
+                    )
+                  : []
+
+                return (
+                  <div
+                    className={`rounded-md border p-3 ${
+                      message.role === 'assistant'
+                        ? 'border-indigo-100 bg-white'
+                        : 'border-blue-100 bg-blue-50'
+                    }`}
+                    key={message.id}
+                  >
                   <span className="text-xs text-slate-500">
                     {message.role === 'assistant' ? 'Assistant' : 'You'}
                   </span>
                   <p className="mt-1 text-sm leading-6 text-slate-700">
                     {message.content.length > 0 ? message.content : 'Thinking...'}
                   </p>
-                  {message.role === 'assistant' && message.confidence !== undefined ? (
+                  {message.role === 'assistant' && message.confidence != null ? (
                     <p className="mt-2 text-xs font-medium text-slate-500">
                       Confidence: {message.confidence}
                     </p>
                   ) : null}
-                  {message.role === 'assistant' &&
-                  message.suggestedActions !== undefined &&
-                  message.suggestedActions.length > 0 ? (
+                  {message.role === 'assistant' && suggestedActions.length > 0 ? (
                     <div className="mt-3">
                       <p className="mb-1.5 text-xs text-slate-500">
-                        {usesChinese(message.suggestedActions)
+                        {usesChinese(suggestedActions)
                           ? '建议下一步'
                           : 'Suggested next steps'}
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {message.suggestedActions.map((action) => {
+                        {suggestedActions.map((action) => {
                           const userAction = toUserAction(action)
 
                           return (
@@ -149,8 +168,9 @@ export function AssistantPanel({
                       </div>
                     </div>
                   ) : null}
-                </div>
-              ))}
+                  </div>
+                )
+              })}
             </div>
 
             <form

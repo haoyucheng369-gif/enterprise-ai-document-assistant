@@ -1,24 +1,32 @@
 import { useEffect, useState } from 'react'
 import { getWorkspaceData } from '../api/workspaceApi'
 import type { DataConnectionState, WorkspaceResponse } from '../types'
+import type { UserIdentity } from '../types'
 
 type WorkspaceDataResult = {
   state: DataConnectionState
   data: WorkspaceResponse | null
 }
 
-export function useWorkspaceData(): WorkspaceDataResult {
-  const [result, setResult] = useState<WorkspaceDataResult>({
+type UserWorkspaceDataResult = WorkspaceDataResult & {
+  userId: UserIdentity
+}
+
+export function useWorkspaceData(userId: UserIdentity): WorkspaceDataResult {
+  const [result, setResult] = useState<UserWorkspaceDataResult>({
+    userId,
     state: 'loading',
     data: null,
   })
 
   useEffect(() => {
     const abortController = new AbortController()
+    setResult({ userId, state: 'loading', data: null })
 
-    getWorkspaceData(abortController.signal)
+    getWorkspaceData(userId, abortController.signal)
       .then((data) => {
         setResult({
+          userId,
           state: 'loaded',
           data,
         })
@@ -29,6 +37,7 @@ export function useWorkspaceData(): WorkspaceDataResult {
         }
 
         setResult({
+          userId,
           state: 'unavailable',
           data: null,
         })
@@ -37,7 +46,10 @@ export function useWorkspaceData(): WorkspaceDataResult {
     return () => {
       abortController.abort()
     }
-  }, [])
+  }, [userId])
 
-  return result
+  // Never expose the previous user's workspace during the render before the reload effect runs.
+  return result.userId === userId
+    ? result
+    : { state: 'loading', data: null }
 }

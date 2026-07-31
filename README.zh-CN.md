@@ -37,7 +37,7 @@ flowchart LR
 | AI 应用层 | Prompt 编排、结构化输出、输入安全检查、结果校验和模型路由 |
 | 可信问答 | Embedding、语义检索、Qdrant 或内存向量、相似度阈值和来源引用 |
 | 受控能力 | Skills、文档工作流、Agent Planner、Tool Gateway、Tool Calling 和 MCP |
-| 持久化 | MongoDB 文档与对话记录、Qdrant 向量索引 |
+| 持久化与权限 | MongoDB 文档和对话记录、Owner/Reader ACL 过滤、Qdrant 向量索引 |
 
 ## 请求主线
 
@@ -97,6 +97,8 @@ npm run dev
 backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
 ```
 
+本地 ACL 测试可以通过 `X-User-Id` 指定用户；不传时使用 `local-user`。这个 Header 只是开发环境身份适配器，部署时应替换为认证后的用户 Claims。
+
 常用入口：
 
 - Swagger：`http://localhost:5221/swagger`
@@ -105,7 +107,7 @@ backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
 
 ## 后续方向
 
-当前应用已经覆盖从文档接入、检索、受控能力执行、结构化回答到持久化的完整主线。下一阶段集中补充文档级权限过滤、精简的可观测性和轻量 Agent 交接。
+当前应用已经覆盖从文档接入、权限过滤检索、受控能力执行、结构化回答到持久化的完整主线。后续扩展只保留精简的可观测性和轻量 Agent 交接。
 
 详细设计与实现顺序：
 

@@ -423,6 +423,7 @@ Storage boundaries:
 Current implementation:
 
 - MongoDB stores uploaded document metadata, parsed sections, and complete validated conversation turns
+- Document records carry an owner and allowed-reader ACL that MongoDB applies before RAG, Skill, or Tool access
 - Qdrant stores persistent embedding vectors used by semantic retrieval
 - In-memory audit and vector implementations remain available behind interfaces where useful
 - Uploaded source files, workflow records, and audit events are not persisted yet

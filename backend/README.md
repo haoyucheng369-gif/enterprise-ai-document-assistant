@@ -24,6 +24,7 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Summary, risk analysis, email draft, and classification skills
 - Conversation memory from recent chat history
 - MongoDB persistence for complete validated conversation turns
+- Owner/reader document ACL filtering through the `X-User-Id` local identity adapter
 - Simple agent planner
 - In-memory audit trail
 - Mock AI Gateway
