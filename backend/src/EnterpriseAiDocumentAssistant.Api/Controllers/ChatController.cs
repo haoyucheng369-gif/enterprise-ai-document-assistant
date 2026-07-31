@@ -4,13 +4,16 @@ using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.Chat;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Conversations;
+using EnterpriseAiDocumentAssistant.Api.RateLimiting;
 using EnterpriseAiDocumentAssistant.Api.Security;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseAiDocumentAssistant.Api.Controllers;
 
 [ApiController]
 [Route("api/chat")]
+[EnableRateLimiting(AiRateLimitPolicy.Name)]
 public sealed class ChatController : ControllerBase
 {
     private readonly IChatOrchestrationService chatOrchestrationService;

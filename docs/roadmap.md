@@ -391,6 +391,8 @@ Current implementation:
 - React provides a global local-user selector and upload-time reader selection for direct ACL testing.
 - MongoDB filters workspace, Skill, Tool, and RAG document reads before content leaves the repository.
 - Owners can delete their documents; readers cannot delete them; denied chat access returns `403 ProblemDetails`.
+- Chat, Skill, Workflow, Planner, and upload endpoints share a per-user fixed-window limit of 10 requests per minute.
+- Rejected requests return `429 ProblemDetails` before planner, retrieval, tool, or model execution.
 
 ---
 

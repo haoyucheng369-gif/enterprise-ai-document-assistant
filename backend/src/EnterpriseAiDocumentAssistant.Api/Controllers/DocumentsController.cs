@@ -1,5 +1,7 @@
 using EnterpriseAiDocumentAssistant.Api.DocumentUpload;
+using EnterpriseAiDocumentAssistant.Api.RateLimiting;
 using EnterpriseAiDocumentAssistant.Api.Security;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseAiDocumentAssistant.Api.Controllers;
@@ -20,6 +22,7 @@ public sealed class DocumentsController : ControllerBase
     }
 
     [HttpPost("upload")]
+    [EnableRateLimiting(AiRateLimitPolicy.Name)]
     [Consumes("multipart/form-data")]
     [ProducesResponseType<DocumentUploadResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]

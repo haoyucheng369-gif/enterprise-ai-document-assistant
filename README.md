@@ -37,7 +37,7 @@ flowchart LR
 | AI application layer | Prompt orchestration, structured responses, input guardrails, validation, and provider routing |
 | Grounded assistance | Embeddings, semantic retrieval, Qdrant or in-memory vectors, similarity threshold, and source citations |
 | Controlled capabilities | Skills, document workflow, Agent Planner, Tool Gateway, native tool calling, and MCP exposure |
-| Persistence and access | MongoDB document/conversation records, owner-reader ACL filtering, and Qdrant vector indexes |
+| Persistence and access | MongoDB records, owner-reader ACL filtering, per-user AI rate limiting, and Qdrant vector indexes |
 
 ## Request Flow
 

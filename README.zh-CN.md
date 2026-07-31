@@ -37,7 +37,7 @@ flowchart LR
 | AI 应用层 | Prompt 编排、结构化输出、输入安全检查、结果校验和模型路由 |
 | 可信问答 | Embedding、语义检索、Qdrant 或内存向量、相似度阈值和来源引用 |
 | 受控能力 | Skills、文档工作流、Agent Planner、Tool Gateway、Tool Calling 和 MCP |
-| 持久化与权限 | MongoDB 文档和对话记录、Owner/Reader ACL 过滤、Qdrant 向量索引 |
+| 持久化与权限 | MongoDB 记录、Owner/Reader ACL 过滤、按用户的 AI 限流、Qdrant 向量索引 |
 
 ## 请求主线
 

@@ -1,9 +1,12 @@
 using EnterpriseAiDocumentAssistant.Api.Options;
 using EnterpriseAiDocumentAssistant.Api.Extensions;
+using EnterpriseAiDocumentAssistant.Api.RateLimiting;
+using EnterpriseAiDocumentAssistant.Api.Security;
 using EnterpriseAiDocumentAssistant.Api.Swagger;
 using Grpc.Core;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +39,32 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Partition by the current local identity so one user cannot consume every user's allowance.
+    options.AddPolicy(AiRateLimitPolicy.Name, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.RequestServices.GetRequiredService<ICurrentUserAccessor>().UserId,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = AiRateLimitPolicy.PermitLimit,
+                Window = AiRateLimitPolicy.Window,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        await context.HttpContext.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "RateLimitExceeded",
+            Detail = "Too many AI requests. Try again after the current rate-limit window."
+        }, cancellationToken);
+    };
+});
 builder.Services.AddSwaggerGen(options =>
 {
     options.OperationFilter<ToolExecuteExampleOperationFilter>();
@@ -98,6 +127,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors(FrontendOptions.CorsPolicyName);
+app.UseRateLimiter();
 app.UseAuthorization();
 
 // Health checks and controller routes are the public HTTP surface for this API.

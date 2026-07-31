@@ -1,12 +1,15 @@
 using System.Diagnostics;
 using EnterpriseAiDocumentAssistant.Api.Audit;
+using EnterpriseAiDocumentAssistant.Api.RateLimiting;
 using EnterpriseAiDocumentAssistant.Api.Skills;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseAiDocumentAssistant.Api.Controllers;
 
 [ApiController]
 [Route("api/skills")]
+[EnableRateLimiting(AiRateLimitPolicy.Name)]
 public sealed class SkillsController : ControllerBase
 {
     private readonly ISummarySkill summarySkill;

@@ -1,10 +1,13 @@
+using EnterpriseAiDocumentAssistant.Api.RateLimiting;
 using EnterpriseAiDocumentAssistant.Api.Workflows;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseAiDocumentAssistant.Api.Controllers;
 
 [ApiController]
 [Route("api/workflows")]
+[EnableRateLimiting(AiRateLimitPolicy.Name)]
 public sealed class WorkflowsController : ControllerBase
 {
     private readonly IDocumentReviewWorkflow documentReviewWorkflow;

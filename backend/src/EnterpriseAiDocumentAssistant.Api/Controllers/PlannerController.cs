@@ -1,10 +1,13 @@
 using EnterpriseAiDocumentAssistant.Api.Planner;
+using EnterpriseAiDocumentAssistant.Api.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EnterpriseAiDocumentAssistant.Api.Controllers;
 
 [ApiController]
 [Route("api/planner")]
+[EnableRateLimiting(AiRateLimitPolicy.Name)]
 public sealed class PlannerController : ControllerBase
 {
     private readonly IAgentPlanner agentPlanner;
