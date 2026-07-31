@@ -71,6 +71,38 @@ public sealed class OpenAiGateway : IAiGateway
         }
     }
 
+    public async Task<ToolCallDecision?> SelectToolAsync(
+        ToolSelectionModelRequest request,
+        CancellationToken cancellationToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var provider = ResolveProvider(request.ProviderOverride);
+
+        try
+        {
+            // Native tool selection sends function schemas to the provider without executing application code.
+            EnsureConfigured(provider);
+            using var httpRequest = OpenAiToolCallingProtocol.BuildRequest(options, request, provider);
+            using var response = await httpClient.SendAsync(httpRequest, cancellationToken);
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new InvalidOperationException(
+                    $"AI provider tool selection failed with {(int)response.StatusCode}.");
+            }
+
+            var decision = OpenAiToolCallingProtocol.ParseResponse(responseJson);
+            RecordAudit(provider, true, stopwatch.ElapsedMilliseconds, null, null);
+            return decision;
+        }
+        catch
+        {
+            RecordAudit(provider, false, stopwatch.ElapsedMilliseconds, null, null);
+            throw;
+        }
+    }
+
     public IEnumerable<string> BuildResponseChunks(StructuredAssistantMessage message)
     {
         yield return message.Answer;

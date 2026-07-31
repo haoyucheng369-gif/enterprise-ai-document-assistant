@@ -1,10 +1,9 @@
-using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.Planner;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
 using EnterpriseAiDocumentAssistant.Api.Services;
 using EnterpriseAiDocumentAssistant.Api.Skills;
-using EnterpriseAiDocumentAssistant.Api.ToolGateway;
+using EnterpriseAiDocumentAssistant.Api.ToolCalling;
 using EnterpriseAiDocumentAssistant.Api.Workflows;
 
 namespace EnterpriseAiDocumentAssistant.Api.Chat;
@@ -17,7 +16,7 @@ public sealed class PlannedCapabilityExecutor : IPlannedCapabilityExecutor
     private readonly IEmailDraftSkill emailDraftSkill;
     private readonly IClassificationSkill classificationSkill;
     private readonly IResumeReviewSkill resumeReviewSkill;
-    private readonly IToolExecutor toolExecutor;
+    private readonly IToolCallingService toolCallingService;
     private readonly IDocumentReviewWorkflow documentReviewWorkflow;
 
     public PlannedCapabilityExecutor(
@@ -27,7 +26,7 @@ public sealed class PlannedCapabilityExecutor : IPlannedCapabilityExecutor
         IEmailDraftSkill emailDraftSkill,
         IClassificationSkill classificationSkill,
         IResumeReviewSkill resumeReviewSkill,
-        IToolExecutor toolExecutor,
+        IToolCallingService toolCallingService,
         IDocumentReviewWorkflow documentReviewWorkflow)
     {
         this.applicationDocumentProvider = applicationDocumentProvider;
@@ -36,7 +35,7 @@ public sealed class PlannedCapabilityExecutor : IPlannedCapabilityExecutor
         this.emailDraftSkill = emailDraftSkill;
         this.classificationSkill = classificationSkill;
         this.resumeReviewSkill = resumeReviewSkill;
-        this.toolExecutor = toolExecutor;
+        this.toolCallingService = toolCallingService;
         this.documentReviewWorkflow = documentReviewWorkflow;
     }
 
@@ -63,44 +62,14 @@ public sealed class PlannedCapabilityExecutor : IPlannedCapabilityExecutor
             "skills.resume-review" => ConvertResumeReviewToAssistantMessage(await resumeReviewSkill.RunAsync(
                 new ResumeReviewSkillRequest(plan.DocumentId, request.Message, request.AiProvider),
                 cancellationToken)),
-            "tools.execute" => await ExecuteToolPlanAsync(request, plan, cancellationToken),
+            "tools.execute" => await toolCallingService.ExecuteSingleToolCallAsync(
+                request,
+                cancellationToken),
             "workflows.document-review" => ConvertWorkflowToAssistantMessage(await documentReviewWorkflow.RunAsync(
                 new DocumentReviewWorkflowRequest(plan.DocumentId, "Prepare a concise follow-up email draft.", request.AiProvider),
                 cancellationToken), request),
             _ => null
         };
-    }
-
-    private async Task<StructuredAssistantMessage> ExecuteToolPlanAsync(
-        ChatRequest request,
-        AgentPlanResponse plan,
-        CancellationToken cancellationToken)
-    {
-        // Planner selects the tool capability; Tool Gateway still owns lookup, execution, errors, and audit.
-        var checksHealth = request.Message.Contains("health", StringComparison.OrdinalIgnoreCase)
-            || request.Message.Contains("健康", StringComparison.Ordinal);
-        var toolName = checksHealth ? "get_health_status" : "get_document_metadata";
-        var arguments = new Dictionary<string, JsonElement>();
-
-        if (!checksHealth)
-        {
-            arguments["documentId"] = JsonSerializer.SerializeToElement(plan.DocumentId);
-        }
-
-        var result = await toolExecutor.ExecuteAsync(
-            new ToolExecutionRequest(toolName, arguments),
-            cancellationToken);
-        var answer = result.Succeeded
-            ? string.Join(Environment.NewLine, result.Data.Select(item => $"{item.Key}: {item.Value}"))
-            : result.Error ?? "Tool execution failed.";
-
-        return new StructuredAssistantMessage(
-            answer,
-            result.Succeeded ? "high" : "low",
-            [],
-            EnterpriseAssistantPromptDefaults.PrefersChinese(request.Message)
-                ? ["继续询问文档内容"]
-                : ["Ask another document question"]);
     }
 
     public StructuredAssistantMessage AttachDocumentCitations(

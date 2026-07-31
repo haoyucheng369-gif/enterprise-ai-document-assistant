@@ -8,5 +8,9 @@ public interface IAiGateway
         ChatModelRequest request,
         CancellationToken cancellationToken);
 
+    Task<ToolCallDecision?> SelectToolAsync(
+        ToolSelectionModelRequest request,
+        CancellationToken cancellationToken);
+
     IEnumerable<string> BuildResponseChunks(StructuredAssistantMessage message);
 }

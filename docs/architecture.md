@@ -267,6 +267,18 @@ Configuration boundary:
 
 The Tool Gateway exposes controlled backend capabilities to the AI layer.
 
+For explicit tool requests, V1 uses a bounded single-turn loop:
+
+```text
+User request
+  -> model selects one registered read-only tool
+  -> Tool Gateway validates and executes it
+  -> tool result returns to the model
+  -> structured assistant response
+```
+
+The loop does not recurse and does not permit write tools, keeping execution predictable.
+
 Example tools:
 
 - Document search
@@ -338,9 +350,19 @@ Current endpoint:
 
 - `GET /api/harness`
 
-### Agent Planner
+### Intent Classification and Agent Planner
 
-The planner chooses from a few known paths instead of attempting open-ended autonomous planning. The current implementation uses AI intent routing first, then falls back to deterministic rules when the model is unavailable or returns an invalid route. RAG chat is the default; specialized skills require an explicit complete action such as summarizing the entire document or producing a resume review.
+Request routing has three explicit responsibilities:
+
+```text
+Intent Classifier -> Agent Planner -> Planned Capability Executor
+```
+
+- `RoutingIntentClassifier` classifies the request with AI first and deterministic rules as fallback.
+- `AgentPlanner` maps the intent to one controlled route and a known set of steps.
+- `PlannedCapabilityExecutor` executes the selected Skill, Workflow, Tool Calling path, or default RAG chat.
+
+This request intent classification is separate from `ClassificationSkill`, which classifies the selected document as a business task.
 
 Example plans:
 
@@ -352,10 +374,9 @@ Example plans:
 
 Responsibilities:
 
-- Intent classification
 - Plan selection
-- Skill and tool sequencing
-- Basic plan result formatting
+- Intent-to-route mapping
+- Known step and capability description
 
 Current endpoint:
 
@@ -418,13 +439,13 @@ Prompt Orchestration
    ↓
 Structured output and guardrails
    ↓
-Tool Gateway and/or Skill execution
-   ↓
-Conversation Memory
+Intent Classifier
    ↓
 Agent Planner
    ↓
-AI Gateway and/or RAG retrieval
+Planned Capability Executor
+   ↓
+Skill / Workflow / Tool Calling / RAG
    ↓
 Response formatting with citations and tool results
    ↓

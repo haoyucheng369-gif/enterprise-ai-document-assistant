@@ -14,9 +14,11 @@ ASP.NET Core Web API for Enterprise AI Document Assistant.
 - Prompt orchestration service for template variables and response rules
 - Structured assistant response contract and validation
 - Input Guardrails with rule-based safety classification, optional AI-backed safety classification, and deterministic fallback
-- Tool Gateway skeleton with tool listing and execution endpoints
+- Tool Gateway with tool listing and validated execution endpoints
 - `get_health_status` tool backed by the API status provider
 - `get_document_metadata` tool backed by workspace document data
+- Single-turn native tool calling with model selection, Tool Gateway execution, and model synthesis
+- Separate request Intent Classifier, Agent Planner, and capability executor
 - MCP-style tool listing and call endpoints
 - Prompt and tool harness checks
 - Summary, risk analysis, email draft, and classification skills

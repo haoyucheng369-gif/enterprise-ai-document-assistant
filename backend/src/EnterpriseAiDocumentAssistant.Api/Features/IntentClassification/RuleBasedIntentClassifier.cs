@@ -1,52 +1,22 @@
-using System.Diagnostics;
-using EnterpriseAiDocumentAssistant.Api.Audit;
+namespace EnterpriseAiDocumentAssistant.Api.IntentClassification;
 
-namespace EnterpriseAiDocumentAssistant.Api.Planner;
-
-public sealed class SimpleAgentPlanner : IAgentPlanner
+public sealed class RuleBasedIntentClassifier
 {
-    private readonly IAuditLogger auditLogger;
-
-    public SimpleAgentPlanner(IAuditLogger auditLogger)
+    public IntentClassificationResult Classify(IntentClassificationRequest request)
     {
-        this.auditLogger = auditLogger;
-    }
-
-    public AgentPlanResponse Plan(AgentPlanRequest request)
-    {
-        // Keyword routing is the deterministic backup for local runs and invalid AI planner output.
-        var stopwatch = Stopwatch.StartNew();
-        var plan = CreateFallbackPlan(request);
-
-        auditLogger.Record(new AuditEventRequest(
-            "planner",
-            "plan_created",
-            plan.Route,
-            true,
-            stopwatch.ElapsedMilliseconds,
-            new Dictionary<string, string>
-            {
-                ["intent"] = plan.Intent,
-                ["documentId"] = plan.DocumentId
-            }));
-
-        return plan;
-    }
-
-    public Task<AgentPlanResponse> PlanAsync(
-        AgentPlanRequest request,
-        CancellationToken cancellationToken)
-    {
-        return Task.FromResult(Plan(request));
-    }
-
-    private static AgentPlanResponse CreateFallbackPlan(AgentPlanRequest request)
-    {
-        // Route order matters: only explicit application actions select a specialized capability.
-        // Document facts, comparisons, calculations, and local questions intentionally fall through to RAG chat.
+        // Deterministic rules keep local runs usable when model classification is unavailable.
         var message = request.Message.Trim();
+        var intent = ClassifyMessage(message);
 
-        // Deterministic rules provide the fallback route when AI routing is unavailable or invalid.
+        return new IntentClassificationResult(
+            intent,
+            "Matched deterministic intent rules.",
+            "rules");
+    }
+
+    private static string ClassifyMessage(string message)
+    {
+        // Rule order matters: explicit application actions win; normal document questions use RAG chat.
         if (ContainsAny(
             message,
             "run full workflow",
@@ -56,7 +26,7 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
             "运行完整流程",
             "完整审查文档"))
         {
-            return AgentPlanCatalog.Create("workflows.document-review", request.DocumentId);
+            return "document_review_workflow";
         }
 
         if (ContainsAny(
@@ -70,7 +40,7 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
             "优化这份简历",
             "简历评审"))
         {
-            return AgentPlanCatalog.Create("skills.resume-review", request.DocumentId);
+            return "resume_review";
         }
 
         if (ContainsAny(
@@ -83,7 +53,7 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
             "文档分类",
             "判断文档类型"))
         {
-            return AgentPlanCatalog.Create("skills.classification", request.DocumentId);
+            return "classification";
         }
 
         if (ContainsAny(
@@ -97,7 +67,7 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
             "写一封邮件",
             "生成后续邮件"))
         {
-            return AgentPlanCatalog.Create("skills.email-draft", request.DocumentId);
+            return "email_draft";
         }
 
         if (ContainsAny(
@@ -112,7 +82,7 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
             "识别风险",
             "风险评估"))
         {
-            return AgentPlanCatalog.Create("skills.risk-analysis", request.DocumentId);
+            return "risk_analysis";
         }
 
         if (ContainsAny(
@@ -128,22 +98,23 @@ public sealed class SimpleAgentPlanner : IAgentPlanner
             "概括全文",
             "生成文档摘要"))
         {
-            return AgentPlanCatalog.Create("skills.summary", request.DocumentId);
+            return "summary";
         }
 
         if (ContainsAny(
             message,
             "check system health",
             "get document metadata",
+            "document metadata",
             "execute health status tool",
             "检查系统健康状态",
-            "获取文档元数据"))
+            "获取文档元数据",
+            "文档元数据"))
         {
-            return AgentPlanCatalog.Create("tools.execute", request.DocumentId);
+            return "tool_request";
         }
 
-        // RAG is the default document-assistant path, including factual questions and calculations.
-        return AgentPlanCatalog.Create("chat", request.DocumentId);
+        return "document_question";
     }
 
     private static bool ContainsAny(string value, params string[] keywords)

@@ -44,19 +44,33 @@ public sealed class ChatOrchestrationService : IChatOrchestrationService
         ChatRequest request,
         CancellationToken cancellationToken)
     {
-        // Main chat flow: guardrails -> explicit skill/workflow route -> default RAG answer -> output validation.
+        // Step 1: reject unsafe input before classification, retrieval, tools, or model execution.
         var guardrailResult = await TryBuildGuardrailResponseAsync(request, cancellationToken);
         if (guardrailResult is not null)
         {
             return guardrailResult;
         }
 
-        var plannedMessage = await TryBuildPlannedCapabilityMessageAsync(request, cancellationToken);
-        if (plannedMessage is not null)
+        // Step 2: classify the request and map the intent to one controlled application route.
+        var plan = await agentPlanner.PlanAsync(
+            new AgentPlanRequest(request.Message, request.DocumentId, request.AiProvider),
+            cancellationToken);
+
+        // Step 3: execute explicit Skill, Workflow, or Tool routes. The chat route continues to RAG below.
+        if (!string.Equals(plan.Route, "chat", StringComparison.OrdinalIgnoreCase))
         {
-            return Validate(plannedCapabilityExecutor.AttachDocumentCitations(request, plannedMessage));
+            var capabilityMessage = await plannedCapabilityExecutor.ExecutePlanAsync(
+                request,
+                plan,
+                cancellationToken);
+
+            if (capabilityMessage is not null)
+            {
+                return Validate(plannedCapabilityExecutor.AttachDocumentCitations(request, capabilityMessage));
+            }
         }
 
+        // Step 4: normal document questions use RAG, then every outgoing message is validated.
         var documentAnswer = await GenerateDocumentAnswerAsync(request, cancellationToken);
         return Validate(documentAnswer);
     }
@@ -80,21 +94,6 @@ public sealed class ChatOrchestrationService : IChatOrchestrationService
         }
 
         return null;
-    }
-
-    private async Task<StructuredAssistantMessage?> TryBuildPlannedCapabilityMessageAsync(
-        ChatRequest request,
-        CancellationToken cancellationToken)
-    {
-        // Only explicit application actions return a skill/workflow response; normal questions return null.
-        var plan = await agentPlanner.PlanAsync(
-            new AgentPlanRequest(request.Message, request.DocumentId, request.AiProvider),
-            cancellationToken);
-
-        return await plannedCapabilityExecutor.ExecutePlanAsync(
-            request,
-            plan,
-            cancellationToken);
     }
 
     private async Task<StructuredAssistantMessage> GenerateDocumentAnswerAsync(

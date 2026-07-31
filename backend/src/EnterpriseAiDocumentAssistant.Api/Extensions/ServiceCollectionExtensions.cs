@@ -8,6 +8,7 @@ using EnterpriseAiDocumentAssistant.Api.Documents;
 using EnterpriseAiDocumentAssistant.Api.Guardrails;
 using EnterpriseAiDocumentAssistant.Api.Harness;
 using EnterpriseAiDocumentAssistant.Api.Integrations.MicrosoftGraph;
+using EnterpriseAiDocumentAssistant.Api.IntentClassification;
 using EnterpriseAiDocumentAssistant.Api.Options;
 using EnterpriseAiDocumentAssistant.Api.Planner;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
@@ -17,6 +18,7 @@ using EnterpriseAiDocumentAssistant.Api.Skills;
 using EnterpriseAiDocumentAssistant.Api.StructuredOutput;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway;
 using EnterpriseAiDocumentAssistant.Api.ToolGateway.Tools;
+using EnterpriseAiDocumentAssistant.Api.ToolCalling;
 using EnterpriseAiDocumentAssistant.Api.Workflows;
 using Microsoft.Extensions.Options;
 
@@ -62,9 +64,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AiSafetyClassifier>();
         services.AddSingleton<ISafetyClassifier, RoutingSafetyClassifier>();
         services.AddSingleton<IChatGuardrailEvaluator, ChatGuardrailEvaluator>();
-        services.AddSingleton<SimpleAgentPlanner>();
-        services.AddSingleton<AiAgentPlanner>();
-        services.AddSingleton<IAgentPlanner, RoutingAgentPlanner>();
+        services.AddSingleton<RuleBasedIntentClassifier>();
+        services.AddSingleton<AiIntentClassifier>();
+        services.AddSingleton<IIntentClassifier, RoutingIntentClassifier>();
+        services.AddSingleton<IAgentPlanner, AgentPlanner>();
         services.AddSingleton<IDocumentReviewWorkflow, DocumentReviewWorkflow>();
         services.AddSingleton<IMicrosoftGraphGateway, MockMicrosoftGraphGateway>();
         services.AddSingleton<IHarnessRunner, HarnessRunner>();
@@ -79,6 +82,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ITool, GetDocumentMetadataTool>();
         services.AddSingleton<IToolRegistry, InMemoryToolRegistry>();
         services.AddSingleton<IToolExecutor, ToolExecutor>();
+        services.AddSingleton<IToolCallingService, SingleTurnToolCallingService>();
 
         return services;
     }

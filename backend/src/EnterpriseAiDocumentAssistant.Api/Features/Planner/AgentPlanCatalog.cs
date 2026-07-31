@@ -2,21 +2,39 @@ namespace EnterpriseAiDocumentAssistant.Api.Planner;
 
 internal static class AgentPlanCatalog
 {
-    public static readonly IReadOnlyList<string> Routes =
+    public static readonly IReadOnlyList<string> Intents =
     [
-        "chat",
-        "skills.summary",
-        "skills.risk-analysis",
-        "skills.email-draft",
-        "skills.classification",
-        "skills.resume-review",
-        "tools.execute",
-        "workflows.document-review"
+        "document_question",
+        "summary",
+        "risk_analysis",
+        "email_draft",
+        "classification",
+        "resume_review",
+        "tool_request",
+        "document_review_workflow"
     ];
 
-    public static bool IsKnownRoute(string route)
+    public static bool IsKnownIntent(string intent)
     {
-        return Routes.Contains(route, StringComparer.OrdinalIgnoreCase);
+        return Intents.Contains(intent, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public static AgentPlanResponse CreateFromIntent(string intent, string? documentId)
+    {
+        // Planner owns the stable mapping from classified business intent to executable route.
+        var route = intent.Trim().ToLowerInvariant() switch
+        {
+            "document_review_workflow" => "workflows.document-review",
+            "resume_review" => "skills.resume-review",
+            "classification" => "skills.classification",
+            "email_draft" => "skills.email-draft",
+            "risk_analysis" => "skills.risk-analysis",
+            "summary" => "skills.summary",
+            "tool_request" => "tools.execute",
+            _ => "chat"
+        };
+
+        return Create(route, documentId);
     }
 
     public static AgentPlanResponse Create(string route, string? documentId)
@@ -64,7 +82,7 @@ internal static class AgentPlanCatalog
                 ["Read selected document", "Extract key points", "Return structured summary"],
                 ["SummarySkill"]),
             "tools.execute" => new AgentPlanResponse(
-                "tool_lookup",
+                "tool_request",
                 "tools.execute",
                 normalizedDocumentId,
                 ["Select registered tool", "Validate arguments", "Execute through Tool Gateway"],

@@ -1,8 +1,8 @@
 # Enterprise AI Document Assistant
 
-一个面向企业应用场景的 React + ASP.NET Core AI 文档助手，用来串起现代 AI 应用里的核心模块：Assistant UI、Prompt Orchestration、AI Gateway、文档解析、结构化输出、Safety Classifier、Tool Gateway、MCP、Skills、Workflow、Planner、MongoDB 持久化，以及后续 RAG 检索。
+一个面向企业应用场景的 React + ASP.NET Core AI 文档助手，用来串起现代 AI 应用里的核心模块：Assistant UI、Prompt Orchestration、AI Gateway、文档解析、结构化输出、Safety Classifier、Tool Gateway、MCP、Skills、Workflow、Planner、MongoDB，以及基于 Qdrant 的 RAG 检索。
 
-V1 保持小而完整：先跑通一条端到端文档助手主线，再逐步加入检索、向量搜索和权限控制。
+V1 保持小而完整：端到端文档问答和向量检索主线已经跑通，后续只补持久化、基础权限和轻量运行保障。
 
 ---
 
@@ -23,12 +23,15 @@ flowchart LR
 
     subgraph backend[Backend]
         api --> safety[Safety Classifier + Guardrails]
-        safety --> planner[Agent Planner]
+        safety --> intent[Intent Classifier]
+        intent --> planner[Agent Planner]
         planner --> skills[Skills]
         planner --> workflows[Workflow]
         api --> gateway[AI Gateway]
         api --> tools[Tool Gateway]
         api --> mongo[MongoDB]
+        api --> rag[RAG]
+        rag --> vectors[Qdrant / In-memory Vector Store]
     end
 
     subgraph extensions[Extension Points]
@@ -56,29 +59,27 @@ flowchart LR
 - [x] Skills：classification、summary、risk analysis、email draft、resume review
 - [x] Workflow：summary -> risk analysis -> email draft
 - [x] Tool Gateway：health 和 document metadata tools
+- [x] 单轮原生 Tool Calling：模型选择 -> Tool Gateway 校验执行 -> 模型生成最终回答
 - [x] MCP surface：暴露已注册 tools
-- [x] Agent Planner：AI routing + deterministic fallback
+- [x] Intent Classifier、Agent Planner、Executor 职责拆分：AI 分类 + 规则 fallback
 - [x] Microsoft Graph adapter mock
 - [x] In-memory audit logging
 - [x] Harness checks
+- [x] RAG：embedding、语义检索、引用和 no-answer threshold
+- [x] Qdrant 向量持久化与 in-memory 替代实现
 
 ### 下一步主线
 
-- [ ] Embeddings
-- [ ] Vector Search
-- [ ] RAG Answer with Citations
-- [ ] No-answer Guardrail
-- [ ] Basic Document Permission Filtering
+- [ ] MongoDB 对话持久化
+- [ ] 基础文档权限过滤
+- [ ] 简单 Agent Orchestration / A2A
+- [ ] 轻量限流、日志和成本记录
 
 ### 轻量增强
 
-- [ ] Conversation / workflow / audit persistence
-- [ ] Rate limiting
-- [ ] Observability and cost tracking
 - [ ] Prompt versioning
 - [ ] Sensitive data redaction
 - [ ] Expanded harness checks
-- [ ] Simple Agent Orchestration / A2A handoff
 
 ---
 
@@ -90,8 +91,9 @@ User message
   -> ASP.NET Core /api/chat
   -> Safety Classifier
   -> Guardrails
+  -> Intent Classifier
   -> Agent Planner
-  -> Skill / Workflow / normal chat
+  -> Skill / Workflow / Tool Calling / RAG chat
   -> AI Gateway
   -> Structured Output Validation
   -> React UI

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using EnterpriseAiDocumentAssistant.Api.Audit;
 using EnterpriseAiDocumentAssistant.Api.Contracts;
 using EnterpriseAiDocumentAssistant.Api.PromptOrchestration;
@@ -59,6 +60,33 @@ public sealed class MockAiGateway : IAiGateway
         {
             yield return $" Suggested action: {message.SuggestedActions[0]}";
         }
+    }
+
+    public Task<ToolCallDecision?> SelectToolAsync(
+        ToolSelectionModelRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Local mode mirrors model-driven selection with deterministic choices for debugging.
+        var toolName = request.UserMessage.Contains("health", StringComparison.OrdinalIgnoreCase)
+            || request.UserMessage.Contains("健康", StringComparison.Ordinal)
+                ? "get_health_status"
+                : "get_document_metadata";
+        var definition = request.Tools.FirstOrDefault(tool =>
+            string.Equals(tool.Name, toolName, StringComparison.OrdinalIgnoreCase));
+
+        if (definition is null)
+        {
+            return Task.FromResult<ToolCallDecision?>(null);
+        }
+
+        var arguments = new Dictionary<string, JsonElement>();
+        if (string.Equals(toolName, "get_document_metadata", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(request.DocumentId))
+        {
+            arguments["documentId"] = JsonSerializer.SerializeToElement(request.DocumentId);
+        }
+
+        return Task.FromResult<ToolCallDecision?>(new ToolCallDecision(toolName, arguments));
     }
 
     private static StructuredAssistantMessage BuildMockStructuredResponse(OrchestratedPrompt prompt)

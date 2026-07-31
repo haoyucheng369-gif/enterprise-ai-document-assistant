@@ -25,11 +25,13 @@ flowchart LR
         api --> gateway[AI Gateway]
         api --> tools[Tool Gateway]
         api --> workflows[Workflow API]
+        api --> intent[Intent Classifier]
+        intent --> planner[Agent Planner]
+        planner --> workflows
         gateway --> prompts[Prompt Orchestration]
         api --> rag[RAG Retrieval]
         rag --> embeddings[Embedding Gateway]
         rag --> vectors[Qdrant / In-memory Vector Store]
-        workflows --> planner[AI Planner + Fallback]
     end
 
     subgraph ai[AI + Extension Points]
@@ -90,9 +92,10 @@ sequenceDiagram
 - [x] Skills: classification, summary, risk analysis, email draft, and resume review
 - [x] Workflow: document summary -> risk analysis -> email draft
 - [x] Tool Gateway with health and document metadata tools
+- [x] Single-turn LLM-native tool calling: model selection -> validated Tool Gateway execution -> model response
 - [x] MCP controller surface over registered tools
 - [x] In-memory audit logging
-- [x] AI intent routing through Agent Planner with deterministic fallback
+- [x] Separate Intent Classifier, Agent Planner, and capability executor with AI classification and deterministic fallback
 - [x] MongoDB document persistence for uploaded document metadata and parsed sections
 - [x] Input Guardrails with rule-based safety classification, optional AI-backed safety classification, and deterministic fallback
 - [x] RAG baseline with embedding gateway, configurable in-memory/Qdrant vector store, semantic retrieval, and retrieved chunk citations
@@ -107,7 +110,6 @@ sequenceDiagram
 ### Not Built Yet
 
 - [ ] MongoDB persistence for conversation, workflow, and audit storage
-- [ ] LLM-native function/tool calling loop
 - [ ] Real Microsoft Graph OAuth integration
 - [ ] Basic document permission filtering
 

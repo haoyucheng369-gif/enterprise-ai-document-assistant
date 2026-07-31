@@ -34,6 +34,19 @@ public sealed class RoutingAiGateway : IAiGateway
             : mockAiGateway.GenerateChatResponseAsync(routedRequest, cancellationToken);
     }
 
+    public Task<ToolCallDecision?> SelectToolAsync(
+        ToolSelectionModelRequest request,
+        CancellationToken cancellationToken)
+    {
+        // Tool selection follows the same provider switch as chat and embeddings.
+        var provider = ResolveProvider(request.ProviderOverride);
+        var routedRequest = request with { ProviderOverride = provider };
+
+        return IsRealProvider(provider)
+            ? openAiGateway.SelectToolAsync(routedRequest, cancellationToken)
+            : mockAiGateway.SelectToolAsync(routedRequest, cancellationToken);
+    }
+
     public IEnumerable<string> BuildResponseChunks(StructuredAssistantMessage message)
     {
         // Current streaming is a lightweight UI simulation over a complete structured message.

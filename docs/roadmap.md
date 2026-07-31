@@ -119,11 +119,13 @@ Scope:
 - `GetHealthStatusTool`
 - `GetDocumentMetadataTool`
 - Tool result formatting for assistant responses
+- Single-turn native function calling for explicit read-only tool requests
 
 Expected outcome:
 
 - The assistant can use simple backend tools safely.
 - Tool results can be shown in the UI and reused by later planner or workflow steps.
+- The selected model can choose one registered tool, then receive its result for the final answer.
 
 ---
 
@@ -409,16 +411,16 @@ Objective: route user requests to the right application path before introducing 
 
 Scope:
 
-- Classify user intent into known routes such as answer, summarize, classify, extract, risk analysis, email draft, tool lookup, or workflow
-- Use `AiAgentPlanner` first when a real provider is available
-- Fall back to deterministic rules in `SimpleAgentPlanner`
-- Keep the route output structured and easy to validate
+- Classify user intent into known types such as document question, summary, classification, risk analysis, email draft, tool request, or workflow
+- Use `AiIntentClassifier` first when a real provider is available
+- Fall back to deterministic rules in `RuleBasedIntentClassifier`
+- Let `AgentPlanner` map the classified intent to a controlled route and known steps
 
 Current V1 progress:
 
-- `RoutingAgentPlanner` tries AI-based intent routing first, then falls back to `SimpleAgentPlanner`.
-- `SimpleAgentPlanner` routes explicit application actions to known skills and defaults document facts, comparisons, and calculations to RAG chat.
-- `ChatController` uses the selected route to execute the matching skill or workflow when the intent is clear.
+- `RoutingIntentClassifier` tries AI classification first, then falls back to `RuleBasedIntentClassifier`.
+- `AgentPlanner` converts the classified intent into a route without executing business capabilities.
+- `PlannedCapabilityExecutor` executes the selected skill, workflow, tool path, or default RAG chat.
 
 Expected outcome:
 
