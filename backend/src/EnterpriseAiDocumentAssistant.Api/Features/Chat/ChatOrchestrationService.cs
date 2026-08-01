@@ -57,7 +57,7 @@ public sealed class ChatOrchestrationService : IChatOrchestrationService
             cancellationToken);
 
         // Step 3: execute explicit Skill, Workflow, or Tool routes. The chat route continues to RAG below.
-        if (!string.Equals(plan.Route, "chat", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(plan.Route, AgentPlanRoutes.Chat, StringComparison.OrdinalIgnoreCase))
         {
             var capabilityMessage = await plannedCapabilityExecutor.ExecutePlanAsync(
                 request,

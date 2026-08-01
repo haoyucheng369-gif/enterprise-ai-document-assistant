@@ -4,6 +4,11 @@ public interface IEmailDraftSkill
 {
     EmailDraftSkillResponse? Run(EmailDraftSkillRequest request);
 
+    EmailDraftSkillResponse? Run(
+        EmailDraftSkillRequest request,
+        SummarySkillResponse summary,
+        RiskAnalysisSkillResponse riskAnalysis);
+
     Task<EmailDraftSkillResponse?> RunAsync(
         EmailDraftSkillRequest request,
         CancellationToken cancellationToken);

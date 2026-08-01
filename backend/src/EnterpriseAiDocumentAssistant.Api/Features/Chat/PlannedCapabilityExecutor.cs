@@ -46,25 +46,25 @@ public sealed class PlannedCapabilityExecutor : IPlannedCapabilityExecutor
         // Execute the capability selected by Planner, then adapt its typed result to one chat response.
         return plan.Route switch
         {
-            "skills.summary" => CapabilityResponseMapper.FromSummary(await summarySkill.RunAsync(
+            AgentPlanRoutes.Summary => CapabilityResponseMapper.FromSummary(await summarySkill.RunAsync(
                 new SummarySkillRequest(plan.DocumentId, request.AiProvider, request.Message),
                 cancellationToken), request),
-            "skills.risk-analysis" => CapabilityResponseMapper.FromRiskAnalysis(await riskAnalysisSkill.RunAsync(
+            AgentPlanRoutes.RiskAnalysis => CapabilityResponseMapper.FromRiskAnalysis(await riskAnalysisSkill.RunAsync(
                 new RiskAnalysisSkillRequest(plan.DocumentId, request.AiProvider, request.Message),
                 cancellationToken), request),
-            "skills.email-draft" => CapabilityResponseMapper.FromEmailDraft(await emailDraftSkill.RunAsync(
+            AgentPlanRoutes.EmailDraft => CapabilityResponseMapper.FromEmailDraft(await emailDraftSkill.RunAsync(
                 new EmailDraftSkillRequest(plan.DocumentId, "Prepare a concise follow-up email draft.", request.AiProvider),
                 cancellationToken)),
-            "skills.classification" => CapabilityResponseMapper.FromClassification(await classificationSkill.RunAsync(
+            AgentPlanRoutes.Classification => CapabilityResponseMapper.FromClassification(await classificationSkill.RunAsync(
                 new ClassificationSkillRequest(plan.DocumentId, request.AiProvider),
                 cancellationToken), request),
-            "skills.resume-review" => CapabilityResponseMapper.FromResumeReview(await resumeReviewSkill.RunAsync(
+            AgentPlanRoutes.ResumeReview => CapabilityResponseMapper.FromResumeReview(await resumeReviewSkill.RunAsync(
                 new ResumeReviewSkillRequest(plan.DocumentId, request.Message, request.AiProvider),
                 cancellationToken)),
-            "tools.execute" => await toolCallingService.ExecuteSingleToolCallAsync(
+            AgentPlanRoutes.ToolExecution => await toolCallingService.ExecuteSingleToolCallAsync(
                 request,
                 cancellationToken),
-            "workflows.document-review" => CapabilityResponseMapper.FromWorkflow(await documentReviewWorkflow.RunAsync(
+            AgentPlanRoutes.DocumentReviewWorkflow => CapabilityResponseMapper.FromWorkflow(await documentReviewWorkflow.RunAsync(
                 new DocumentReviewWorkflowRequest(plan.DocumentId, "Prepare a concise follow-up email draft.", request.AiProvider),
                 cancellationToken), request),
             _ => null

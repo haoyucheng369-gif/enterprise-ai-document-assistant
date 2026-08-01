@@ -1,8 +1,8 @@
 # Architecture Overview
 
-Enterprise AI Document Assistant is structured as a focused React + ASP.NET Core application for connecting the core concepts of modern AI software: assistant UX, prompt orchestration, structured output, safety classification, AI Gateway, document intelligence, RAG, Tool Calling, MCP, simple Agent Planner, and workflow orchestration.
+Enterprise AI Document Assistant is structured as a focused React + ASP.NET Core application connecting assistant UX, prompt orchestration, structured output, safety classification, AI Gateway, document intelligence, RAG, Tool Calling, an MCP-style surface, controlled planning, workflow orchestration, and typed agent handoff.
 
-The architecture keeps the first version small. It supports enterprise-style patterns, but the initial implementation should be one narrow end-to-end assistant flow rather than a broad platform.
+The architecture keeps V1 focused on one end-to-end assistant flow rather than a broad platform.
 
 ---
 
@@ -14,7 +14,7 @@ The architecture keeps the first version small. It supports enterprise-style pat
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                                React Frontend                                │
 │                                                                             │
-│   AI Assistant  │  Document Center  │  Workflow View  │  Integration View   │
+│       Document List  │  Preview and Insights  │  AI Assistant             │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
@@ -28,7 +28,7 @@ The architecture keeps the first version small. It supports enterprise-style pat
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            AI Application Layer                              │
 │                                                                             │
-│ Prompt Orchestration │ RAG │ Tool Calling │ Skills │ Planner │ Workflows   │
+│ Prompt Orchestration │ RAG │ Tool Calling │ Skills │ Planner │ Agents      │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                     ┌─────────────────┼─────────────────┐
@@ -37,14 +37,14 @@ The architecture keeps the first version small. It supports enterprise-style pat
 │   Document Pipeline      │ │ Enterprise Tools  │ │       AI Models           │
 │                          │ │                  │ │                          │
 │ Upload → Parse → Chunk   │ │ Graph / REST / DB │ │ Chat / Embedding Models   │
-│ Embed → Retrieve         │ │ Health / MCP      │ │ OpenAI / Azure OpenAI     │
+│ Embed → Retrieve         │ │ Health / MCP      │ │ Mock / OpenAI / Azure     │
 └─────────────────────────┘ └──────────────────┘ └──────────────────────────┘
                     │                 │                 │
                     ▼                 ▼                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                                Persistence                                   │
 │                                                                             │
-│   SQL Server / PostgreSQL  │  Vector Store  │  File Storage  │  AI Records   │
+│       MongoDB Documents / Conversations  │  Qdrant  │  In-memory Audit   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -58,22 +58,22 @@ The first version should prove the whole path with minimal depth:
 
 - One assistant UI
 - One conversation API
-- One or two prompt templates
+- Shared and task-specific prompt templates
 - Structured output, response validation, safety classification, and lightweight guardrails
 - Basic conversation memory
 - A small Tool Gateway
 - One or two simple tools
-- A minimal MCP Server for existing tools
+- A minimal MCP-style HTTP surface for existing tools
 - Prompt and tool harnesses
-- Three reusable skills
-- One deterministic planner
-- Basic audit log shape
+- Five reusable skills
+- AI intent classification with rule fallback and a controlled planner
+- In-memory structured audit and AI execution records
 - One document ingestion path
-- One vector search path
-- One simple workflow
+- One RAG path with replaceable in-memory or Qdrant vector storage
+- One simple workflow with a typed agent handoff
 - A minimal Microsoft Graph adapter boundary
 
-Advanced security, observability, multi-tenant authorization, queue monitoring, and broad admin features are later hardening items.
+External authentication, persistent telemetry, source-file storage, advanced retrieval, and broad admin features remain later hardening items.
 
 ### V1 Module Map
 
@@ -106,6 +106,8 @@ The first implementation is grouped into six modules:
    - `SummarySkill`
    - `RiskAnalysisSkill`
    - `EmailDraftSkill`
+   - `ClassificationSkill`
+   - `ResumeReviewSkill`
    - Conversation memory
 
 5. Document RAG
@@ -117,11 +119,11 @@ The first implementation is grouped into six modules:
    - Answer with citations
 
 6. MCP, Harness, Workflow, and Integration Extension
-   - MCP Server exposing existing tools first
+   - MCP-style interface exposing existing tools
    - Prompt and tool harnesses
    - Workflow: summarize document, identify risks, generate email draft
    - Microsoft Graph adapter boundary with mock email draft output
-   - Optional later A2A path: `DocumentAgent` handoff to `EmailAgent`
+   - Typed A2A path: `DocumentAgent` handoff to `EmailAgent`
 
 ### React Frontend
 
@@ -130,7 +132,7 @@ The frontend provides the user-facing assistant and document experience.
 Responsibilities:
 
 - Chat-based interaction
-- Streaming response rendering
+- Chunked rendering from a completed structured response
 - Basic conversation memory
 - Document upload
 - Source citation display
@@ -145,10 +147,10 @@ Responsibilities:
 
 - Conversation endpoints
 - Document endpoints
-- AI Gateway endpoints
+- Internal AI Gateway provider routing
 - Tool Gateway endpoints
 - Integration endpoints
-- MCP-compatible entry points
+- MCP-style entry points
 
 ### AI Gateway
 
@@ -159,7 +161,7 @@ Responsibilities:
 - Model provider abstraction
 - Chat and embedding request routing
 - OpenAI / Azure OpenAI configuration
-- Retry and timeout handling
+- Timeout and cancellation handling; automatic retry remains deferred
 - Request logging
 - Model selection
 
@@ -173,9 +175,7 @@ Current implementation:
 - Gateway responses include provider, model, latency, and token estimates
 - Gateway calls are recorded in the audit trail
 
-Planned near-term extension:
-
-- Use the real provider from Classification and Structured Extraction without changing controller boundaries
+Classification and the implemented skills already use the selected provider. Dedicated structured extraction remains deferred.
 
 ### Prompt Orchestration
 
@@ -200,7 +200,7 @@ Current code keeps the shared assistant behavior in `EnterpriseAssistantPromptDe
 
 Skills package a focused AI capability behind a stable input and output contract.
 
-Current skill:
+Current skills:
 
 - `SummarySkill`: summarizes a selected document through `POST /api/skills/summary`
 - `RiskAnalysisSkill`: extracts risk items through `POST /api/skills/risk-analysis`
@@ -210,7 +210,7 @@ Current skill:
 
 Each document skill keeps a deterministic Mock path for local testing and an AI Gateway path for OpenAI or Azure OpenAI execution.
 
-Planned near-term skills can extend the same prompt/template/output contract pattern for structured extraction or document generation exports.
+Deferred skills can extend the same prompt/template/output contract pattern for structured extraction or document generation exports.
 
 ### Document Intelligence
 
@@ -279,14 +279,16 @@ User request
 
 The loop does not recurse and does not permit write tools, keeping execution predictable.
 
-Example tools:
+Current tools:
+
+- Document metadata lookup
+- Health status lookup
+
+Possible later tools:
 
 - Document search
-- Document metadata lookup
-- Health check lookup
 - SQL-backed data lookup
 - A small Microsoft Graph adapter operation
-- MCP-compatible tools
 
 Responsibilities:
 
@@ -298,7 +300,7 @@ Responsibilities:
 
 ### MCP Interface
 
-The MCP interface exposes selected Tool Gateway capabilities through MCP-style discovery and call endpoints.
+The MCP interface exposes selected Tool Gateway capabilities through simplified MCP-style discovery and call endpoints. It demonstrates `list + call`, but it is not a complete MCP SDK/JSON-RPC transport implementation.
 
 Current endpoints:
 
@@ -386,13 +388,13 @@ Current endpoint:
 
 ### Simple Workflow
 
-The first workflow coordinates existing skills in a fixed sequence instead of introducing a full workflow engine.
+The first workflow coordinates two focused agents in a fixed sequence instead of introducing a full workflow engine.
 
 Current sequence:
 
-- `SummarySkill`
-- `RiskAnalysisSkill`
-- `EmailDraftSkill`
+- `DocumentAgent` runs `SummarySkill` and `RiskAnalysisSkill`
+- `DocumentAgentHandoff` carries typed analysis output
+- `EmailAgent` consumes the handoff through `EmailDraftSkill`
 
 Current endpoint:
 
@@ -400,14 +402,14 @@ Current endpoint:
 
 ### Agent Orchestration And A2A
 
-Agent orchestration remains a later extension after workflow is stable.
+Agent orchestration is intentionally limited to one controlled handoff.
 
-Planned shape:
+Current shape:
 
-- `CoordinatorAgent`: selects a known path
+- Existing `AgentPlanner`: selects the known workflow path
 - `DocumentAgent`: summarizes documents and identifies risks
 - `EmailAgent`: drafts follow-up email content
-- A2A handoff: pass structured document analysis from `DocumentAgent` to `EmailAgent`
+- `DocumentAgentHandoff`: passes structured document analysis between the agents
 
 ### Persistence
 
@@ -415,10 +417,10 @@ Persistence stores application state without making any single database the cent
 
 Storage boundaries:
 
-- Application database: document records, conversations, tool executions, and workflow records
+- MongoDB: document records, ACL metadata, parsed sections, and conversations
 - Vector store: embeddings and semantic retrieval indexes
-- File or object storage: uploaded source documents
-- Optional document database or JSON columns: conversation memory, flexible AI records, and workflow state
+- In-memory stores: audit, tool execution, and workflow execution records
+- Deferred file or object storage: uploaded source documents
 
 Current implementation:
 
@@ -436,23 +438,23 @@ Current implementation:
 ```text
 User message
    ↓
-Conversation API
+HTTP validation, ACL, and rate limiting
    ↓
-Prompt Orchestration
+Input guardrails
    ↓
-Structured output and guardrails
-   ↓
-Intent Classifier
-   ↓
-Agent Planner
+Intent Classifier and Agent Planner
    ↓
 Planned Capability Executor
    ↓
 Skill / Workflow / Tool Calling / RAG
    ↓
-Response formatting with citations and tool results
+Prompt Orchestration and AI Gateway when the selected capability needs a model
    ↓
-Streaming response to React UI
+Structured output validation
+   ↓
+Conversation persistence for the primary chat endpoint
+   ↓
+Response formatting and chunked rendering to React UI
 ```
 
 ---
@@ -468,7 +470,7 @@ Text extraction and metadata capture
    ↓
 Chunking
    ↓
-Embedding through AI Gateway
+Embedding through Embedding Gateway
    ↓
 Vector store indexing
    ↓
@@ -488,6 +490,7 @@ The first audit trail records key AI application decisions and executions in mem
 Current endpoint:
 
 - `GET /api/audit/events`
+- `GET /api/audit/ai-executions`
 
 Tracked categories:
 
@@ -497,6 +500,8 @@ Tracked categories:
 - `tool`
 - `skill`
 - `integration`
+- `workflow`
+- `ai_gateway`
 
 The current implementation is intentionally replaceable. A later infrastructure step can swap `InMemoryAuditLogger` for structured logging, database storage, or OpenTelemetry without changing the calling code.
 
@@ -530,12 +535,12 @@ This allows the assistant to use enterprise capabilities without coupling prompt
 - Prefer one working vertical slice over many shallow modules.
 - The frontend must not call AI providers or enterprise systems directly.
 - Model access must go through the AI Gateway.
-- Enterprise actions must go through the Tool Gateway.
+- AI-invoked backend actions should go through the Tool Gateway.
 - RAG answers must include traceable citations.
 - Prompt templates should be versionable and testable.
 - Structured outputs should be validated before they are used by the UI or workflows.
 - Guardrails should start with structured safety classification, simple rules, and deterministic fallback, then evolve toward stronger policies.
-- MCP can be introduced once at least one backend tool exists.
+- The MCP-style surface must reuse registered Tool Gateway definitions and execution.
 - The Agent Planner should choose from known paths instead of performing open-ended autonomous planning.
 - Persistence should be replaceable where possible.
-- Agent orchestration and A2A should remain optional extension points until the workflow is stable.
+- Agent orchestration should remain a controlled typed handoff rather than an open-ended autonomous loop.

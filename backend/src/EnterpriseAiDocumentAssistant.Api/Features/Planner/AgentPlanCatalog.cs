@@ -24,14 +24,14 @@ internal static class AgentPlanCatalog
         // Planner owns the stable mapping from classified business intent to executable route.
         var route = intent.Trim().ToLowerInvariant() switch
         {
-            "document_review_workflow" => "workflows.document-review",
-            "resume_review" => "skills.resume-review",
-            "classification" => "skills.classification",
-            "email_draft" => "skills.email-draft",
-            "risk_analysis" => "skills.risk-analysis",
-            "summary" => "skills.summary",
-            "tool_request" => "tools.execute",
-            _ => "chat"
+            "document_review_workflow" => AgentPlanRoutes.DocumentReviewWorkflow,
+            "resume_review" => AgentPlanRoutes.ResumeReview,
+            "classification" => AgentPlanRoutes.Classification,
+            "email_draft" => AgentPlanRoutes.EmailDraft,
+            "risk_analysis" => AgentPlanRoutes.RiskAnalysis,
+            "summary" => AgentPlanRoutes.Summary,
+            "tool_request" => AgentPlanRoutes.ToolExecution,
+            _ => AgentPlanRoutes.Chat
         };
 
         return Create(route, documentId);
@@ -45,51 +45,51 @@ internal static class AgentPlanCatalog
 
         return route.Trim().ToLowerInvariant() switch
         {
-            "workflows.document-review" => new AgentPlanResponse(
+            AgentPlanRoutes.DocumentReviewWorkflow => new AgentPlanResponse(
                 "document_review_workflow",
-                "workflows.document-review",
+                AgentPlanRoutes.DocumentReviewWorkflow,
                 normalizedDocumentId,
                 ["Summarize document", "Analyze risks", "Draft follow-up email"],
-                ["SummarySkill", "RiskAnalysisSkill", "EmailDraftSkill"]),
-            "skills.resume-review" => new AgentPlanResponse(
+                ["DocumentAgent", "EmailAgent"]),
+            AgentPlanRoutes.ResumeReview => new AgentPlanResponse(
                 "resume_review",
-                "skills.resume-review",
+                AgentPlanRoutes.ResumeReview,
                 normalizedDocumentId,
                 ["Read selected resume", "Identify strengths and gaps", "Generate Markdown review brief"],
                 ["ResumeReviewSkill"]),
-            "skills.classification" => new AgentPlanResponse(
+            AgentPlanRoutes.Classification => new AgentPlanResponse(
                 "classification",
-                "skills.classification",
+                AgentPlanRoutes.Classification,
                 normalizedDocumentId,
                 ["Read selected document", "Classify business category", "Return priority and confidence"],
                 ["ClassificationSkill"]),
-            "skills.email-draft" => new AgentPlanResponse(
+            AgentPlanRoutes.EmailDraft => new AgentPlanResponse(
                 "email_draft",
-                "skills.email-draft",
+                AgentPlanRoutes.EmailDraft,
                 normalizedDocumentId,
                 ["Read selected document", "Summarize document", "Analyze risks", "Draft follow-up email"],
                 ["SummarySkill", "RiskAnalysisSkill", "EmailDraftSkill"]),
-            "skills.risk-analysis" => new AgentPlanResponse(
+            AgentPlanRoutes.RiskAnalysis => new AgentPlanResponse(
                 "risk_analysis",
-                "skills.risk-analysis",
+                AgentPlanRoutes.RiskAnalysis,
                 normalizedDocumentId,
                 ["Read selected document", "Identify risk signals", "Return severity and recommendations"],
                 ["RiskAnalysisSkill"]),
-            "skills.summary" => new AgentPlanResponse(
+            AgentPlanRoutes.Summary => new AgentPlanResponse(
                 "summary",
-                "skills.summary",
+                AgentPlanRoutes.Summary,
                 normalizedDocumentId,
                 ["Read selected document", "Extract key points", "Return structured summary"],
                 ["SummarySkill"]),
-            "tools.execute" => new AgentPlanResponse(
+            AgentPlanRoutes.ToolExecution => new AgentPlanResponse(
                 "tool_request",
-                "tools.execute",
+                AgentPlanRoutes.ToolExecution,
                 normalizedDocumentId,
                 ["Select registered tool", "Validate arguments", "Execute through Tool Gateway"],
                 ["GetHealthStatusTool", "GetDocumentMetadataTool"]),
             _ => new AgentPlanResponse(
                 "document_question",
-                "chat",
+                AgentPlanRoutes.Chat,
                 normalizedDocumentId,
                 ["Retrieve relevant chunks", "Build prompt with conversation memory", "Generate grounded answer"],
                 ["RAG", "PromptOrchestration", "ConversationMemory"])

@@ -1,44 +1,36 @@
 # Enterprise AI Document Assistant
 
-An enterprise-oriented document intelligence workspace built with React and ASP.NET Core. It combines document ingestion, grounded AI assistance, controlled capability execution, and persistent application state behind clear service boundaries.
+A focused enterprise document intelligence application built with React and ASP.NET Core. It connects document ingestion, grounded AI assistance, controlled tool execution, agent handoff, and persistent application state through replaceable service boundaries.
 
-The solution demonstrates how common enterprise AI patterns fit into one coherent application without coupling business workflows directly to a model provider.
+The system supports local Mock execution as well as OpenAI and Azure OpenAI without coupling business workflows to a specific model provider.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    user[User] --> ui[React Workspace]
-    ui --> api[ASP.NET Core API]
+    user["User"] --> ui["React Workspace"]
+    ui --> api["ASP.NET Core API"]
 
-    api --> safety[Input Guardrails]
-    safety --> planner[Intent Classifier + Planner]
+    api --> security["ACL + Guardrails"]
+    security --> routing["Intent Classifier + Planner"]
 
-    planner --> rag[RAG]
-    planner --> skills[Skills + Workflow]
-    planner --> tools[Tool Gateway]
+    routing --> rag["Document RAG"]
+    routing --> capabilities["Skills + Workflow + Agent Handoff"]
+    routing --> calling["Tool Calling"]
 
-    rag --> embeddings[Embedding Gateway]
-    embeddings --> vectors[Qdrant]
-    rag --> ai[AI Gateway]
-    skills --> ai
-    tools --> ai
+    rag --> embedding["Embedding Gateway"]
+    embedding --> qdrant["Qdrant"]
+    rag --> gateway["AI Gateway"]
+    capabilities --> gateway
+    calling --> gateway
+    calling --> tools["Tool Gateway"]
 
-    ai --> models[OpenAI / Azure OpenAI]
-    api --> mongo[MongoDB]
-    tools --> mcp[MCP Surface]
+    gateway --> models["Mock | OpenAI | Azure OpenAI"]
+    api --> mongo["MongoDB"]
+
+    external["External MCP Client"] --> mcp["MCP-style Surface"]
+    mcp --> tools
 ```
-
-## Solution Scope
-
-| Area | Implementation |
-|---|---|
-| Document workspace | Upload, parsing, chunk preview, classification, workflow results, citations, and tool output |
-| AI application layer | Prompt orchestration, structured responses, input guardrails, validation, and provider routing |
-| Grounded assistance | Embeddings, semantic retrieval, Qdrant or in-memory vectors, similarity threshold, and source citations |
-| Controlled capabilities | Skills, document workflow, Agent Planner, Tool Gateway, native tool calling, and MCP exposure |
-| Persistence and access | MongoDB records, owner-reader ACL filtering, per-user AI rate limiting, and Qdrant vector indexes |
-| Operations | Structured audit events and an AI execution view for provider, model, tokens, latency, user, and outcome |
 
 ## Request Flow
 
@@ -46,32 +38,54 @@ flowchart LR
 sequenceDiagram
     participant UI as React Workspace
     participant API as ASP.NET Core API
-    participant Plan as Guardrails + Planner
-    participant Capability as RAG / Skill / Tool
+    participant Route as Guardrails and Planner
+    participant App as RAG or Controlled Capability
     participant AI as AI Gateway
-    participant DB as MongoDB
+    participant Data as MongoDB and Qdrant
 
-    UI->>API: Document question
-    API->>Plan: Validate and classify intent
-    Plan->>Capability: Execute controlled route
-    Capability->>AI: Grounded prompt or tool result
+    UI->>API: Question and selected document
+    API->>Route: Check access, safety, and intent
+    Route->>App: Select RAG, Skill, Workflow, or Tool
+    App->>Data: Retrieve authorized context
+    App->>AI: Send prompt, evidence, or tool result
     AI-->>API: Structured assistant response
-    API->>DB: Persist validated conversation turn
+    API->>API: Validate, audit, and persist
     API-->>UI: Answer, citations, and suggested actions
 ```
 
+## Core Capabilities
+
+**Document intelligence and grounded answers**
+
+TXT, Markdown, PDF, and DOCX uploads are parsed into chunks, converted to embeddings, indexed in Qdrant, and retrieved with a configurable similarity threshold. The assistant sends matched source text rather than vectors to the model and returns traceable citations.
+
+**Controlled AI orchestration**
+
+Input guardrails run before intent classification. The Planner maps classified requests to known RAG, Skill, Workflow, or Tool routes. Structured model responses are validated before they reach the UI or conversation store.
+
+**Reusable Skills and agent handoff**
+
+Summary, risk analysis, classification, email drafting, and resume review are exposed through stable contracts. The document review workflow demonstrates a typed `DocumentAgentHandoff` from `DocumentAgent` to `EmailAgent` without introducing an open-ended autonomous loop.
+
+**Tool and MCP interoperability**
+
+The Tool Gateway registers and executes controlled backend capabilities. Native single-turn tool calling lets the model choose a read-only tool, while MCP-style `list` and `call` endpoints expose the same registered tools to external clients.
+
+**Enterprise application controls**
+
+MongoDB applies owner-reader ACL filtering before documents reach chat, RAG, Skills, or Tools. ASP.NET Core rate limiting, ProblemDetails, health checks, cancellation, structured audit events, and provider/token/latency records keep operational behavior visible.
+
 ## Technology
 
-- React, TypeScript, Vite, Tailwind CSS
-- ASP.NET Core Web API, controllers, dependency injection, Swagger, ProblemDetails
-- OpenAI and Azure OpenAI behind an AI Gateway abstraction
-- MongoDB for document and conversation records
-- Qdrant for persistent vector search
-- Docker Compose for local infrastructure
+- **Frontend:** React, TypeScript, Vite, Tailwind CSS
+- **Backend:** ASP.NET Core Web API, Controllers, dependency injection, Swagger, ProblemDetails
+- **AI:** OpenAI-compatible chat and embedding APIs behind `IAiGateway` and `IEmbeddingGateway`
+- **Data:** MongoDB for documents and conversations; Qdrant for persistent vector search
+- **Infrastructure:** Docker Compose for local MongoDB and Qdrant
 
 ## Run Locally
 
-Start MongoDB and Qdrant from the repository root:
+Start infrastructure from the repository root:
 
 ```bash
 docker compose up -d mongodb qdrant
@@ -92,26 +106,28 @@ npm install
 npm run dev
 ```
 
-Local provider credentials belong in the Git-ignored file:
+Provider settings and API keys belong in the Git-ignored file:
 
 ```text
 backend/src/EnterpriseAiDocumentAssistant.Api/appsettings.Local.json
 ```
 
-For local ACL testing, requests may include `X-User-Id`; omitting it uses `local-user`. This header is a development identity adapter, not a replacement for authenticated claims in a deployed environment.
+Local interfaces:
 
-Operational interfaces:
-
+- React workspace: `http://localhost:5173`
 - Swagger: `http://localhost:5221/swagger`
+- Health check: `http://localhost:5221/health`
 - MongoDB Compass: `mongodb://localhost:27017`
 - Qdrant dashboard: `http://localhost:6333/dashboard`
 
-## Direction
+For local ACL verification, the frontend sends `X-User-Id`. This development identity adapter is designed to be replaced by authenticated claims in a deployed environment.
 
-The current application covers the main document-assistant flow from ingestion through permission-filtered retrieval, controlled execution, structured response, and persistence. Remaining extensions are intentionally limited to concise observability and a lightweight agent handoff.
+## V1 Boundaries
 
-Detailed design and implementation order:
+The current MCP surface demonstrates tool discovery and execution through HTTP but is not a complete MCP SDK/JSON-RPC transport. Microsoft Graph uses a replaceable mock adapter, audit records remain in memory, and uploaded source binaries are not persisted. These boundaries are documented explicitly so production integrations can replace them without changing the core application flow.
+
+## Documentation
 
 - [Architecture](docs/architecture.md)
-- [Roadmap](docs/roadmap.md)
+- [Roadmap and implementation status](docs/roadmap.md)
 - [中文说明](README.zh-CN.md)

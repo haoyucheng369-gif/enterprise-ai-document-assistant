@@ -443,15 +443,17 @@ public sealed class HarnessRunner : IHarnessRunner
 
         var passed = result is not null
             && result.Status == "Completed"
-            && result.Steps.Count == 3
+            && result.Steps.Count == 2
+            && result.Steps[0].Name == "DocumentAgent"
+            && result.Steps[1].Name == "EmailAgent"
             && !string.IsNullOrWhiteSpace(result.Summary.Summary)
             && result.RiskAnalysis.Risks.Count > 0
             && !string.IsNullOrWhiteSpace(result.EmailDraft.Body);
 
         return Result(
-            "document review workflow runs skill sequence",
+            "document review workflow runs agent handoff",
             passed,
-            passed ? "Workflow returned summary, risks, and email draft." : "Workflow did not return expected skill outputs.");
+            passed ? "DocumentAgent handed structured analysis to EmailAgent." : "Workflow did not return expected agent handoff outputs.");
     }
 
     private HarnessCheckResult CheckMicrosoftGraphEmailDraftSucceeds(string documentId)

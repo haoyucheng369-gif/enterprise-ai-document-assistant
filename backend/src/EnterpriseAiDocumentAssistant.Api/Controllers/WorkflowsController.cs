@@ -25,7 +25,8 @@ public sealed class WorkflowsController : ControllerBase
         DocumentReviewWorkflowRequest request,
         CancellationToken cancellationToken)
     {
-        // Keep HTTP validation at the boundary before the workflow executes application steps.
+        // Agent Handoff Step 1: receive the HTTP request and validate it before entering the workflow.
+        // Debug next: DocumentReviewWorkflow.RunAsync -> DocumentAgent -> EmailAgent -> final response.
         if (string.IsNullOrWhiteSpace(request.DocumentId))
         {
             ModelState.AddModelError(nameof(request.DocumentId), "DocumentId is required.");

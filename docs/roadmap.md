@@ -16,7 +16,7 @@ React chat
   -> Safety classifier and guardrails
   -> Tool Gateway
   -> First tools
-  -> MCP Server
+  -> MCP-style tool surface
   -> Prompt and Tool Harness
   -> Reusable skills
   -> Conversation Memory
@@ -33,9 +33,7 @@ React chat
   -> grounded-answer guardrails
   -> document permission filtering
   -> rate limiting
-  -> observability and cost tracking
-  -> prompt versioning
-  -> sensitive data redaction
+  -> observability and usage tracking
   -> expanded harness checks
   -> intent classification and routing
   -> simple agent orchestration / A2A handoff
@@ -54,8 +52,8 @@ V1 is organized around a small core path plus lightweight extension boundaries:
 - Prompt and AI Layer: prompt orchestration, conversation memory, structured output, validation, safety classifier, guardrails, AI Gateway
 - Tool Gateway and Skills: `GetHealthStatusTool`, `GetDocumentMetadataTool`, `SummarySkill`, `RiskAnalysisSkill`, `EmailDraftSkill`, `ClassificationSkill`, `ResumeReviewSkill`
 - Document Processing and RAG: upload, parse text, chunk, embed, retrieve relevant chunks, and answer with citations
-- Persistence: conversation history, document metadata, workflow records, audit/tool records; MongoDB or relational storage can be selected later
-- MCP, Harness, Workflow, and Integration Extension: MCP wrapper over registered tools, prompt/tool harnesses, document summary to risk analysis to email draft workflow, Microsoft Graph adapter boundary, optional later agent handoff
+- Persistence: MongoDB document/conversation records, Qdrant vectors, and replaceable in-memory audit records
+- MCP, Harness, Workflow, and Integration Extension: MCP-style wrapper over registered tools, prompt/tool harnesses, typed document-to-email agent handoff, and a mock Microsoft Graph adapter boundary
 
 ---
 
@@ -69,7 +67,7 @@ Scope:
 - ASP.NET Core Web API
 - Backend-driven workspace data
 - Chat endpoint
-- Streaming response support
+- Chunked response rendering from a completed structured response
 - Local development setup
 
 Expected outcome:
@@ -129,13 +127,13 @@ Expected outcome:
 
 ---
 
-## Phase 4 - MCP Server and Harnesses
+## Phase 4 - MCP-style Interface and Harnesses
 
 Objective: expose selected tools through MCP and add lightweight verification for prompt and tool behavior.
 
 Scope:
 
-- Minimal MCP Server
+- Minimal MCP-style HTTP surface
 - MCP `get_health_status` and `get_document_metadata`
 - MCP request/response contract
 - Prompt harness with a few fixed test cases
@@ -153,7 +151,7 @@ Expected outcome:
 
 ## Phase 5 - Reusable Skills, Memory, and Simple Planner
 
-Objective: introduce reusable AI capabilities, short-term conversation memory, and a deterministic planner.
+Objective: introduce reusable AI capabilities, short-term conversation memory, and a controlled planner.
 
 Scope:
 
@@ -188,7 +186,7 @@ Scope:
 - AI Gateway abstraction
 - OpenAI / Azure OpenAI provider configuration
 - Chat model calls
-- Retry and timeout handling
+- Timeout and cancellation handling; automatic retry is deferred
 - Basic request logging
 - Model, token, and latency metadata
 - Microsoft.Extensions.AI or Semantic Kernel friendly integration points
@@ -234,13 +232,15 @@ Scope:
 
 - Simple workflow: summarize document, identify risks, generate email draft
 - One Microsoft Graph adapter boundary for an Outlook-style email draft scenario
-- Optional Agent-to-Agent handoff: `DocumentAgent` to `EmailAgent`
-- Basic workflow state persistence
+- Agent-to-Agent handoff: `DocumentAgent` to `EmailAgent`
+- In-memory workflow execution state
 
 Current V1 progress:
 
 - `POST /api/workflows/document-review` runs summary, risk analysis, and email draft generation in sequence
 - `POST /api/integrations/graph/email-draft` creates a mock Microsoft Graph email draft; OAuth-backed Graph calls are not wired yet
+- `DocumentReviewWorkflow` now coordinates `DocumentAgent` and `EmailAgent` through a typed handoff
+- Workflow execution state is returned and audited in memory; it is not persisted yet
 
 Expected outcome:
 
@@ -255,7 +255,7 @@ Objective: add a common business AI capability that returns a validated structur
 Scope:
 
 - Document classification
-- Priority and risk level classification
+- Priority and confidence classification
 - Validated JSON response contracts
 - Harness checks for fixed classification cases
 
@@ -311,6 +311,10 @@ Expected outcome:
 
 - The assistant can extract key fields in a format that backend code can consume safely.
 
+V1 status:
+
+- Deferred. The current structured contracts cover assistant responses and classification, but there is no dedicated extraction endpoint.
+
 ---
 
 ## Phase 12 - Persistence
@@ -322,8 +326,8 @@ Scope:
 - Docker Compose MongoDB baseline for local persistence work
 - Uploaded document metadata and parsed sections through a MongoDB repository
 - Conversation turns through a MongoDB repository
-- Workflow execution records
-- Audit and tool execution records
+- Workflow execution records (deferred persistence)
+- Audit and tool execution records (deferred persistence)
 - MongoDB or relational storage behind repository interfaces
 
 Expected outcome:
@@ -332,6 +336,12 @@ Expected outcome:
 - Refreshing the workspace restores recent validated conversation turns.
 - Storage remains replaceable without changing controllers, skills, tools, or workflows.
 - Local MongoDB can be inspected with MongoDB Compass at `mongodb://localhost:27017`.
+
+Current V1 progress:
+
+- MongoDB persists uploaded document metadata, parsed sections, ACL data, and validated conversation turns.
+- Qdrant persists chunk vectors and retrieval payloads.
+- Workflow, audit, and tool execution records remain in memory.
 
 ---
 
@@ -396,30 +406,28 @@ Current implementation:
 
 ---
 
-## Phase 15 - Observability and Cost Tracking
+## Phase 15 - Observability and Usage Tracking
 
 Objective: make AI operations visible and reviewable without adding a full monitoring platform.
 
 Scope:
 
-- Provider, model, token, latency, and cost estimate records
-- Prompt name and prompt version on AI execution records
+- Provider, model, token, and latency records
 - Structured audit records for chat, skills, workflow, tool, and MCP calls
 - Basic dashboard or endpoint for recent AI executions
-- Redaction rules for sensitive prompt or document content
 - Expanded harness checks for prompts, skills, tools, and workflows
 
 Expected outcome:
 
 - AI usage can be inspected and explained.
-- The project demonstrates cost and latency awareness around model calls.
-- Prompt changes can be traced by version without logging full sensitive content.
+- The project demonstrates token usage and latency awareness around model calls.
+- AI execution records avoid logging full prompt and response content.
 
 Current V1 progress:
 
 - Chat and embedding gateway calls record provider, model, user, success, latency, and available token counts.
 - `GET /api/audit/ai-executions` exposes recent AI execution records without prompt or response content.
-- Records remain in memory for V1; external telemetry and persistent cost reporting are deferred.
+- Records remain in memory for V1; persistent telemetry, monetary cost calculation, prompt version metadata, and configurable redaction are deferred.
 
 ---
 
@@ -453,10 +461,17 @@ Objective: show a small agent-to-agent handoff without introducing broad autonom
 
 Scope:
 
-- `CoordinatorAgent` selects the document review path
-- `DocumentAgent` prepares summary, risk, classification, and extraction output
+- Existing `AgentPlanner` selects the controlled document review path
+- `DocumentAgent` prepares summary and risk output
 - `EmailAgent` receives structured handoff data and prepares follow-up content
 - Harness check for the agent handoff
+
+Current V1 progress:
+
+- `DocumentAgent` composes summary and risk skills into a typed `DocumentAgentHandoff`.
+- `EmailAgent` consumes the handoff without recomputing document analysis.
+- `DocumentReviewWorkflow` coordinates the two agents and records the handoff in workflow steps.
+- Harness validates the controlled agent-to-agent sequence.
 
 Expected outcome:
 
@@ -468,12 +483,13 @@ Expected outcome:
 
 These items are outside the first implementation path and should be added only when they support a concrete product workflow:
 
-- Authentication and authorization
-- Authorization-aware RAG retrieval
-- Prompt injection mitigation
+- External authentication such as Entra ID and claims-based authorization
 - Advanced prompt injection mitigation
 - Real Microsoft Graph OAuth integration
+- Dedicated structured extraction endpoint
 - Hybrid search and semantic ranking
+- Persistent telemetry and monetary cost calculation
+- Prompt version metadata and configurable sensitive-content redaction
 - GraphQL API surface
-- Docker-based deployment
+- Containerized application deployment
 - CI foundation

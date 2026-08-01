@@ -1,4 +1,5 @@
 using EnterpriseAiDocumentAssistant.Api.Audit;
+using EnterpriseAiDocumentAssistant.Api.Agents;
 using EnterpriseAiDocumentAssistant.Api.AiGateway;
 using EnterpriseAiDocumentAssistant.Api.Chat;
 using EnterpriseAiDocumentAssistant.Api.ConversationMemory;
@@ -77,6 +78,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AiIntentClassifier>();
         services.AddSingleton<IIntentClassifier, RoutingIntentClassifier>();
         services.AddSingleton<IAgentPlanner, AgentPlanner>();
+        services.AddSingleton<IDocumentAgent, DocumentAgent>();
+        services.AddSingleton<IEmailAgent, EmailAgent>();
         services.AddSingleton<IDocumentReviewWorkflow, DocumentReviewWorkflow>();
         services.AddSingleton<IMicrosoftGraphGateway, MockMicrosoftGraphGateway>();
         services.AddSingleton<IHarnessRunner, HarnessRunner>();

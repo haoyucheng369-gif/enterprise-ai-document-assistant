@@ -51,17 +51,26 @@ public sealed class EmailDraftSkill : IEmailDraftSkill
             "Document metadata tool is only executed on the async skill path.");
     }
 
+    public EmailDraftSkillResponse? Run(
+        EmailDraftSkillRequest request,
+        SummarySkillResponse summary,
+        RiskAnalysisSkillResponse riskAnalysis)
+    {
+        // Agent handoff path reuses completed analysis instead of running both skills again.
+        return applicationDocumentProvider.FindById(request.DocumentId) is null
+            ? null
+            : BuildDeterministicDraft(
+                request,
+                summary,
+                riskAnalysis,
+                "Document metadata tool is only executed on the async skill path.");
+    }
+
     public async Task<EmailDraftSkillResponse?> RunAsync(
         EmailDraftSkillRequest request,
         CancellationToken cancellationToken)
     {
         // First async overload owns the full composition: run summary and risk analysis before drafting.
-        var document = applicationDocumentProvider.FindById(request.DocumentId);
-        if (document is null)
-        {
-            return null;
-        }
-
         var provider = SkillJsonReader.ResolveProvider(options, request.AiProvider);
         var summary = await summarySkill.RunAsync(
             new SummarySkillRequest(request.DocumentId, provider),
